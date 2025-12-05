@@ -1,38 +1,140 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pkg from "pg";
+const { Pool } = pkg;
+import { eq } from "drizzle-orm";
+import {
+  users,
+  resumes,
+  coverLetters,
+  payments,
+  type User,
+  type InsertUser,
+  type Resume,
+  type InsertResume,
+  type CoverLetter,
+  type InsertCoverLetter,
+  type Payment,
+  type InsertPayment,
+} from "@shared/schema";
 
-// modify the interface with any CRUD methods
-// you might need
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+const db = drizzle(pool);
 
 export interface IStorage {
+  // User operations
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserCredits(userId: string, credits: number): Promise<void>;
+  updateUserPlan(userId: string, plan: string): Promise<void>;
+
+  // Resume operations
+  getResume(id: string): Promise<Resume | undefined>;
+  getResumesByUser(userId: string): Promise<Resume[]>;
+  createResume(resume: InsertResume): Promise<Resume>;
+  updateResume(id: string, data: Partial<Resume>): Promise<Resume | undefined>;
+
+  // Cover letter operations
+  getCoverLetter(id: string): Promise<CoverLetter | undefined>;
+  getCoverLettersByUser(userId: string): Promise<CoverLetter[]>;
+  createCoverLetter(coverLetter: InsertCoverLetter): Promise<CoverLetter>;
+
+  // Payment operations
+  getPayment(id: string): Promise<Payment | undefined>;
+  getPaymentsByUser(userId: string): Promise<Payment[]>;
+  createPayment(payment: InsertPayment): Promise<Payment>;
+  updatePaymentStatus(id: string, status: string, stripeId?: string): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
-  }
-
+export class PostgresStorage implements IStorage {
+  // User operations
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0];
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+    const result = await db.insert(users).values(insertUser).returning();
+    return result[0];
+  }
+
+  async updateUserCredits(userId: string, credits: number): Promise<void> {
+    await db.update(users).set({ creditsRemaining: credits }).where(eq(users.id, userId));
+  }
+
+  async updateUserPlan(userId: string, plan: string): Promise<void> {
+    await db.update(users).set({ plan }).where(eq(users.id, userId));
+  }
+
+  // Resume operations
+  async getResume(id: string): Promise<Resume | undefined> {
+    const result = await db.select().from(resumes).where(eq(resumes.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getResumesByUser(userId: string): Promise<Resume[]> {
+    return await db.select().from(resumes).where(eq(resumes.userId, userId));
+  }
+
+  async createResume(insertResume: InsertResume): Promise<Resume> {
+    const result = await db.insert(resumes).values(insertResume).returning();
+    return result[0];
+  }
+
+  async updateResume(id: string, data: Partial<Resume>): Promise<Resume | undefined> {
+    const result = await db
+      .update(resumes)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(resumes.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Cover letter operations
+  async getCoverLetter(id: string): Promise<CoverLetter | undefined> {
+    const result = await db.select().from(coverLetters).where(eq(coverLetters.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getCoverLettersByUser(userId: string): Promise<CoverLetter[]> {
+    return await db.select().from(coverLetters).where(eq(coverLetters.userId, userId));
+  }
+
+  async createCoverLetter(insertCoverLetter: InsertCoverLetter): Promise<CoverLetter> {
+    const result = await db.insert(coverLetters).values(insertCoverLetter).returning();
+    return result[0];
+  }
+
+  // Payment operations
+  async getPayment(id: string): Promise<Payment | undefined> {
+    const result = await db.select().from(payments).where(eq(payments.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getPaymentsByUser(userId: string): Promise<Payment[]> {
+    return await db.select().from(payments).where(eq(payments.userId, userId));
+  }
+
+  async createPayment(insertPayment: InsertPayment): Promise<Payment> {
+    const result = await db.insert(payments).values(insertPayment).returning();
+    return result[0];
+  }
+
+  async updatePaymentStatus(id: string, status: string, stripeId?: string): Promise<void> {
+    const updateData: any = { status };
+    if (stripeId) {
+      updateData.stripePaymentId = stripeId;
+    }
+    await db.update(payments).set(updateData).where(eq(payments.id, id));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new PostgresStorage();
