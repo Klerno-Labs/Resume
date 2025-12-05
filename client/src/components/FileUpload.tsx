@@ -2,15 +2,20 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, FileText, Check, AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
 interface FileUploadProps {
-  onUpload?: (file: File) => void;
+  onUpload?: (file: File, resumeId: string) => void;
 }
 
 export function FileUpload({ onUpload }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -22,29 +27,46 @@ export function FileUpload({ onUpload }: FileUploadProps) {
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const droppedFile = e.dataTransfer.files[0];
-      setFile(droppedFile);
-      // Simulate upload delay then redirect
-      setTimeout(() => {
-        if (onUpload) onUpload(droppedFile);
-        setLocation("/editor");
-      }, 1500);
+      await processFile(droppedFile);
     }
-  }, [onUpload, setLocation]);
+  }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      setFile(selectedFile);
+      await processFile(selectedFile);
+    }
+  };
+
+  const processFile = async (uploadedFile: File) => {
+    if (!user) {
+      setLocation("/auth");
+      return;
+    }
+
+    setFile(uploadedFile);
+    
+    try {
+      const result = await api.uploadResume(uploadedFile, user.id);
+      if (onUpload) onUpload(uploadedFile, result.resumeId);
+      
+      // Wait a bit for UI then redirect
       setTimeout(() => {
-        if (onUpload) onUpload(selectedFile);
-        setLocation("/editor");
+        setLocation(`/editor?resumeId=${result.resumeId}`);
       }, 1500);
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setFile(null);
     }
   };
 

@@ -21,30 +21,47 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
-export function CoverLetterDialog() {
+interface CoverLetterDialogProps {
+  resumeId?: string;
+}
+
+export function CoverLetterDialog({ resumeId }: CoverLetterDialogProps) {
   const [step, setStep] = useState<"input" | "generating" | "result">("input");
   const [jobDescription, setJobDescription] = useState("");
   const [tone, setTone] = useState("professional");
   const [result, setResult] = useState("");
   const [copied, setCopied] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
+    if (!user || !resumeId) {
+      toast({
+        title: "Error",
+        description: "Please upload a resume first",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setStep("generating");
-    // Mock generation
-    setTimeout(() => {
-      setResult(`Dear Hiring Manager,
-
-I am writing to express my strong interest in the Software Engineer position at TechCorp. With over 5 years of experience in full-stack development and a proven track record of optimizing system performance by 40%, I am confident in my ability to contribute immediately to your engineering team.
-
-In my current role at PreviousCompany, I spearheaded the migration of legacy systems to a microservices architecture, a challenge that aligns perfectly with TechCorp's goals for the coming year. I am particularly excited about your recent work in AI-driven analytics, and I would welcome the opportunity to bring my expertise in Python and React to support these initiatives.
-
-Thank you for considering my application. I look forward to the possibility of discussing how my technical skills and leadership experience can help drive TechCorp's continued success.
-
-Sincerely,
-Jane Doe`);
+    
+    try {
+      const coverLetter = await api.generateCoverLetter(user.id, resumeId, jobDescription, tone);
+      setResult(coverLetter.content);
       setStep("result");
-    }, 2500);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      setStep("input");
+    }
   };
 
   const handleCopy = () => {

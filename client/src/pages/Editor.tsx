@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "wouter";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "wouter";
 import { ArrowLeft, Download, RefreshCw, Wand2, Check, AlertTriangle, FileText } from "lucide-react";
 import { AtsScore } from "@/components/AtsScore";
 import { ComparisonView } from "@/components/ComparisonView";
@@ -7,6 +7,8 @@ import { CoverLetterDialog } from "@/components/CoverLetterDialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
+import { api, type Resume } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 // Mock Data
 const MOCK_ORIGINAL = `Jane Doe
@@ -50,6 +52,39 @@ Tools: Git, Docker, AWS, Jira`;
 export default function Editor() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState("resume");
+  const [resume, setResume] = useState<Resume | null>(null);
+  const [, navigate] = useLocation();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const resumeId = params.get("resumeId");
+    
+    if (!resumeId) {
+      navigate("/");
+      return;
+    }
+
+    // Poll for resume updates
+    const fetchResume = async () => {
+      try {
+        const data = await api.getResume(resumeId);
+        setResume(data);
+        
+        if (data.status === "processing") {
+          setTimeout(fetchResume, 2000); // Poll every 2 seconds
+        }
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchResume();
+  }, [navigate]);
 
   const handleOptimize = () => {
     setIsProcessing(true);
@@ -62,10 +97,26 @@ export default function Editor() {
       setIsProcessing(false);
       toast({
         title: "Optimization Complete",
-        description: "Your resume score increased by 45 points!",
+        description: "Your resume score increased!",
       });
     }, 2000);
   };
+
+  if (!resume) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading resume...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isCompleted = resume.status === "completed";
+  const originalText = resume.originalText || MOCK_ORIGINAL;
+  const improvedText = resume.improvedText || (isCompleted ? MOCK_IMPROVED : "Processing...");
+  const atsScore = resume.atsScore || 50;
 
   return (
     <div className="h-screen flex flex-col bg-background font-sans overflow-hidden">
@@ -78,16 +129,16 @@ export default function Editor() {
             </button>
           </Link>
           <div className="flex flex-col">
-            <h1 className="font-semibold text-sm">resume_draft_v1.pdf</h1>
+            <h1 className="font-semibold text-sm">{resume.fileName}</h1>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-              Auto-saved
+              <span className={`w-1.5 h-1.5 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></span>
+              {isCompleted ? "Optimized" : "Processing..."}
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <CoverLetterDialog />
+          <CoverLetterDialog resumeId={resume.id} />
           <Button 
             size="sm" 
             className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
@@ -111,24 +162,26 @@ export default function Editor() {
         <aside className="w-80 border-r bg-secondary/30 flex flex-col overflow-y-auto">
           <div className="p-6 border-b bg-white dark:bg-slate-950">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Performance</h2>
-            <AtsScore score={85} />
+            <AtsScore score={atsScore} />
           </div>
 
           <div className="p-6 space-y-6">
             <div>
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                Critical Issues (3)
+                Critical Issues ({resume.issues?.length || 0})
               </h3>
               <div className="space-y-2">
-                <div className="p-3 bg-white dark:bg-slate-950 border rounded-lg text-sm shadow-sm">
-                  <div className="font-medium text-red-500 mb-1">Weak Action Verbs</div>
-                  <p className="text-muted-foreground text-xs">Replaced "Worked at" with "Spearheaded".</p>
-                </div>
-                <div className="p-3 bg-white dark:bg-slate-950 border rounded-lg text-sm shadow-sm">
-                  <div className="font-medium text-yellow-500 mb-1">Missing Keywords</div>
-                  <p className="text-muted-foreground text-xs">Added "Microservices", "TypeScript".</p>
-                </div>
+                {resume.issues?.slice(0, 3).map((issue, i) => (
+                  <div key={i} className="p-3 bg-white dark:bg-slate-950 border rounded-lg text-sm shadow-sm">
+                    <div className={`font-medium mb-1 ${issue.severity === 'high' ? 'text-red-500' : 'text-yellow-500'}`}>
+                      {issue.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </div>
+                    <p className="text-muted-foreground text-xs">{issue.message}</p>
+                  </div>
+                )) || (
+                  <p className="text-muted-foreground text-sm">No issues detected.</p>
+                )}
               </div>
             </div>
 
@@ -164,13 +217,12 @@ export default function Editor() {
            <div className="flex-1 p-8 overflow-hidden">
              <Tabs value={activeTab} className="h-full">
                <TabsContent value="resume" className="h-full mt-0">
-                 <ComparisonView originalText={MOCK_ORIGINAL} improvedText={MOCK_IMPROVED} />
+                 <ComparisonView originalText={originalText} improvedText={improvedText} />
                </TabsContent>
                <TabsContent value="preview" className="h-full mt-0 flex items-center justify-center">
                  <div className="bg-white shadow-2xl w-[595px] h-[842px] p-12 text-[10px] overflow-hidden border">
-                    {/* Mock PDF A4 View */}
                     <pre className="font-sans whitespace-pre-wrap text-slate-800">
-                      {MOCK_IMPROVED}
+                      {improvedText}
                     </pre>
                  </div>
                </TabsContent>

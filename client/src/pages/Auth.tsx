@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 // Login Schema
 const authSchema = z.object({
@@ -25,6 +27,7 @@ export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { setUser } = useAuth();
 
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(authSchema),
@@ -36,15 +39,26 @@ export default function Auth() {
 
   const onSubmit = async (data: AuthFormValues) => {
     setIsLoading(true);
-    // Mock API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const response = isLogin 
+        ? await api.login(data.email, data.password)
+        : await api.register(data.email, data.password);
+      
+      setUser(response.user);
       toast({
         title: isLogin ? "Welcome back!" : "Account created",
-        description: "Redirecting to editor...",
+        description: `You have ${response.user.creditsRemaining} credits remaining`,
       });
       setLocation("/editor");
-    }, 1500);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

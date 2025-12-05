@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { CheckCircle2, CreditCard, ShieldCheck, Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -13,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 interface PricingModalProps {
   trigger?: React.ReactNode;
@@ -23,19 +26,49 @@ export function PricingModal({ trigger, defaultPlan = "pro" }: PricingModalProps
   const [plan, setPlan] = useState(defaultPlan);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user, setUser } = useAuth();
+  const [, navigate] = useLocation();
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
     setIsLoading(true);
     
-    // Mock payment delay
-    setTimeout(() => {
+    try {
+      const payment = await api.createPayment(user.id, plan);
+      
+      // Poll for payment completion
+      const checkPayment = async () => {
+        const updatedPayment = await api.getPayment(payment.paymentId);
+        if (updatedPayment.status === "completed") {
+          // Update user's credits
+          const credits = plan === "basic" ? 1 : plan === "pro" ? 3 : 999;
+          setUser({ ...user, plan, creditsRemaining: credits });
+          
+          toast({
+            title: "Payment Successful",
+            description: `Your ${plan} subscription has been activated!`,
+          });
+          setIsLoading(false);
+        } else {
+          setTimeout(checkPayment, 1000);
+        }
+      };
+      
+      checkPayment();
+    } catch (error: any) {
       setIsLoading(false);
       toast({
-        title: "Payment Successful",
-        description: "Your subscription has been activated!",
+        title: "Payment Failed",
+        description: error.message,
+        variant: "destructive",
       });
-    }, 2000);
+    }
   };
 
   return (
