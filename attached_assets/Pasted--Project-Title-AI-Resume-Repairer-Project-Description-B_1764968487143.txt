@@ -1,0 +1,140 @@
+🛠️ Project Title
+
+AI Resume Repairer
+
+🎯 Project Description
+
+Build a web application that allows users to upload a résumé (PDF, DOCX, or text) and have it instantly repaired using AI. The app fixes formatting, rewrites weak content into impactful bullet points, ensures ATS compatibility, and provides a downloadable result with a side-by-side comparison. Optional features include AI-generated cover letters, LinkedIn rewrites, and resume optimization based on job descriptions.
+
+💻 Target Platform
+
+Web application
+
+🌐 Operating Environment
+
+Online (cloud-hosted)
+
+☁️ Hosting
+
+Deploy using Replit Deployments or Vercel
+
+🧩 Core Features
+Input & Upload
+
+Upload support for PDF, DOCX, or plain text
+
+Optional job title input
+
+Optional job description for targeted optimization
+
+AI Resume Enhancement
+
+Fix formatting (spacing, structure, fonts, alignment)
+
+Rewrite weak language into strong, measurable action statements
+
+Quantify achievements where appropriate
+
+Remove clichés and passive voice
+
+Ensure ATS-friendly formatting (no tables, images, or odd fonts)
+
+Normalize section headers
+
+Detect missing content (e.g., Skills, Tools, Achievements)
+
+Output & Interaction
+
+Side-by-side Before/After view
+
+ATS score report (20+ factors)
+
+Tracked changes or highlighted differences
+
+Explanation of what was improved and why
+
+Manual in-browser editing before download
+
+Export in PDF, DOCX, and plain text
+
+Optional AI cover letter, LinkedIn rewrite
+
+Payment & Plans
+
+Stripe integration with tiered pricing:
+
+Basic ($7): Resume only
+
+Pro ($19): Resume + ATS report + keywords
+
+Premium ($29): All features + cover letter & LinkedIn rewrite
+
+Upsells: template packs, unlimited plan ($39/mo)
+
+🧠 AI Logic
+
+Use OpenAI GPT-4o or Claude API for text transformation
+
+Parse documents with PDFPlumber and python-docx
+
+ATS scoring engine (custom rules or API-based)
+
+Generate cover letters and keyword suggestions contextually
+
+🧱 Tech Stack
+
+Frontend: React / Next.js
+
+Backend: FastAPI or Node.js
+
+AI: OpenAI API or Claude
+
+Parsing: PDFPlumber, python-docx
+
+Storage: Supabase or S3
+
+Payments: Stripe
+
+Auth: Guest + optional login
+
+🧑‍💼 Admin Dashboard
+
+Resume and user tracking
+
+Error/debug logs
+
+Resume processing stats
+
+AI template editing interface
+
+Payment status logs
+
+🧭 Interface Style
+
+Modern, clean, user-friendly interface
+
+Focus on accessibility and clarity
+
+In-app preview editor with tracked changes
+
+💡 Example Apps
+
+Jobscan (ATS score)
+
+Rezi.ai (resume AI)
+
+Resume.io (UI)
+
+📢 Marketing & SEO
+
+Core keywords: “Fix my resume”, “ATS resume repair”, “Rewrite my resume”, “Resume not getting interviews”
+
+Homepage copy: “Instant Resume Repair in 30 Seconds”, “Get an ATS-optimized résumé now”
+
+Blog & SEO content engine for traffic
+
+🌍 Language Preferences
+
+Interaction language: English
+
+Application interface: English
