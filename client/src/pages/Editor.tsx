@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ArrowLeft, Download, RefreshCw, Wand2, Check, AlertTriangle, FileText } from "lucide-react";
 import { AtsScore } from "@/components/AtsScore";
 import { ComparisonView } from "@/components/ComparisonView";
+import { CoverLetterDialog } from "@/components/CoverLetterDialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
@@ -86,11 +87,17 @@ export default function Editor() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="gap-2">
-             <FileText className="w-4 h-4" />
-             Cover Letter
-          </Button>
-          <Button size="sm" className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
+          <CoverLetterDialog />
+          <Button 
+            size="sm" 
+            className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
+            onClick={() => {
+              toast({
+                title: "Exporting PDF...",
+                description: "Your download will start in a moment.",
+              });
+            }}
+          >
             <Download className="w-4 h-4" />
             Export PDF
           </Button>

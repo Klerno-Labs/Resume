@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { ArrowRight, CheckCircle2, Zap, Award, FileText, Download, Wand2 } from "lucide-react";
 import { FileUpload } from "@/components/FileUpload";
+import { PricingModal } from "@/components/PricingModal";
 import heroBg from "@assets/generated_images/abstract_minimalist_tech_background_with_soft_geometric_shapes_in_white_and_light_gray..png";
 
 export default function Home() {
@@ -20,10 +21,10 @@ export default function Home() {
             <a href="#testimonials" className="hover:text-primary transition-colors">Success Stories</a>
           </div>
           <div className="flex gap-4">
-            <Link href="/editor">
+            <Link href="/auth">
               <button className="text-sm font-medium hover:text-primary transition-colors">Log in</button>
             </Link>
-            <Link href="/editor">
+            <Link href="/auth">
               <button className="bg-foreground text-background px-4 py-2 rounded-full text-sm font-medium hover:bg-primary hover:text-white transition-all shadow-lg hover:shadow-primary/25" data-testid="button-get-started">
                 Get Started
               </button>
@@ -135,7 +136,10 @@ export default function Home() {
                 <li className="flex gap-2 text-sm"><CheckCircle2 className="w-4 h-4 text-green-500" /> PDF & DOCX Export</li>
                 <li className="flex gap-2 text-sm text-muted-foreground"><CheckCircle2 className="w-4 h-4 text-muted" /> ATS Report</li>
               </ul>
-              <button className="w-full py-2.5 rounded-lg border font-medium hover:bg-secondary transition-colors">Choose Basic</button>
+              <PricingModal 
+                defaultPlan="basic"
+                trigger={<button className="w-full py-2.5 rounded-lg border font-medium hover:bg-secondary transition-colors">Choose Basic</button>}
+              />
             </div>
 
             {/* Pro */}
@@ -151,7 +155,10 @@ export default function Home() {
                 <li className="flex gap-2 text-sm"><CheckCircle2 className="w-4 h-4 text-green-500" /> Detailed ATS Report</li>
                 <li className="flex gap-2 text-sm"><CheckCircle2 className="w-4 h-4 text-green-500" /> Keyword Optimization</li>
               </ul>
-              <button className="w-full py-2.5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25">Choose Pro</button>
+              <PricingModal 
+                defaultPlan="pro"
+                trigger={<button className="w-full py-2.5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25">Choose Pro</button>}
+              />
             </div>
 
             {/* Premium */}
@@ -166,7 +173,10 @@ export default function Home() {
                 <li className="flex gap-2 text-sm"><CheckCircle2 className="w-4 h-4 text-green-500" /> LinkedIn Profile Rewrite</li>
                 <li className="flex gap-2 text-sm"><CheckCircle2 className="w-4 h-4 text-green-500" /> Priority Support</li>
               </ul>
-              <button className="w-full py-2.5 rounded-lg border font-medium hover:bg-secondary transition-colors">Choose Premium</button>
+              <PricingModal 
+                defaultPlan="premium"
+                trigger={<button className="w-full py-2.5 rounded-lg border font-medium hover:bg-secondary transition-colors">Choose Premium</button>}
+              />
             </div>
           </div>
         </div>
