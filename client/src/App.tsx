@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Editor from "@/pages/Editor";
 import Auth from "@/pages/Auth";
+import History from "@/pages/History";
 
 function Router() {
   return (
@@ -14,6 +15,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/auth" component={Auth} />
       <Route path="/editor" component={Editor} />
+      <Route path="/history" component={History} />
       <Route component={NotFound} />
     </Switch>
   );

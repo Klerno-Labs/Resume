@@ -7,9 +7,15 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import cors from "cors";
 import { env } from "./lib/env";
+import { csrfProtection, generateCsrfToken } from "./lib/csrf";
+import { initSentry, attachSentryErrorHandler } from "./lib/sentry";
+import { logger } from "./lib/logger";
 
 const app = express();
 const httpServer = createServer(app);
+
+// Initialize Sentry (must be first)
+initSentry(app);
 
 declare module "http" {
   interface IncomingMessage {
@@ -39,15 +45,17 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
-export function log(message: string, source = "express") {
-  const formattedTime = new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
+// CSRF protection middleware
+app.use(csrfProtection);
 
-  console.log(`${formattedTime} [${source}] ${message}`);
+// CSRF token endpoint
+app.get("/api/csrf-token", (req, res) => {
+  const token = generateCsrfToken(req, res);
+  res.json({ csrfToken: token });
+});
+
+export function log(message: string, source = "express") {
+  logger.info(message, { source });
 }
 
 app.use((req, res, next) => {
@@ -79,9 +87,20 @@ app.use((req, res, next) => {
 (async () => {
   await registerRoutes(httpServer, app);
 
+  // Attach Sentry error handler before other error handlers
+  attachSentryErrorHandler(app);
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+
+    // Log error with Winston
+    logger.error(message, {
+      status,
+      stack: err.stack,
+      url: _req.url,
+      method: _req.method,
+    });
 
     res.status(status).json({ message });
     throw err;

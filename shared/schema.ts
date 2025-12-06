@@ -84,3 +84,21 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
 });
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 export type Payment = typeof payments.$inferSelect;
+
+// LinkedIn Profiles table
+export const linkedinProfiles = pgTable("linkedin_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
+  resumeId: varchar("resume_id").references(() => resumes.id),
+  headline: text("headline").notNull(),
+  about: text("about").notNull(),
+  suggestions: jsonb("suggestions").$type<Array<{ section: string; recommendation: string }>>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertLinkedInProfileSchema = createInsertSchema(linkedinProfiles).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertLinkedInProfile = z.infer<typeof insertLinkedInProfileSchema>;
+export type LinkedInProfile = typeof linkedinProfiles.$inferSelect;

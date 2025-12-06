@@ -45,11 +45,40 @@ export interface Payment {
 
 class ApiClient {
   private baseUrl = "/api";
+  private csrfToken: string | null = null;
 
-  // Helper method to include credentials (cookies) in all requests
+  // Fetch CSRF token from server
+  private async getCsrfToken(): Promise<string> {
+    if (this.csrfToken) {
+      return this.csrfToken;
+    }
+
+    const res = await fetch(`${this.baseUrl}/csrf-token`, {
+      credentials: 'include',
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch CSRF token");
+    }
+
+    const data = await res.json();
+    this.csrfToken = data.csrfToken;
+    return this.csrfToken;
+  }
+
+  // Helper method to include credentials (cookies) and CSRF tokens in all requests
   private async fetchWithCredentials(url: string, options: RequestInit = {}) {
+    const headers = new Headers(options.headers);
+
+    // Add CSRF token to non-GET requests
+    if (options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method)) {
+      const token = await this.getCsrfToken();
+      headers.set('x-csrf-token', token);
+    }
+
     return fetch(url, {
       ...options,
+      headers,
       credentials: 'include', // Include cookies
     });
   }

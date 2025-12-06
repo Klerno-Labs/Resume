@@ -12,6 +12,7 @@ import { generateToken, requireAuth } from "./lib/jwt";
 import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from "./lib/email";
 import { env } from "./lib/env";
 import Stripe from "stripe";
+import { logger } from "./lib/logger";
 
 // File upload configuration with security limits
 const upload = multer({
@@ -108,7 +109,7 @@ export async function registerRoutes(
 
       // Send verification email (non-blocking)
       sendVerificationEmail(email, verificationToken).catch(err => {
-        console.error("Failed to send verification email:", err);
+        logger.error("Failed to send verification email", { error: err.message, email });
       });
 
       // Generate JWT token
@@ -133,7 +134,7 @@ export async function registerRoutes(
         }
       });
     } catch (error: any) {
-      console.error("Registration error:", error);
+      logger.error("Registration error", { error: error.message, stack: error.stack });
       res.status(500).json({ error: "Failed to register user" });
     }
   });
@@ -178,7 +179,7 @@ export async function registerRoutes(
         }
       });
     } catch (error: any) {
-      console.error("Login error:", error);
+      logger.error("Login error", { error: error.message, stack: error.stack });
       res.status(500).json({ error: "Failed to login" });
     }
   });
@@ -194,21 +195,42 @@ export async function registerRoutes(
       return res.status(500).json({ error: "Google OAuth is not configured" });
     }
 
+    // Generate secure random state parameter to prevent CSRF
+    const state = crypto.randomBytes(32).toString('hex');
+
+    // Store state in session cookie (httpOnly for security)
+    res.cookie("oauth_state", state, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 10 * 60 * 1000, // 10 minutes
+    });
+
     const redirectUri = `${env.APP_URL}/api/auth/google/callback`;
     const scope = encodeURIComponent("email profile");
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${env.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
-    
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${env.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&state=${state}&access_type=offline&prompt=consent`;
+
     res.redirect(authUrl);
   });
 
   // Google OAuth - Callback
   app.get("/api/auth/google/callback", async (req, res) => {
     try {
-      const { code } = req.query;
+      const { code, state } = req.query;
 
       if (!code || typeof code !== "string") {
         return res.redirect("/auth?error=no_code");
       }
+
+      // Validate state parameter to prevent CSRF
+      const storedState = req.cookies.oauth_state;
+      if (!state || state !== storedState) {
+        res.clearCookie("oauth_state");
+        return res.redirect("/auth?error=invalid_state");
+      }
+
+      // Clear the state cookie after validation
+      res.clearCookie("oauth_state");
 
       if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
         return res.redirect("/auth?error=oauth_not_configured");
@@ -230,7 +252,8 @@ export async function registerRoutes(
       });
 
       if (!tokenResponse.ok) {
-        console.error("Token exchange failed:", await tokenResponse.text());
+        const errorText = await tokenResponse.text();
+        logger.error("Token exchange failed", { error: errorText });
         return res.redirect("/auth?error=token_exchange_failed");
       }
 
@@ -279,7 +302,7 @@ export async function registerRoutes(
       // Redirect to home page where user can upload resume
       res.redirect("/");
     } catch (error: any) {
-      console.error("Google OAuth error:", error);
+      logger.error("Google OAuth error", { error: error.message, stack: error.stack });
       res.redirect("/auth?error=oauth_failed");
     }
   });
@@ -304,7 +327,7 @@ export async function registerRoutes(
         }
       });
     } catch (error: any) {
-      console.error("Get user error:", error);
+      logger.error("Get user error", { error: error.message, stack: error.stack });
       res.status(500).json({ error: "Failed to fetch user" });
     }
   });
@@ -327,12 +350,12 @@ export async function registerRoutes(
 
       // Send welcome email
       sendWelcomeEmail(user.email, user.name || undefined).catch(err => {
-        console.error("Failed to send welcome email:", err);
+        logger.error("Failed to send welcome email", { error: err.message, email: user.email });
       });
 
       res.json({ success: true, message: "Email verified successfully" });
     } catch (error: any) {
-      console.error("Email verification error:", error);
+      logger.error("Email verification error", { error: error.message, stack: error.stack });
       res.status(500).json({ error: "Failed to verify email" });
     }
   });
@@ -363,7 +386,7 @@ export async function registerRoutes(
 
       res.json({ success: true, message: "If the email exists, a reset link has been sent" });
     } catch (error: any) {
-      console.error("Password reset request error:", error);
+      logger.error("Password reset request error", { error: error.message, stack: error.stack });
       res.status(500).json({ error: "Failed to process password reset request" });
     }
   });
@@ -392,7 +415,7 @@ export async function registerRoutes(
 
       res.json({ success: true, message: "Password reset successfully" });
     } catch (error: any) {
-      console.error("Password reset error:", error);
+      logger.error("Password reset error", { error: error.message, stack: error.stack });
       res.status(500).json({ error: "Failed to reset password" });
     }
   });
@@ -443,7 +466,7 @@ export async function registerRoutes(
           await storage.updateUserCredits(userId, user.creditsRemaining - 1);
         })
         .catch(async (error) => {
-          console.error("Optimization error:", error);
+          logger.error("Optimization error", { error: error.message, resumeId: resume.id });
           await storage.updateResume(resume.id, {
             status: "failed",
           });
@@ -451,7 +474,7 @@ export async function registerRoutes(
 
       res.json({ resumeId: resume.id, status: "processing" });
     } catch (error: any) {
-      console.error("Upload error:", error);
+      logger.error("Upload error", { error: error.message, stack: error.stack });
       if (error.message.includes('Invalid file type')) {
         return res.status(400).json({ error: error.message });
       }
@@ -476,7 +499,7 @@ export async function registerRoutes(
 
       res.json(resume);
     } catch (error: any) {
-      console.error("Get resume error:", error);
+      logger.error("Get resume error", { error: error.message, stack: error.stack });
       res.status(500).json({ error: "Failed to fetch resume" });
     }
   });
@@ -495,7 +518,7 @@ export async function registerRoutes(
       const resumes = await storage.getResumesByUser(requestedUserId);
       res.json(resumes);
     } catch (error: any) {
-      console.error("Get resumes error:", error);
+      logger.error("Get resumes error", { error: error.message, stack: error.stack });
       res.status(500).json({ error: "Failed to fetch resumes" });
     }
   });
@@ -533,7 +556,7 @@ export async function registerRoutes(
 
       res.json(coverLetter);
     } catch (error: any) {
-      console.error("Cover letter generation error:", error);
+      logger.error("Cover letter generation error", { error: error.message, stack: error.stack });
       res.status(500).json({ error: "Failed to generate cover letter" });
     }
   });
@@ -610,7 +633,7 @@ export async function registerRoutes(
         res.json({ paymentId: payment.id, status: "pending", mock: true });
       }
     } catch (error: any) {
-      console.error("Payment creation error:", error);
+      logger.error("Payment creation error", { error: error.message, stack: error.stack });
       res.status(500).json({ error: "Failed to create payment" });
     }
   });
@@ -656,7 +679,7 @@ export async function registerRoutes(
 
         res.json({ received: true });
       } catch (error: any) {
-        console.error("Webhook error:", error);
+        logger.error("Webhook error", { error: error.message, stack: error.stack });
         res.status(400).send(`Webhook Error: ${error.message}`);
       }
     });
@@ -679,7 +702,7 @@ export async function registerRoutes(
 
       res.json(payment);
     } catch (error: any) {
-      console.error("Get payment error:", error);
+      logger.error("Get payment error", { error: error.message, stack: error.stack });
       res.status(500).json({ error: "Failed to fetch payment" });
     }
   });

@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for Development
+  postgres:
+    image: postgres:16-alpine
+    container_name: resume-postgres-dev
+    environment:
+      POSTGRES_USER: resume_user
+      POSTGRES_PASSWORD: resume_password
+      POSTGRES_DB: resume_repairer
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - resume-network-dev
+
+  # Redis Cache for Development
+  redis:
+    image: redis:7-alpine
+    container_name: resume-redis-dev
+    ports:
+      - '6379:6379'
+    networks:
+      - resume-network-dev
+    command: redis-server --appendonly yes
+
+  # Development server (runs on host with hot reload)
+  # Database and Redis run in containers for isolation
+
+volumes:
+  postgres_dev_data:
+    driver: local
+
+networks:
+  resume-network-dev:
+    driver: bridge

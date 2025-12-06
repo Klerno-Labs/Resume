@@ -123,3 +123,55 @@ Respond with JSON:
     content: result.content || "",
   };
 }
+
+interface LinkedInOptimizationResult {
+  headline: string;
+  about: string;
+  suggestions: Array<{ section: string; recommendation: string }>;
+}
+
+export async function optimizeLinkedIn(resumeText: string): Promise<LinkedInOptimizationResult> {
+  const prompt = `You are a LinkedIn profile optimization expert. Based on the following resume, create an optimized LinkedIn profile.
+
+RESUME:
+${resumeText}
+
+Your task:
+1. Create a compelling LinkedIn headline (120 characters max) that's keyword-rich and attention-grabbing
+2. Write an engaging "About" section (2000 characters max) that tells a story and highlights key achievements
+3. Provide specific recommendations for improving different LinkedIn sections
+
+Respond with JSON in this exact format:
+{
+  "headline": "Compelling professional headline with keywords",
+  "about": "Engaging About section that tells your professional story...",
+  "suggestions": [
+    {"section": "Skills", "recommendation": "Add these key skills: ..."},
+    {"section": "Experience", "recommendation": "Reframe your experience bullets to..."},
+    {"section": "Featured", "recommendation": "Showcase these projects or articles..."}
+  ]
+}`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-5",
+    messages: [
+      {
+        role: "system",
+        content: "You are a LinkedIn profile optimization AI. Always respond with valid JSON matching the requested format.",
+      },
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+    response_format: { type: "json_object" },
+    max_completion_tokens: 4096,
+  });
+
+  const result = JSON.parse(response.choices[0].message.content || "{}");
+  return {
+    headline: result.headline || "",
+    about: result.about || "",
+    suggestions: result.suggestions || [],
+  };
+}
