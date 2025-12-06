@@ -9,6 +9,7 @@ interface AuthState {
   setUser: (user: User | null) => void;
   logout: () => Promise<void>;
   restoreSession: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 export const useAuth = create<AuthState>()(
@@ -32,6 +33,14 @@ export const useAuth = create<AuthState>()(
           set({ user, isLoading: false });
         } catch (error) {
           set({ user: null, isLoading: false });
+        }
+      },
+      refreshUser: async () => {
+        try {
+          const { user } = await api.getCurrentUser();
+          set({ user });
+        } catch (error) {
+          console.error('Failed to refresh user:', error);
         }
       },
     }),

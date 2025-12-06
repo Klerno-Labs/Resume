@@ -190,6 +190,32 @@ class ApiClient {
   }
 
   // Payments
+  async createCheckout(plan: string): Promise<{ url: string }> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/payments/create-checkout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || "Failed to create checkout");
+    }
+    return res.json();
+  }
+
+  async verifyPayment(sessionId: string): Promise<{ success: boolean; plan: string; credits: number }> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/payments/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || "Failed to verify payment");
+    }
+    return res.json();
+  }
+
   async createPayment(plan: string): Promise<{ paymentId: string; status: string; clientSecret?: string }> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/payments/create`, {
       method: "POST",

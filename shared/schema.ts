@@ -71,6 +71,7 @@ export type CoverLetter = typeof coverLetters.$inferSelect;
 export const payments = pgTable("payments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id),
+  stripeSessionId: text("stripe_session_id").unique(),
   plan: text("plan").notNull(), // basic, pro, premium
   amount: integer("amount").notNull(), // in cents
   stripePaymentId: text("stripe_payment_id"),

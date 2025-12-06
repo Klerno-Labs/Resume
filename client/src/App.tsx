@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Editor from "@/pages/Editor";
 import Auth from "@/pages/Auth";
+import PaymentSuccess from "@/pages/PaymentSuccess";
 
 function Router() {
   const { restoreSession } = useAuth();
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/auth" component={Auth} />
       <Route path="/editor" component={Editor} />
+      <Route path="/payment-success" component={PaymentSuccess} />
       <Route component={NotFound} />
     </Switch>
   );

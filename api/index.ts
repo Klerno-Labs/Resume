@@ -4,10 +4,19 @@ import OpenAI from 'openai';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { serialize, parse } from 'cookie';
+import Stripe from 'stripe';
 
 // Initialize services
 const sql = neon(process.env.DATABASE_URL!);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-12-18.acacia' });
+
+// Price configuration
+const PRICES = {
+  basic: { amount: 700, credits: 1, name: 'Basic Plan' },
+  pro: { amount: 1900, credits: 3, name: 'Pro Plan' },
+  premium: { amount: 2900, credits: 999, name: 'Premium Plan' },
+} as const;
 
 // Helper to generate JWT
 function generateToken(payload: { userId: string; email: string }): string {
@@ -320,6 +329,123 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       processResume(resume.id, text).catch(console.error);
       
       return res.json({ resumeId: resume.id });
+    }
+
+    // Create Stripe checkout session
+    if (path === '/api/payments/create-checkout' && method === 'POST') {
+      const user = await getUserFromRequest(req);
+      if (!user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+      
+      const { plan } = body;
+      if (!plan || !PRICES[plan as keyof typeof PRICES]) {
+        return res.status(400).json({ error: 'Invalid plan' });
+      }
+      
+      const priceConfig = PRICES[plan as keyof typeof PRICES];
+      
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: priceConfig.name,
+                description: `${priceConfig.credits === 999 ? 'Unlimited' : priceConfig.credits} resume optimization${priceConfig.credits !== 1 ? 's' : ''}`,
+              },
+              unit_amount: priceConfig.amount,
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `${process.env.APP_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.APP_URL}/#pricing`,
+        customer_email: user.email,
+        metadata: {
+          userId: user.id,
+          plan: plan,
+          credits: priceConfig.credits.toString(),
+        },
+      });
+      
+      return res.json({ url: session.url });
+    }
+
+    // Verify payment success
+    if (path === '/api/payments/verify' && method === 'POST') {
+      const { sessionId } = body;
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID required' });
+      }
+      
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      
+      if (session.payment_status === 'paid') {
+        const userId = session.metadata?.userId;
+        const plan = session.metadata?.plan;
+        const credits = parseInt(session.metadata?.credits || '0');
+        
+        if (userId && plan) {
+          // Update user plan and credits
+          await sql`
+            UPDATE users 
+            SET plan = ${plan}, credits_remaining = credits_remaining + ${credits}
+            WHERE id = ${userId}
+          `;
+          
+          // Record payment
+          await sql`
+            INSERT INTO payments (user_id, stripe_session_id, plan, amount, status)
+            VALUES (${userId}, ${sessionId}, ${plan}, ${session.amount_total}, 'completed')
+            ON CONFLICT (stripe_session_id) DO NOTHING
+          `;
+          
+          return res.json({ success: true, plan, credits });
+        }
+      }
+      
+      return res.status(400).json({ error: 'Payment not completed' });
+    }
+
+    // Stripe webhook
+    if (path === '/api/webhooks/stripe' && method === 'POST') {
+      const sig = req.headers['stripe-signature'] as string;
+      
+      let event: Stripe.Event;
+      try {
+        // For webhooks, we need the raw body
+        const rawBody = JSON.stringify(body);
+        event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+      } catch (err: any) {
+        console.error('Webhook signature verification failed:', err.message);
+        return res.status(400).json({ error: 'Webhook signature verification failed' });
+      }
+      
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.metadata?.userId;
+        const plan = session.metadata?.plan;
+        const credits = parseInt(session.metadata?.credits || '0');
+        
+        if (userId && plan && session.payment_status === 'paid') {
+          await sql`
+            UPDATE users 
+            SET plan = ${plan}, credits_remaining = credits_remaining + ${credits}
+            WHERE id = ${userId}
+          `;
+          
+          await sql`
+            INSERT INTO payments (user_id, stripe_session_id, plan, amount, status)
+            VALUES (${userId}, ${session.id}, ${plan}, ${session.amount_total}, 'completed')
+            ON CONFLICT (stripe_session_id) DO NOTHING
+          `;
+        }
+      }
+      
+      return res.json({ received: true });
     }
 
     return res.status(404).json({ error: 'Not found' });
