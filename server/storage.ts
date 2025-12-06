@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pkg from "pg";
 const { Pool } = pkg;
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
   users,
   resumes,
@@ -53,6 +53,9 @@ export interface IStorage {
   getPaymentsByUser(userId: string): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
   updatePaymentStatus(id: string, status: string, stripeId?: string): Promise<void>;
+  
+  // Atomic transaction operations
+  processPaymentAndAddCredits(userId: string, paymentData: InsertPayment, creditsToAdd: number): Promise<{ payment: Payment; user: User }>;
 }
 
 export class PostgresStorage implements IStorage {
@@ -176,6 +179,120 @@ export class PostgresStorage implements IStorage {
       updateData.stripePaymentId = stripeId;
     }
     await db.update(payments).set(updateData).where(eq(payments.id, id));
+  }
+
+  // Atomic transaction: Create payment and add credits in a single transaction
+  // This ensures data consistency - either both succeed or both fail
+  async processPaymentAndAddCredits(
+    userId: string,
+    paymentData: InsertPayment,
+    creditsToAdd: number
+  ): Promise<{ payment: Payment; user: User }> {
+    // Get a client from the pool for transaction
+    const client = await pool.connect();
+    
+    try {
+      // Start transaction
+      await client.query('BEGIN');
+
+      // Insert payment record
+      const paymentResult = await client.query(
+        `INSERT INTO payments (user_id, plan, amount, status, stripe_payment_id) 
+         VALUES ($1, $2, $3, $4, $5) 
+         RETURNING *`,
+        [paymentData.userId, paymentData.plan, paymentData.amount, paymentData.status || 'completed', paymentData.stripePaymentId]
+      );
+      const payment = this.mapPaymentRow(paymentResult.rows[0]);
+
+      // Update user credits atomically (using atomic increment)
+      const userResult = await client.query(
+        `UPDATE users 
+         SET credits_remaining = credits_remaining + $1,
+             plan = $2
+         WHERE id = $3
+         RETURNING *`,
+        [creditsToAdd, paymentData.plan, userId]
+      );
+      
+      if (userResult.rows.length === 0) {
+        throw new Error('User not found');
+      }
+      
+      const user = this.mapUserRow(userResult.rows[0]);
+
+      // Commit transaction
+      await client.query('COMMIT');
+
+      return { payment, user };
+    } catch (error) {
+      // Rollback on any error
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      // Release client back to pool
+      client.release();
+    }
+  }
+
+  // Atomic credit deduction for resume optimization
+  async deductCreditAtomic(userId: string): Promise<User | null> {
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+
+      // Check and deduct in one atomic operation
+      const result = await client.query(
+        `UPDATE users 
+         SET credits_remaining = credits_remaining - 1
+         WHERE id = $1 AND credits_remaining > 0
+         RETURNING *`,
+        [userId]
+      );
+
+      if (result.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return null; // No credits available or user not found
+      }
+
+      await client.query('COMMIT');
+      return this.mapUserRow(result.rows[0]);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  // Helper to map database row to User type
+  private mapUserRow(row: any): User {
+    return {
+      id: row.id,
+      email: row.email,
+      passwordHash: row.password_hash,
+      name: row.name,
+      plan: row.plan,
+      creditsRemaining: row.credits_remaining,
+      emailVerified: row.email_verified,
+      verificationToken: row.verification_token,
+      resetToken: row.reset_token,
+      resetTokenExpiry: row.reset_token_expiry,
+      createdAt: row.created_at,
+    };
+  }
+
+  // Helper to map database row to Payment type
+  private mapPaymentRow(row: any): Payment {
+    return {
+      id: row.id,
+      userId: row.user_id,
+      plan: row.plan,
+      amount: row.amount,
+      stripePaymentId: row.stripe_payment_id,
+      status: row.status,
+      createdAt: row.created_at,
+    };
   }
 }
 
