@@ -1,9 +1,18 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Download, RefreshCw, Wand2, Check, AlertTriangle, FileText } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  RefreshCw,
+  Wand2,
+  Check,
+  AlertTriangle,
+  FileText,
+} from "lucide-react";
 import { AtsScore } from "@/components/AtsScore";
 import { ComparisonView } from "@/components/ComparisonView";
 import { CoverLetterDialog } from "@/components/CoverLetterDialog";
+import { LinkedInDialog } from "@/components/LinkedInDialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
@@ -60,7 +69,7 @@ export default function Editor() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const resumeId = params.get("resumeId");
-    
+
     if (!resumeId) {
       navigate("/");
       return;
@@ -71,7 +80,7 @@ export default function Editor() {
       try {
         const data = await api.getResume(resumeId);
         setResume(data);
-        
+
         if (data.status === "processing") {
           setTimeout(fetchResume, 2000); // Poll every 2 seconds
         }
@@ -93,7 +102,7 @@ export default function Editor() {
       title: "Optimizing Resume",
       description: "AI is rewriting your bullets for maximum impact...",
     });
-    
+
     setTimeout(() => {
       setIsProcessing(false);
       toast({
@@ -132,7 +141,9 @@ export default function Editor() {
           <div className="flex flex-col">
             <h1 className="font-semibold text-sm">{resume.fileName}</h1>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className={`w-1.5 h-1.5 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></span>
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${isCompleted ? "bg-green-500" : "bg-yellow-500 animate-pulse"}`}
+              ></span>
               {isCompleted ? "Optimized" : "Processing..."}
             </span>
           </div>
@@ -140,6 +151,7 @@ export default function Editor() {
 
         <div className="flex items-center gap-3">
           <CoverLetterDialog resumeId={resume.id} />
+          <LinkedInDialog resumeId={resume.id} />
           <Button
             size="sm"
             className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
@@ -178,11 +190,12 @@ export default function Editor() {
 
       {/* Main Layout */}
       <div className="flex-1 flex overflow-hidden">
-        
         {/* Sidebar Tools */}
         <aside className="w-80 border-r bg-secondary/30 flex flex-col overflow-y-auto">
           <div className="p-6 border-b bg-white dark:bg-slate-950">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Performance</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+              Performance
+            </h2>
             <AtsScore
               score={atsScore}
               keywordsScore={resume.keywordsScore}
@@ -198,63 +211,63 @@ export default function Editor() {
               </h3>
               <div className="space-y-2">
                 {resume.issues?.slice(0, 3).map((issue, i) => (
-                  <div key={i} className="p-3 bg-white dark:bg-slate-950 border rounded-lg text-sm shadow-sm">
-                    <div className={`font-medium mb-1 ${issue.severity === 'high' ? 'text-red-500' : 'text-yellow-500'}`}>
-                      {issue.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  <div
+                    key={i}
+                    className="p-3 bg-white dark:bg-slate-950 border rounded-lg text-sm shadow-sm"
+                  >
+                    <div
+                      className={`font-medium mb-1 ${issue.severity === "high" ? "text-red-500" : "text-yellow-500"}`}
+                    >
+                      {issue.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                     </div>
                     <p className="text-muted-foreground text-xs">{issue.message}</p>
                   </div>
-                )) || (
-                  <p className="text-muted-foreground text-sm">No issues detected.</p>
-                )}
+                )) || <p className="text-muted-foreground text-sm">No issues detected.</p>}
               </div>
             </div>
 
             <div className="pt-4 border-t">
-               <Button 
-                 className="w-full gap-2" 
-                 onClick={handleOptimize} 
-                 disabled={isProcessing}
-                 data-testid="button-optimize"
-               >
-                 {isProcessing ? (
-                   <RefreshCw className="w-4 h-4 animate-spin" />
-                 ) : (
-                   <Wand2 className="w-4 h-4" />
-                 )}
-                 {isProcessing ? "Optimizing..." : "Re-Optimize with AI"}
-               </Button>
+              <Button
+                className="w-full gap-2"
+                onClick={handleOptimize}
+                disabled={isProcessing}
+                data-testid="button-optimize"
+              >
+                {isProcessing ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Wand2 className="w-4 h-4" />
+                )}
+                {isProcessing ? "Optimizing..." : "Re-Optimize with AI"}
+              </Button>
             </div>
           </div>
         </aside>
 
         {/* Editor Area */}
         <main className="flex-1 flex flex-col bg-muted/20 relative">
-           <div className="p-2 border-b bg-white dark:bg-slate-950 flex justify-center">
-             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[400px]">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="resume">Resume Editor</TabsTrigger>
-                  <TabsTrigger value="preview">Print Preview</TabsTrigger>
-                </TabsList>
-              </Tabs>
-           </div>
+          <div className="p-2 border-b bg-white dark:bg-slate-950 flex justify-center">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[400px]">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="resume">Resume Editor</TabsTrigger>
+                <TabsTrigger value="preview">Print Preview</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
 
-           <div className="flex-1 p-8 overflow-hidden">
-             <Tabs value={activeTab} className="h-full">
-               <TabsContent value="resume" className="h-full mt-0">
-                 <ComparisonView originalText={originalText} improvedText={improvedText} />
-               </TabsContent>
-               <TabsContent value="preview" className="h-full mt-0 flex items-center justify-center">
-                 <div className="bg-white shadow-2xl w-[595px] h-[842px] p-12 text-[10px] overflow-hidden border">
-                    <pre className="font-sans whitespace-pre-wrap text-slate-800">
-                      {improvedText}
-                    </pre>
-                 </div>
-               </TabsContent>
-             </Tabs>
-           </div>
+          <div className="flex-1 p-8 overflow-hidden">
+            <Tabs value={activeTab} className="h-full">
+              <TabsContent value="resume" className="h-full mt-0">
+                <ComparisonView originalText={originalText} improvedText={improvedText} />
+              </TabsContent>
+              <TabsContent value="preview" className="h-full mt-0 flex items-center justify-center">
+                <div className="bg-white shadow-2xl w-[595px] h-[842px] p-12 text-[10px] overflow-hidden border">
+                  <pre className="font-sans whitespace-pre-wrap text-slate-800">{improvedText}</pre>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
         </main>
-
       </div>
     </div>
   );

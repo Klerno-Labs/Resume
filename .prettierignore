@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+playwright-report
+.git
+.env
+*.log
+package-lock.json

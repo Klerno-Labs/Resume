@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import multer from "multer";
 import { parseFile } from "./lib/fileParser";
-import { optimizeResume, generateCoverLetter } from "./lib/openai";
+import { optimizeResume, generateCoverLetter, optimizeLinkedIn } from "./lib/openai";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -22,23 +22,23 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     const allowedMimes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain'
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "text/plain",
     ];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only PDF, DOCX, and TXT files are allowed.'));
+      cb(new Error("Invalid file type. Only PDF, DOCX, and TXT files are allowed."));
     }
-  }
+  },
 });
 
 // Initialize Stripe if configured
 let stripe: Stripe | null = null;
 if (env.STRIPE_SECRET_KEY) {
   stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-    apiVersion: '2024-11-20.acacia',
+    apiVersion: "2024-11-20.acacia",
   });
 }
 
@@ -63,11 +63,7 @@ const apiLimiter = rateLimit({
   message: "Too many requests, please try again later.",
 });
 
-export async function registerRoutes(
-  httpServer: Server,
-  app: Express
-): Promise<Server> {
-
+export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   // Apply general API rate limiting
   app.use("/api", apiLimiter);
 
@@ -95,7 +91,7 @@ export async function registerRoutes(
       const passwordHash = await bcrypt.hash(password, 10);
 
       // Generate verification token
-      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const verificationToken = crypto.randomBytes(32).toString("hex");
 
       // Create user with free plan and 1 free credit
       const user = await storage.createUser({
@@ -108,7 +104,7 @@ export async function registerRoutes(
       });
 
       // Send verification email (non-blocking)
-      sendVerificationEmail(email, verificationToken).catch(err => {
+      sendVerificationEmail(email, verificationToken).catch((err) => {
         logger.error("Failed to send verification email", { error: err.message, email });
       });
 
@@ -131,7 +127,7 @@ export async function registerRoutes(
           plan: user.plan,
           creditsRemaining: user.creditsRemaining,
           emailVerified: !!user.emailVerified,
-        }
+        },
       });
     } catch (error: any) {
       logger.error("Registration error", { error: error.message, stack: error.stack });
@@ -176,7 +172,7 @@ export async function registerRoutes(
           plan: user.plan,
           creditsRemaining: user.creditsRemaining,
           emailVerified: !!user.emailVerified,
-        }
+        },
       });
     } catch (error: any) {
       logger.error("Login error", { error: error.message, stack: error.stack });
@@ -196,7 +192,7 @@ export async function registerRoutes(
     }
 
     // Generate secure random state parameter to prevent CSRF
-    const state = crypto.randomBytes(32).toString('hex');
+    const state = crypto.randomBytes(32).toString("hex");
 
     // Store state in session cookie (httpOnly for security)
     res.cookie("oauth_state", state, {
@@ -257,7 +253,7 @@ export async function registerRoutes(
         return res.redirect("/auth?error=token_exchange_failed");
       }
 
-      const tokens = await tokenResponse.json() as { access_token: string };
+      const tokens = (await tokenResponse.json()) as { access_token: string };
 
       // Get user info from Google
       const userInfoResponse = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
@@ -268,7 +264,11 @@ export async function registerRoutes(
         return res.redirect("/auth?error=user_info_failed");
       }
 
-      const googleUser = await userInfoResponse.json() as { email: string; name?: string; id: string };
+      const googleUser = (await userInfoResponse.json()) as {
+        email: string;
+        name?: string;
+        id: string;
+      };
 
       // Check if user exists
       let user = await storage.getUserByEmail(googleUser.email);
@@ -324,7 +324,7 @@ export async function registerRoutes(
           plan: user.plan,
           creditsRemaining: user.creditsRemaining,
           emailVerified: !!user.emailVerified,
-        }
+        },
       });
     } catch (error: any) {
       logger.error("Get user error", { error: error.message, stack: error.stack });
@@ -349,7 +349,7 @@ export async function registerRoutes(
       await storage.verifyUserEmail(user.id);
 
       // Send welcome email
-      sendWelcomeEmail(user.email, user.name || undefined).catch(err => {
+      sendWelcomeEmail(user.email, user.name || undefined).catch((err) => {
         logger.error("Failed to send welcome email", { error: err.message, email: user.email });
       });
 
@@ -372,11 +372,14 @@ export async function registerRoutes(
       const user = await storage.getUserByEmail(email);
       if (!user) {
         // Don't reveal if user exists
-        return res.json({ success: true, message: "If the email exists, a reset link has been sent" });
+        return res.json({
+          success: true,
+          message: "If the email exists, a reset link has been sent",
+        });
       }
 
       // Generate reset token
-      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetToken = crypto.randomBytes(32).toString("hex");
       const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
       await storage.setPasswordResetToken(user.id, resetToken, resetTokenExpiry);
@@ -421,66 +424,74 @@ export async function registerRoutes(
   });
 
   // Resume upload and optimization (protected route)
-  app.post("/api/resumes/upload", requireAuth, uploadLimiter, upload.single("file"), async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
-      }
+  app.post(
+    "/api/resumes/upload",
+    requireAuth,
+    uploadLimiter,
+    upload.single("file"),
+    async (req, res) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ error: "No file uploaded" });
+        }
 
-      const userId = (req as any).userId;
+        const userId = (req as any).userId;
 
-      // Check user credits
-      const user = await storage.getUser(userId);
-      if (!user || user.creditsRemaining <= 0) {
-        return res.status(403).json({ error: "No credits remaining" });
-      }
+        // Check user credits
+        const user = await storage.getUser(userId);
+        if (!user || user.creditsRemaining <= 0) {
+          return res.status(403).json({ error: "No credits remaining" });
+        }
 
-      // Parse file
-      const originalText = await parseFile(req.file.buffer, req.file.mimetype);
+        // Parse file
+        const originalText = await parseFile(req.file.buffer, req.file.mimetype);
 
-      if (!originalText || originalText.length < 100) {
-        return res.status(400).json({ error: "Resume content is too short or could not be parsed" });
-      }
+        if (!originalText || originalText.length < 100) {
+          return res
+            .status(400)
+            .json({ error: "Resume content is too short or could not be parsed" });
+        }
 
-      // Create resume record
-      const resume = await storage.createResume({
-        userId,
-        fileName: req.file.originalname,
-        originalText,
-        status: "processing",
-      });
-
-      // Start optimization in background
-      optimizeResume(originalText)
-        .then(async (result) => {
-          await storage.updateResume(resume.id, {
-            improvedText: result.improvedText,
-            atsScore: result.atsScore,
-            keywordsScore: result.keywordsScore,
-            formattingScore: result.formattingScore,
-            issues: result.issues,
-            status: "completed",
-          });
-
-          // Deduct credit
-          await storage.updateUserCredits(userId, user.creditsRemaining - 1);
-        })
-        .catch(async (error) => {
-          logger.error("Optimization error", { error: error.message, resumeId: resume.id });
-          await storage.updateResume(resume.id, {
-            status: "failed",
-          });
+        // Create resume record
+        const resume = await storage.createResume({
+          userId,
+          fileName: req.file.originalname,
+          originalText,
+          status: "processing",
         });
 
-      res.json({ resumeId: resume.id, status: "processing" });
-    } catch (error: any) {
-      logger.error("Upload error", { error: error.message, stack: error.stack });
-      if (error.message.includes('Invalid file type')) {
-        return res.status(400).json({ error: error.message });
+        // Start optimization in background
+        optimizeResume(originalText)
+          .then(async (result) => {
+            await storage.updateResume(resume.id, {
+              improvedText: result.improvedText,
+              atsScore: result.atsScore,
+              keywordsScore: result.keywordsScore,
+              formattingScore: result.formattingScore,
+              issues: result.issues,
+              status: "completed",
+            });
+
+            // Deduct credit
+            await storage.updateUserCredits(userId, user.creditsRemaining - 1);
+          })
+          .catch(async (error) => {
+            logger.error("Optimization error", { error: error.message, resumeId: resume.id });
+            await storage.updateResume(resume.id, {
+              status: "failed",
+            });
+          });
+
+        res.json({ resumeId: resume.id, status: "processing" });
+      } catch (error: any) {
+        logger.error("Upload error", { error: error.message, stack: error.stack });
+        if (error.message.includes("Invalid file type")) {
+          return res.status(400).json({ error: error.message });
+        }
+        res.status(500).json({ error: error.message || "Failed to upload file" });
       }
-      res.status(500).json({ error: error.message || "Failed to upload file" });
     }
-  });
+  );
 
   // Get resume status and results (protected)
   app.get("/api/resumes/:id", requireAuth, async (req, res) => {
@@ -572,8 +583,8 @@ export async function registerRoutes(
       }
 
       const amounts: Record<string, number> = {
-        basic: 700,   // $7.00
-        pro: 1900,    // $19.00
+        basic: 700, // $7.00
+        pro: 1900, // $19.00
         premium: 2900, // $29.00
       };
 
@@ -586,7 +597,7 @@ export async function registerRoutes(
       if (stripe) {
         const paymentIntent = await stripe.paymentIntents.create({
           amount,
-          currency: 'usd',
+          currency: "usd",
           metadata: {
             userId,
             plan,
@@ -604,7 +615,7 @@ export async function registerRoutes(
         res.json({
           paymentId: payment.id,
           clientSecret: paymentIntent.client_secret,
-          status: "pending"
+          status: "pending",
         });
       } else {
         // Fallback to mock payment for development
@@ -641,10 +652,10 @@ export async function registerRoutes(
   // Stripe webhook handler
   if (stripe && env.STRIPE_WEBHOOK_SECRET) {
     app.post("/api/webhooks/stripe", async (req, res) => {
-      const sig = req.headers['stripe-signature'];
+      const sig = req.headers["stripe-signature"];
 
       if (!sig) {
-        return res.status(400).send('No signature');
+        return res.status(400).send("No signature");
       }
 
       try {
@@ -654,13 +665,13 @@ export async function registerRoutes(
           env.STRIPE_WEBHOOK_SECRET!
         );
 
-        if (event.type === 'payment_intent.succeeded') {
+        if (event.type === "payment_intent.succeeded") {
           const paymentIntent = event.data.object as Stripe.PaymentIntent;
           const { userId, plan } = paymentIntent.metadata;
 
           // Find payment by Stripe ID
           const payments = await storage.getPaymentsByUser(userId);
-          const payment = payments.find(p => p.stripePaymentId === paymentIntent.id);
+          const payment = payments.find((p) => p.stripePaymentId === paymentIntent.id);
 
           if (payment) {
             await storage.updatePaymentStatus(payment.id, "completed", paymentIntent.id);
@@ -704,6 +715,86 @@ export async function registerRoutes(
     } catch (error: any) {
       logger.error("Get payment error", { error: error.message, stack: error.stack });
       res.status(500).json({ error: "Failed to fetch payment" });
+    }
+  });
+
+  // LinkedIn profile optimization (protected)
+  app.post("/api/linkedin/optimize", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { resumeId } = req.body;
+
+      if (!resumeId) {
+        return res.status(400).json({ error: "Resume ID is required" });
+      }
+
+      const resume = await storage.getResume(resumeId);
+      if (!resume) {
+        return res.status(404).json({ error: "Resume not found" });
+      }
+
+      // Verify ownership
+      if (resume.userId !== userId) {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+
+      // Use improved text if available, otherwise original
+      const resumeText = resume.improvedText || resume.originalText;
+      const result = await optimizeLinkedIn(resumeText);
+
+      const linkedInProfile = await storage.createLinkedInProfile({
+        userId,
+        resumeId,
+        headline: result.headline,
+        about: result.about,
+        suggestions: result.suggestions,
+      });
+
+      res.json(linkedInProfile);
+    } catch (error: any) {
+      logger.error("LinkedIn optimization error", { error: error.message, stack: error.stack });
+      res.status(500).json({ error: "Failed to optimize LinkedIn profile" });
+    }
+  });
+
+  // Get LinkedIn profile (protected)
+  app.get("/api/linkedin/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const profile = await storage.getLinkedInProfile(req.params.id);
+
+      if (!profile) {
+        return res.status(404).json({ error: "LinkedIn profile not found" });
+      }
+
+      // Verify ownership
+      if (profile.userId !== userId) {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+
+      res.json(profile);
+    } catch (error: any) {
+      logger.error("Get LinkedIn profile error", { error: error.message, stack: error.stack });
+      res.status(500).json({ error: "Failed to fetch LinkedIn profile" });
+    }
+  });
+
+  // Get user's LinkedIn profiles (protected)
+  app.get("/api/users/:userId/linkedin", requireAuth, async (req, res) => {
+    try {
+      const authenticatedUserId = (req as any).userId;
+      const requestedUserId = req.params.userId;
+
+      // Users can only fetch their own profiles
+      if (authenticatedUserId !== requestedUserId) {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+
+      const profiles = await storage.getLinkedInProfilesByUser(requestedUserId);
+      res.json(profiles);
+    } catch (error: any) {
+      logger.error("Get LinkedIn profiles error", { error: error.message, stack: error.stack });
+      res.status(500).json({ error: "Failed to fetch LinkedIn profiles" });
     }
   });
 

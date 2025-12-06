@@ -43,6 +43,16 @@ export interface Payment {
   createdAt: string;
 }
 
+export interface LinkedInProfile {
+  id: string;
+  userId?: string;
+  resumeId?: string;
+  headline: string;
+  about: string;
+  suggestions?: Array<{ section: string; recommendation: string }>;
+  createdAt: string;
+}
+
 class ApiClient {
   private baseUrl = "/api";
   private csrfToken: string | null = null;
@@ -54,7 +64,7 @@ class ApiClient {
     }
 
     const res = await fetch(`${this.baseUrl}/csrf-token`, {
-      credentials: 'include',
+      credentials: "include",
     });
 
     if (!res.ok) {
@@ -71,15 +81,15 @@ class ApiClient {
     const headers = new Headers(options.headers);
 
     // Add CSRF token to non-GET requests
-    if (options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method)) {
+    if (options.method && !["GET", "HEAD", "OPTIONS"].includes(options.method)) {
       const token = await this.getCsrfToken();
-      headers.set('x-csrf-token', token);
+      headers.set("x-csrf-token", token);
     }
 
     return fetch(url, {
       ...options,
       headers,
-      credentials: 'include', // Include cookies
+      credentials: "include", // Include cookies
     });
   }
 
@@ -153,7 +163,10 @@ class ApiClient {
     return res.json();
   }
 
-  async resetPassword(token: string, password: string): Promise<{ success: boolean; message: string }> {
+  async resetPassword(
+    token: string,
+    password: string
+  ): Promise<{ success: boolean; message: string }> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/auth/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -219,7 +232,9 @@ class ApiClient {
   }
 
   // Payments
-  async createPayment(plan: string): Promise<{ paymentId: string; status: string; clientSecret?: string }> {
+  async createPayment(
+    plan: string
+  ): Promise<{ paymentId: string; status: string; clientSecret?: string }> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/payments/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -237,6 +252,38 @@ class ApiClient {
     if (!res.ok) {
       const error = await res.json();
       throw new Error(error.error || "Failed to fetch payment");
+    }
+    return res.json();
+  }
+
+  // LinkedIn Profiles
+  async generateLinkedIn(resumeId: string): Promise<LinkedInProfile> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/linkedin/optimize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resumeId }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || "Failed to generate LinkedIn profile");
+    }
+    return res.json();
+  }
+
+  async getLinkedInProfile(id: string): Promise<LinkedInProfile> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/linkedin/${id}`);
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || "Failed to fetch LinkedIn profile");
+    }
+    return res.json();
+  }
+
+  async getUserLinkedInProfiles(userId: string): Promise<LinkedInProfile[]> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/users/${userId}/linkedin`);
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || "Failed to fetch LinkedIn profiles");
     }
     return res.json();
   }

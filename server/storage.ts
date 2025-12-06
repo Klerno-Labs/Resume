@@ -7,6 +7,7 @@ import {
   resumes,
   coverLetters,
   payments,
+  linkedinProfiles,
   type User,
   type InsertUser,
   type Resume,
@@ -15,6 +16,8 @@ import {
   type InsertCoverLetter,
   type Payment,
   type InsertPayment,
+  type LinkedInProfile,
+  type InsertLinkedInProfile,
 } from "@shared/schema";
 
 const pool = new Pool({
@@ -53,6 +56,11 @@ export interface IStorage {
   getPaymentsByUser(userId: string): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
   updatePaymentStatus(id: string, status: string, stripeId?: string): Promise<void>;
+
+  // LinkedIn profile operations
+  getLinkedInProfile(id: string): Promise<LinkedInProfile | undefined>;
+  getLinkedInProfilesByUser(userId: string): Promise<LinkedInProfile[]>;
+  createLinkedInProfile(profile: InsertLinkedInProfile): Promise<LinkedInProfile>;
 }
 
 export class PostgresStorage implements IStorage {
@@ -95,25 +103,34 @@ export class PostgresStorage implements IStorage {
   }
 
   async verifyUserEmail(userId: string): Promise<void> {
-    await db.update(users).set({
-      emailVerified: new Date(),
-      verificationToken: null
-    }).where(eq(users.id, userId));
+    await db
+      .update(users)
+      .set({
+        emailVerified: new Date(),
+        verificationToken: null,
+      })
+      .where(eq(users.id, userId));
   }
 
   async setPasswordResetToken(userId: string, token: string, expiry: Date): Promise<void> {
-    await db.update(users).set({
-      resetToken: token,
-      resetTokenExpiry: expiry
-    }).where(eq(users.id, userId));
+    await db
+      .update(users)
+      .set({
+        resetToken: token,
+        resetTokenExpiry: expiry,
+      })
+      .where(eq(users.id, userId));
   }
 
   async updatePassword(userId: string, passwordHash: string): Promise<void> {
-    await db.update(users).set({
-      passwordHash,
-      resetToken: null,
-      resetTokenExpiry: null
-    }).where(eq(users.id, userId));
+    await db
+      .update(users)
+      .set({
+        passwordHash,
+        resetToken: null,
+        resetTokenExpiry: null,
+      })
+      .where(eq(users.id, userId));
   }
 
   // Resume operations
@@ -176,6 +193,25 @@ export class PostgresStorage implements IStorage {
       updateData.stripePaymentId = stripeId;
     }
     await db.update(payments).set(updateData).where(eq(payments.id, id));
+  }
+
+  // LinkedIn profile operations
+  async getLinkedInProfile(id: string): Promise<LinkedInProfile | undefined> {
+    const result = await db
+      .select()
+      .from(linkedinProfiles)
+      .where(eq(linkedinProfiles.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async getLinkedInProfilesByUser(userId: string): Promise<LinkedInProfile[]> {
+    return await db.select().from(linkedinProfiles).where(eq(linkedinProfiles.userId, userId));
+  }
+
+  async createLinkedInProfile(insertProfile: InsertLinkedInProfile): Promise<LinkedInProfile> {
+    const result = await db.insert(linkedinProfiles).values(insertProfile).returning();
+    return result[0];
   }
 }
 
