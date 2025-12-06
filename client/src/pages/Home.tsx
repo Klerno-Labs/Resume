@@ -15,8 +15,7 @@ export default function Home() {
       <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4 md:px-8 mx-auto max-w-7xl">
           <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="RewriteMe" className="w-9 h-9" />
-            <span className="font-display font-bold text-xl tracking-tight">RewriteMe</span>
+            <img src="/rewritemelogo.png" alt="RewriteMe" className="h-10 w-auto" />
           </div>
           <div className="hidden md:flex gap-8 text-sm font-medium text-muted-foreground">
             <a href="#features" className="hover:text-primary transition-colors">Features</a>
