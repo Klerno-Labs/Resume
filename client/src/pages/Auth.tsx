@@ -90,7 +90,7 @@ export default function Auth() {
         <div className="w-full max-w-md space-y-8">
           <div className="space-y-2 text-center">
             <Link href="/">
-              <img src="/rewritemelogo.png" alt="RewriteMe" className="h-14 w-auto mx-auto mb-4 cursor-pointer" />
+              <img src="/rewritemelogo.png" alt="RewriteMe" className="h-28 w-auto mx-auto mb-4 cursor-pointer" />
             </Link>
             <h1 className="text-3xl font-display font-bold tracking-tight">
               {isLogin ? "Welcome back" : "Create an account"}
