@@ -69,8 +69,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Push database schema
-        run: npm run db:push
+      - name: Run database migrations
+        run: npm run db:migrate
 
       - name: Run backend tests
         run: npm run test:backend
@@ -147,8 +147,8 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Push database schema
-        run: npm run db:push
+      - name: Run database migrations
+        run: npm run db:migrate
 
       - name: Run E2E tests
         run: npm run test:e2e

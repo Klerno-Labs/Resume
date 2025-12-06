@@ -13,6 +13,3 @@ vite.config.ts.*
 # Local development
 .local/
 .claude/
-
-# Database
-migrations/
