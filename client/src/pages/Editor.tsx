@@ -4,6 +4,7 @@ import { ArrowLeft, Download, RefreshCw, Wand2, Check, AlertTriangle, FileText }
 import { AtsScore } from "@/components/AtsScore";
 import { ComparisonView } from "@/components/ComparisonView";
 import { CoverLetterDialog } from "@/components/CoverLetterDialog";
+import { ResumePreviewStyled } from "@/components/ResumePreview";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
@@ -244,11 +245,9 @@ export default function Editor() {
                <TabsContent value="resume" className="h-full mt-0">
                  <ComparisonView originalText={originalText} improvedText={improvedText} />
                </TabsContent>
-               <TabsContent value="preview" className="h-full mt-0 flex items-center justify-center">
-                 <div className="bg-white shadow-2xl w-[595px] h-[842px] p-12 text-[10px] overflow-hidden border">
-                    <pre className="font-sans whitespace-pre-wrap text-slate-800">
-                      {improvedText}
-                    </pre>
+               <TabsContent value="preview" className="h-full mt-0 flex items-center justify-center overflow-auto py-4">
+                 <div className="bg-white shadow-2xl w-[595px] min-h-[842px] overflow-hidden border rounded-sm">
+                    <ResumePreviewStyled text={improvedText} />
                  </div>
                </TabsContent>
              </Tabs>

@@ -250,19 +250,28 @@ export async function registerRoutes(
       // Check if user exists
       let user = await storage.getUserByEmail(googleUser.email);
 
+      // Check if this is an admin email
+      const adminEmails = (env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
+      const isAdmin = adminEmails.includes(googleUser.email.toLowerCase());
+
       if (!user) {
         // Create new user with Google OAuth (no password needed)
         user = await storage.createUser({
           email: googleUser.email,
           passwordHash: `google_oauth_${googleUser.id}`, // Placeholder for OAuth users
           name: googleUser.name,
-          plan: "free",
-          creditsRemaining: 1,
+          plan: isAdmin ? "admin" : "free",
+          creditsRemaining: isAdmin ? 9999 : 1,
           verificationToken: null,
         });
 
         // Mark email as verified since Google already verified it
         await storage.verifyUserEmail(user.id);
+      } else if (isAdmin && user.plan !== 'admin') {
+        // Upgrade existing user to admin if they're in admin list
+        await storage.updateUserPlan(user.id, 'admin', 9999);
+        user.plan = 'admin';
+        user.creditsRemaining = 9999;
       }
 
       // Generate JWT token

@@ -19,6 +19,9 @@ const envSchema = z.object({
   // Sentry Error Tracking
   SENTRY_DSN: z.string().optional(),
 
+  // Admin emails (comma-separated for multiple admins)
+  ADMIN_EMAILS: z.string().optional(),
+
   EMAIL_HOST: z.string().optional(),
   EMAIL_PORT: z.string().optional(),
   EMAIL_USER: z.string().optional(),

@@ -31,7 +31,7 @@ export interface IStorage {
   getUserByResetToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserCredits(userId: string, credits: number): Promise<void>;
-  updateUserPlan(userId: string, plan: string): Promise<void>;
+  updateUserPlan(userId: string, plan: string, credits?: number): Promise<void>;
   updateUserVerification(userId: string, token: string): Promise<void>;
   verifyUserEmail(userId: string): Promise<void>;
   setPasswordResetToken(userId: string, token: string, expiry: Date): Promise<void>;
@@ -79,8 +79,12 @@ export class PostgresStorage implements IStorage {
     await db.update(users).set({ creditsRemaining: credits }).where(eq(users.id, userId));
   }
 
-  async updateUserPlan(userId: string, plan: string): Promise<void> {
-    await db.update(users).set({ plan }).where(eq(users.id, userId));
+  async updateUserPlan(userId: string, plan: string, credits?: number): Promise<void> {
+    const updateData: { plan: string; creditsRemaining?: number } = { plan };
+    if (credits !== undefined) {
+      updateData.creditsRemaining = credits;
+    }
+    await db.update(users).set(updateData).where(eq(users.id, userId));
   }
 
   async getUserByVerificationToken(token: string): Promise<User | undefined> {

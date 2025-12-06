@@ -1,10 +1,13 @@
 import { Link } from "wouter";
-import { ArrowRight, CheckCircle2, Zap, Award, FileText, Download, Wand2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Zap, Award, FileText, Download, Wand2, LogOut, User } from "lucide-react";
 import { FileUpload } from "@/components/FileUpload";
 import { PricingModal } from "@/components/PricingModal";
+import { useAuth } from "@/lib/auth";
 import heroBg from "@assets/generated_images/abstract_minimalist_tech_background_with_soft_geometric_shapes_in_white_and_light_gray..png";
 
 export default function Home() {
+  const { user, logout } = useAuth();
+
   return (
     <div className="min-h-screen bg-background font-sans">
       
@@ -12,23 +15,47 @@ export default function Home() {
       <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4 md:px-8 mx-auto max-w-7xl">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">R</div>
-            <span className="font-display font-bold text-xl tracking-tight">ResumeRepairer.ai</span>
+            <img src="/logo.svg" alt="RewriteMe" className="w-9 h-9" />
+            <span className="font-display font-bold text-xl tracking-tight">RewriteMe</span>
           </div>
           <div className="hidden md:flex gap-8 text-sm font-medium text-muted-foreground">
             <a href="#features" className="hover:text-primary transition-colors">Features</a>
             <a href="#pricing" className="hover:text-primary transition-colors">Pricing</a>
             <a href="#testimonials" className="hover:text-primary transition-colors">Success Stories</a>
           </div>
-          <div className="flex gap-4">
-            <Link href="/auth">
-              <button className="text-sm font-medium hover:text-primary transition-colors">Log in</button>
-            </Link>
-            <Link href="/auth">
-              <button className="bg-foreground text-background px-4 py-2 rounded-full text-sm font-medium hover:bg-primary hover:text-white transition-all shadow-lg hover:shadow-primary/25" data-testid="button-get-started">
-                Get Started
-              </button>
-            </Link>
+          <div className="flex gap-4 items-center">
+            {user ? (
+              <>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <User className="w-4 h-4" />
+                  <span>{user.email}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                    {user.creditsRemaining} credits
+                  </span>
+                </div>
+                <Link href="/editor">
+                  <button className="text-sm font-medium hover:text-primary transition-colors">Dashboard</button>
+                </Link>
+                <button 
+                  onClick={() => logout()}
+                  className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth">
+                  <button className="text-sm font-medium hover:text-primary transition-colors">Log in</button>
+                </Link>
+                <Link href="/auth">
+                  <button className="bg-foreground text-background px-4 py-2 rounded-full text-sm font-medium hover:bg-primary hover:text-white transition-all shadow-lg hover:shadow-primary/25" data-testid="button-get-started">
+                    Get Started
+                  </button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>

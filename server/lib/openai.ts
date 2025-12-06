@@ -1,7 +1,18 @@
 import OpenAI from "openai";
+import crypto from "crypto";
 
-// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Use gpt-4o-mini for maximum speed
+const FAST_MODEL = "gpt-4o-mini";
+
+// Simple in-memory cache for resume results
+const resumeCache = new Map<string, { result: ResumeOptimizationResult; timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour cache
+
+function getCacheKey(text: string): string {
+  return crypto.createHash('md5').update(text.trim().toLowerCase()).digest('hex');
+}
 
 interface ResumeOptimizationResult {
   improvedText: string;
@@ -11,59 +22,75 @@ interface ResumeOptimizationResult {
   formattingScore?: number;
 }
 
+// Parallel optimization - split work into concurrent requests
 export async function optimizeResume(originalText: string): Promise<ResumeOptimizationResult> {
-  const prompt = `You are an expert resume writer and ATS optimization specialist. Analyze the following resume and improve it.
+  // Check cache first
+  const cacheKey = getCacheKey(originalText);
+  const cached = resumeCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log('Resume cache hit!');
+    return cached.result;
+  }
 
-ORIGINAL RESUME:
+  // Run analysis and optimization in parallel for speed
+  const [optimizationResult, scoreResult] = await Promise.all([
+    // Task 1: Optimize the resume text
+    openai.chat.completions.create({
+      model: FAST_MODEL,
+      messages: [
+        { role: "system", content: "Optimize resumes. Output JSON only." },
+        { role: "user", content: `Rewrite this resume with strong action verbs and quantified achievements. Keep same structure.
+
 ${originalText}
 
-Your task:
-1. Rewrite weak, passive language into strong, active voice with measurable achievements
-2. Quantify accomplishments wherever possible (use percentages, numbers, timeframes)
-3. Remove clichés and vague statements
-4. Ensure ATS-friendly formatting (no tables, clean structure)
-5. Identify and fix critical issues (weak verbs, missing keywords, poor formatting)
-6. Calculate an ATS compatibility score (0-100)
+{"improvedText": "optimized resume"}` }
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 2500,
+      temperature: 0.5,
+    }),
+    // Task 2: Score and analyze (smaller, faster)
+    openai.chat.completions.create({
+      model: FAST_MODEL,
+      messages: [
+        { role: "system", content: "Score resumes. Output JSON only." },
+        { role: "user", content: `Score this resume for ATS compatibility.
 
-Respond with JSON in this exact format:
-{
-  "improvedText": "the complete rewritten resume",
-  "issues": [
-    {"type": "weak_verb", "message": "Replaced 'Worked at' with 'Spearheaded'", "severity": "high"},
-    {"type": "missing_keywords", "message": "Added relevant technical keywords", "severity": "medium"}
-  ],
-  "atsScore": 85,
-  "keywordsScore": 8,
-  "formattingScore": 9
-}
+${originalText.substring(0, 1500)}
 
-Note: atsScore is 0-100, keywordsScore and formattingScore are 0-10 ratings.`;
+{"atsScore": 0-100, "keywordsScore": 0-10, "formattingScore": 0-10, "issues": [{"type": "issue", "message": "fix", "severity": "high"}]}` }
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 500,
+      temperature: 0.3,
+    })
+  ]);
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-5",
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a professional resume optimization AI. Always respond with valid JSON matching the requested format.",
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
-    ],
-    response_format: { type: "json_object" },
-    max_completion_tokens: 4096,
-  });
+  const optimization = JSON.parse(optimizationResult.choices[0].message.content || "{}");
+  const scores = JSON.parse(scoreResult.choices[0].message.content || "{}");
 
-  const result = JSON.parse(response.choices[0].message.content || "{}");
-  return {
-    improvedText: result.improvedText || originalText,
-    issues: result.issues || [],
-    atsScore: Math.max(0, Math.min(100, result.atsScore || 50)),
-    keywordsScore: result.keywordsScore ? Math.max(0, Math.min(10, result.keywordsScore)) : undefined,
-    formattingScore: result.formattingScore ? Math.max(0, Math.min(10, result.formattingScore)) : undefined,
+  const result: ResumeOptimizationResult = {
+    improvedText: optimization.improvedText || originalText,
+    issues: scores.issues || [],
+    atsScore: Math.max(0, Math.min(100, scores.atsScore || 70)),
+    keywordsScore: scores.keywordsScore ? Math.max(0, Math.min(10, scores.keywordsScore)) : 7,
+    formattingScore: scores.formattingScore ? Math.max(0, Math.min(10, scores.formattingScore)) : 7,
   };
+
+  // Cache the result
+  resumeCache.set(cacheKey, { result, timestamp: Date.now() });
+  
+  // Cleanup old cache entries
+  if (resumeCache.size > 100) {
+    const now = Date.now();
+    for (const [key, value] of resumeCache.entries()) {
+      if (now - value.timestamp > CACHE_TTL) {
+        resumeCache.delete(key);
+      }
+    }
+  }
+
+  return result;
 }
 
 interface CoverLetterResult {
@@ -75,51 +102,29 @@ export async function generateCoverLetter(
   jobDescription: string,
   tone: string = "professional"
 ): Promise<CoverLetterResult> {
-  const toneInstructions = {
-    professional: "professional, confident, and formal",
-    enthusiastic: "enthusiastic, energetic, and passionate",
-    academic: "academic, formal, and research-focused",
-    creative: "creative, storytelling, and unique",
+  const toneMap: Record<string, string> = {
+    professional: "professional",
+    enthusiastic: "enthusiastic",
+    academic: "academic",
+    creative: "creative",
   };
 
-  const prompt = `Based on the following resume and job description, write a compelling cover letter.
-
-RESUME:
-${resumeText}
-
-JOB DESCRIPTION:
-${jobDescription}
-
-Write a ${toneInstructions[tone as keyof typeof toneInstructions] || toneInstructions.professional} cover letter that:
-1. Highlights relevant experience from the resume
-2. Addresses key requirements from the job description
-3. Shows genuine interest and fit for the role
-4. Is concise (250-300 words)
-5. Includes a professional greeting and closing
-
-Respond with JSON:
-{
-  "content": "the complete cover letter text"
-}`;
-
   const response = await openai.chat.completions.create({
-    model: "gpt-5",
+    model: FAST_MODEL,
     messages: [
-      {
-        role: "system",
-        content: "You are a professional cover letter writer. Always respond with valid JSON.",
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
+      { role: "system", content: `Write ${toneMap[tone] || 'professional'} cover letters. JSON only.` },
+      { role: "user", content: `250-word cover letter.
+
+Resume: ${resumeText.substring(0, 1000)}
+Job: ${jobDescription.substring(0, 500)}
+
+{"content": "letter"}` }
     ],
     response_format: { type: "json_object" },
-    max_completion_tokens: 2048,
+    max_tokens: 1000,
+    temperature: 0.6,
   });
 
   const result = JSON.parse(response.choices[0].message.content || "{}");
-  return {
-    content: result.content || "",
-  };
+  return { content: result.content || "" };
 }
