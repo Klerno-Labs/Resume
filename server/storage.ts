@@ -27,9 +27,15 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByVerificationToken(token: string): Promise<User | undefined>;
+  getUserByResetToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserCredits(userId: string, credits: number): Promise<void>;
   updateUserPlan(userId: string, plan: string): Promise<void>;
+  updateUserVerification(userId: string, token: string): Promise<void>;
+  verifyUserEmail(userId: string): Promise<void>;
+  setPasswordResetToken(userId: string, token: string, expiry: Date): Promise<void>;
+  updatePassword(userId: string, passwordHash: string): Promise<void>;
 
   // Resume operations
   getResume(id: string): Promise<Resume | undefined>;
@@ -72,6 +78,42 @@ export class PostgresStorage implements IStorage {
 
   async updateUserPlan(userId: string, plan: string): Promise<void> {
     await db.update(users).set({ plan }).where(eq(users.id, userId));
+  }
+
+  async getUserByVerificationToken(token: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.verificationToken, token)).limit(1);
+    return result[0];
+  }
+
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.resetToken, token)).limit(1);
+    return result[0];
+  }
+
+  async updateUserVerification(userId: string, token: string): Promise<void> {
+    await db.update(users).set({ verificationToken: token }).where(eq(users.id, userId));
+  }
+
+  async verifyUserEmail(userId: string): Promise<void> {
+    await db.update(users).set({
+      emailVerified: new Date(),
+      verificationToken: null
+    }).where(eq(users.id, userId));
+  }
+
+  async setPasswordResetToken(userId: string, token: string, expiry: Date): Promise<void> {
+    await db.update(users).set({
+      resetToken: token,
+      resetTokenExpiry: expiry
+    }).where(eq(users.id, userId));
+  }
+
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await db.update(users).set({
+      passwordHash,
+      resetToken: null,
+      resetTokenExpiry: null
+    }).where(eq(users.id, userId));
   }
 
   // Resume operations

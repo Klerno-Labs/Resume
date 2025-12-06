@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { useLocation, Link } from "wouter";
+import { useState, useEffect } from "react";
+import { useLocation, Link, useSearch } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, ArrowRight, Github, Mail } from "lucide-react";
+import { Loader2, ArrowRight, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,28 @@ export default function Auth() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { setUser } = useAuth();
+
+  // Check for OAuth errors in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+    if (error) {
+      const errorMessages: Record<string, string> = {
+        no_code: "Google authentication failed. Please try again.",
+        oauth_not_configured: "Google sign-in is not configured.",
+        token_exchange_failed: "Failed to authenticate with Google. Please try again.",
+        user_info_failed: "Failed to get your Google account info. Please try again.",
+        oauth_failed: "Google authentication failed. Please try again.",
+      };
+      toast({
+        title: "Authentication Error",
+        description: errorMessages[error] || "An error occurred during authentication.",
+        variant: "destructive",
+      });
+      // Clean up URL
+      window.history.replaceState({}, "", "/auth");
+    }
+  }, [toast]);
 
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(authSchema),
@@ -83,11 +105,14 @@ export default function Auth() {
           </div>
 
           <div className="space-y-4">
-            <Button variant="outline" className="w-full gap-2" type="button">
-              <Github className="w-4 h-4" />
-              Continue with GitHub
-            </Button>
-            <Button variant="outline" className="w-full gap-2" type="button">
+            <Button 
+              variant="outline" 
+              className="w-full gap-2" 
+              type="button"
+              onClick={() => {
+                window.location.href = "/api/auth/google";
+              }}
+            >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

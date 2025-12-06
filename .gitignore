@@ -4,3 +4,15 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Environment variables (contains secrets)
+.env
+.env.local
+.env.*.local
+
+# Local development
+.local/
+.claude/
+
+# Database
+migrations/

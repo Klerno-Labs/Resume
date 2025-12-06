@@ -51,7 +51,7 @@ export function CoverLetterDialog({ resumeId }: CoverLetterDialogProps) {
     setStep("generating");
     
     try {
-      const coverLetter = await api.generateCoverLetter(user.id, resumeId, jobDescription, tone);
+      const coverLetter = await api.generateCoverLetter(resumeId, jobDescription, tone);
       setResult(coverLetter.content);
       setStep("result");
     } catch (error: any) {

@@ -11,6 +11,10 @@ export const users = pgTable("users", {
   name: text("name"),
   plan: text("plan").notNull().default("free"), // free, basic, pro, premium
   creditsRemaining: integer("credits_remaining").notNull().default(0),
+  emailVerified: timestamp("email_verified"),
+  verificationToken: text("verification_token"),
+  resetToken: text("reset_token"),
+  resetTokenExpiry: timestamp("reset_token_expiry"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -29,6 +33,8 @@ export const resumes = pgTable("resumes", {
   originalText: text("original_text").notNull(),
   improvedText: text("improved_text"),
   atsScore: integer("ats_score"),
+  keywordsScore: integer("keywords_score"),
+  formattingScore: integer("formatting_score"),
   issues: jsonb("issues").$type<Array<{ type: string; message: string; severity: string }>>(),
   status: text("status").notNull().default("pending"), // pending, processing, completed, failed
   createdAt: timestamp("created_at").notNull().defaultNow(),

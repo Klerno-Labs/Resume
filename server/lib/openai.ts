@@ -7,6 +7,8 @@ interface ResumeOptimizationResult {
   improvedText: string;
   issues: Array<{ type: string; message: string; severity: string }>;
   atsScore: number;
+  keywordsScore?: number;
+  formattingScore?: number;
 }
 
 export async function optimizeResume(originalText: string): Promise<ResumeOptimizationResult> {
@@ -30,8 +32,12 @@ Respond with JSON in this exact format:
     {"type": "weak_verb", "message": "Replaced 'Worked at' with 'Spearheaded'", "severity": "high"},
     {"type": "missing_keywords", "message": "Added relevant technical keywords", "severity": "medium"}
   ],
-  "atsScore": 85
-}`;
+  "atsScore": 85,
+  "keywordsScore": 8,
+  "formattingScore": 9
+}
+
+Note: atsScore is 0-100, keywordsScore and formattingScore are 0-10 ratings.`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-5",
@@ -55,6 +61,8 @@ Respond with JSON in this exact format:
     improvedText: result.improvedText || originalText,
     issues: result.issues || [],
     atsScore: Math.max(0, Math.min(100, result.atsScore || 50)),
+    keywordsScore: result.keywordsScore ? Math.max(0, Math.min(10, result.keywordsScore)) : undefined,
+    formattingScore: result.formattingScore ? Math.max(0, Math.min(10, result.formattingScore)) : undefined,
   };
 }
 

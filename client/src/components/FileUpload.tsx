@@ -53,9 +53,9 @@ export function FileUpload({ onUpload }: FileUploadProps) {
     setFile(uploadedFile);
     
     try {
-      const result = await api.uploadResume(uploadedFile, user.id);
+      const result = await api.uploadResume(uploadedFile);
       if (onUpload) onUpload(uploadedFile, result.resumeId);
-      
+
       // Wait a bit for UI then redirect
       setTimeout(() => {
         setLocation(`/editor?resumeId=${result.resumeId}`);

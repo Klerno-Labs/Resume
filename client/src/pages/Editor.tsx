@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { api, type Resume } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { exportResumeToPDF } from "@/lib/pdfExport";
 
 // Mock Data
 const MOCK_ORIGINAL = `Jane Doe
@@ -139,15 +140,35 @@ export default function Editor() {
 
         <div className="flex items-center gap-3">
           <CoverLetterDialog resumeId={resume.id} />
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
-            onClick={() => {
-              toast({
-                title: "Exporting PDF...",
-                description: "Your download will start in a moment.",
-              });
+            onClick={async () => {
+              try {
+                toast({
+                  title: "Exporting PDF...",
+                  description: "Generating your resume PDF...",
+                });
+
+                await exportResumeToPDF({
+                  improvedText: resume.improvedText || resume.originalText,
+                  fileName: resume.fileName,
+                  atsScore: resume.atsScore,
+                });
+
+                toast({
+                  title: "Success!",
+                  description: "Your resume has been downloaded.",
+                });
+              } catch (error) {
+                toast({
+                  title: "Export Failed",
+                  description: "Failed to export PDF. Please try again.",
+                  variant: "destructive",
+                });
+              }
             }}
+            disabled={!isCompleted}
           >
             <Download className="w-4 h-4" />
             Export PDF
@@ -162,7 +183,11 @@ export default function Editor() {
         <aside className="w-80 border-r bg-secondary/30 flex flex-col overflow-y-auto">
           <div className="p-6 border-b bg-white dark:bg-slate-950">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Performance</h2>
-            <AtsScore score={atsScore} />
+            <AtsScore
+              score={atsScore}
+              keywordsScore={resume.keywordsScore}
+              formattingScore={resume.formattingScore}
+            />
           </div>
 
           <div className="p-6 space-y-6">

@@ -1,0 +1,47 @@
+import { z } from "zod";
+
+const envSchema = z.object({
+  DATABASE_URL: z.string().url("DATABASE_URL must be a valid PostgreSQL URL"),
+  OPENAI_API_KEY: z.string().min(1, "OPENAI_API_KEY is required"),
+  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters for security"),
+  PORT: z.string().default("5000"),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+
+  // Optional but recommended
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+
+  // Google OAuth
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+
+  EMAIL_HOST: z.string().optional(),
+  EMAIL_PORT: z.string().optional(),
+  EMAIL_USER: z.string().optional(),
+  EMAIL_PASSWORD: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
+
+  APP_URL: z.string().url().default("http://localhost:5000"),
+  CORS_ORIGIN: z.string().default("http://localhost:5000"),
+});
+
+export type Env = z.infer<typeof envSchema>;
+
+export function validateEnv(): Env {
+  try {
+    return envSchema.parse(process.env);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error("❌ Environment validation failed:");
+      error.errors.forEach((err) => {
+        console.error(`  - ${err.path.join(".")}: ${err.message}`);
+      });
+      console.error("\n💡 Please check your .env file and compare with .env.example");
+      process.exit(1);
+    }
+    throw error;
+  }
+}
+
+export const env = validateEnv();

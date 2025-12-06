@@ -40,7 +40,7 @@ export function PricingModal({ trigger, defaultPlan = "pro" }: PricingModalProps
     setIsLoading(true);
     
     try {
-      const payment = await api.createPayment(user.id, plan);
+      const payment = await api.createPayment(plan);
       
       // Poll for payment completion
       const checkPayment = async () => {
