@@ -107,9 +107,10 @@ export default function Auth() {
           <div className="space-y-4">
             <Button 
               variant="outline" 
-              className="w-full gap-2" 
+              className="w-full gap-2 min-h-[44px]" 
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
                 window.location.href = "/api/auth/google";
               }}
             >
@@ -190,7 +191,7 @@ export default function Auth() {
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full min-h-[44px]"
               disabled={isLoading}
               data-testid="button-submit-auth"
             >
