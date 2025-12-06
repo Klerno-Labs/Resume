@@ -90,9 +90,7 @@ export default function Auth() {
         <div className="w-full max-w-md space-y-8">
           <div className="space-y-2 text-center">
             <Link href="/">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary mb-4 cursor-pointer">
-                <span className="font-display font-bold text-xl">R</span>
-              </div>
+              <img src="/logo.svg" alt="RewriteMe" className="w-12 h-12 mx-auto mb-4 cursor-pointer rounded-xl" />
             </Link>
             <h1 className="text-3xl font-display font-bold tracking-tight">
               {isLogin ? "Welcome back" : "Create an account"}
