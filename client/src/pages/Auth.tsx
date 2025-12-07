@@ -73,11 +73,20 @@ export default function Auth() {
       });
       setLocation("/editor");
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      // If login fails with "Invalid credentials", offer to create account
+      if (isLogin && error.message?.toLowerCase().includes("invalid")) {
+        toast({
+          title: "Account not found",
+          description: "Would you like to create a new account with this email?",
+        });
+        setIsLogin(false);
+      } else {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
