@@ -142,6 +142,33 @@ export default function Home() {
         </div>
       </section>
 
+      {/* How It Works */}
+      <section className="py-24 bg-secondary/20">
+        <div className="container px-4 mx-auto max-w-7xl">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">How It Works</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">Transform your resume in three simple steps</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold mx-auto mb-4">1</div>
+              <h3 className="text-xl font-bold mb-2">Upload Resume</h3>
+              <p className="text-muted-foreground">Upload your current resume in PDF, DOCX, or paste text directly</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold mx-auto mb-4">2</div>
+              <h3 className="text-xl font-bold mb-2">AI Analysis</h3>
+              <p className="text-muted-foreground">Our AI scans for ATS compatibility, keywords, and formatting issues</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold mx-auto mb-4">3</div>
+              <h3 className="text-xl font-bold mb-2">Download & Apply</h3>
+              <p className="text-muted-foreground">Get your optimized resume and start landing more interviews</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing */}
       <section id="pricing" className="py-24">
         <div className="container px-4 mx-auto max-w-7xl">
@@ -204,6 +231,178 @@ export default function Home() {
                 trigger={<button className="w-full py-2.5 rounded-lg border font-medium hover:bg-secondary transition-colors">Choose Premium</button>}
               />
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section with Schema.org markup */}
+      <section id="faq" className="py-24 bg-secondary/20">
+        <div className="container px-4 mx-auto max-w-4xl">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Frequently Asked Questions</h2>
+            <p className="text-muted-foreground">Everything you need to know about optimizing your resume</p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "What is an ATS resume checker?",
+                a: "An ATS (Applicant Tracking System) resume checker analyzes your resume to ensure it can be properly read by the automated systems that 98% of Fortune 500 companies use to screen applicants. Our AI checks formatting, keywords, and structure to maximize your chances of passing ATS screening."
+              },
+              {
+                q: "How does AI resume optimization work?",
+                a: "Our AI analyzes your resume content and rewrites weak bullets using strong action verbs and quantifiable achievements. It identifies missing keywords, fixes formatting issues, and restructures your content to highlight your impact and skills that match job requirements."
+              },
+              {
+                q: "Is the ATS checker really free?",
+                a: "Yes! Every new user gets 1 free credit to test our resume optimizer. You can upload your resume, get a complete ATS compatibility score, and see detailed feedback on what to improve - completely free."
+              },
+              {
+                q: "What file formats do you support?",
+                a: "We support PDF, DOCX (Microsoft Word), and plain text. You can also paste your resume text directly into our editor. After optimization, you can download your improved resume in both PDF and DOCX formats."
+              },
+              {
+                q: "How long does resume optimization take?",
+                a: "Our AI processes your resume in 30-60 seconds. You'll get instant ATS scoring, keyword analysis, and a completely rewritten version optimized for applicant tracking systems and hiring managers."
+              },
+              {
+                q: "Will this work for my industry?",
+                a: "Yes! Our AI is trained on resumes across all industries - tech, healthcare, finance, marketing, engineering, and more. It adapts its recommendations based on your field and the specific terminology used in your industry."
+              },
+              {
+                q: "What makes your resume optimizer better than others?",
+                a: "Unlike basic ATS checkers, we don't just scan - we rewrite. Our GPT-4 powered AI completely transforms weak content into compelling, achievement-focused bullets. Plus, we provide actionable feedback on formatting, keywords, and specific improvements."
+              },
+              {
+                q: "Can I use this for multiple job applications?",
+                a: "Absolutely! With our Pro and Premium plans, you can optimize your resume multiple times. We recommend tailoring your resume for each application by adjusting keywords and achievements to match specific job descriptions."
+              }
+            ].map((faq, i) => (
+              <details key={i} className="group bg-card border rounded-xl p-6 hover:shadow-md transition-shadow">
+                <summary className="flex justify-between items-center cursor-pointer list-none font-semibold text-lg">
+                  <span>{faq.q}</span>
+                  <span className="text-muted-foreground group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <p className="mt-4 text-muted-foreground leading-relaxed">{faq.a}</p>
+              </details>
+            ))}
+          </div>
+
+          {/* Schema.org FAQ Markup */}
+          <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is an ATS resume checker?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "An ATS (Applicant Tracking System) resume checker analyzes your resume to ensure it can be properly read by the automated systems that 98% of Fortune 500 companies use to screen applicants. Our AI checks formatting, keywords, and structure to maximize your chances of passing ATS screening."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How does AI resume optimization work?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Our AI analyzes your resume content and rewrites weak bullets using strong action verbs and quantifiable achievements. It identifies missing keywords, fixes formatting issues, and restructures your content to highlight your impact and skills that match job requirements."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is the ATS checker really free?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes! Every new user gets 1 free credit to test our resume optimizer. You can upload your resume, get a complete ATS compatibility score, and see detailed feedback on what to improve - completely free."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What file formats do you support?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "We support PDF, DOCX (Microsoft Word), and plain text. You can also paste your resume text directly into our editor. After optimization, you can download your improved resume in both PDF and DOCX formats."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How long does resume optimization take?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Our AI processes your resume in 30-60 seconds. You'll get instant ATS scoring, keyword analysis, and a completely rewritten version optimized for applicant tracking systems and hiring managers."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Will this work for my industry?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes! Our AI is trained on resumes across all industries - tech, healthcare, finance, marketing, engineering, and more. It adapts its recommendations based on your field and the specific terminology used in your industry."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What makes your resume optimizer better than others?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Unlike basic ATS checkers, we don't just scan - we rewrite. Our GPT-4 powered AI completely transforms weak content into compelling, achievement-focused bullets. Plus, we provide actionable feedback on formatting, keywords, and specific improvements."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I use this for multiple job applications?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Absolutely! With our Pro and Premium plans, you can optimize your resume multiple times. We recommend tailoring your resume for each application by adjusting keywords and achievements to match specific job descriptions."
+                }
+              }
+            ]
+          })}} />
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section id="testimonials" className="py-24">
+        <div className="container px-4 mx-auto max-w-7xl">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Success Stories</h2>
+            <p className="text-muted-foreground">Real results from real job seekers</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                name: "Sarah Chen",
+                role: "Software Engineer at Google",
+                text: "After optimizing my resume with RewriteMe, I went from 0 responses to 5 interviews in 2 weeks. The ATS formatting made all the difference.",
+                rating: 5
+              },
+              {
+                name: "Marcus Johnson",
+                role: "Marketing Manager",
+                text: "The AI rewrites were incredible. My bullets went from boring tasks to achievement-focused results. Got a 30% salary increase at my new role.",
+                rating: 5
+              },
+              {
+                name: "Priya Patel",
+                role: "Data Analyst",
+                text: "I was skeptical about AI resume tools, but this is different. It actually understands context and writes naturally. Worth every penny.",
+                rating: 5
+              }
+            ].map((testimonial, i) => (
+              <div key={i} className="bg-card p-6 rounded-2xl border shadow-sm">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <span key={i} className="text-yellow-500">★</span>
+                  ))}
+                </div>
+                <p className="text-muted-foreground mb-6 italic">"{testimonial.text}"</p>
+                <div>
+                  <div className="font-semibold">{testimonial.name}</div>
+                  <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

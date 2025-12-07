@@ -1,0 +1,33 @@
+# robots.txt for RewriteMe - AI Resume Optimizer
+
+User-agent: *
+Allow: /
+Allow: /auth
+Allow: /editor
+Allow: /payment-success
+
+# Sitemap location
+Sitemap: https://rewriteme.app/sitemap.xml
+
+# Crawl delay (optional - be gentle on server)
+Crawl-delay: 1
+
+# Block access to API endpoints
+Disallow: /api/
+
+# Block user-specific content
+Disallow: /*resumeId=*
+Disallow: /*session_id=*
+
+# Major search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
