@@ -28,10 +28,52 @@
     <priority>0.9</priority>
   </url>
 
+  <!-- AI Resume Builder landing -->
+  <url>
+    <loc>https://rewriteme.app/ai-resume-builder</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Role landing pages -->
+  <url>
+    <loc>https://rewriteme.app/resume/software-engineer</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rewriteme.app/resume/nurse</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rewriteme.app/resume/sales-rep</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rewriteme.app/resume/product-manager</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- How-to / guide -->
+  <url>
+    <loc>https://rewriteme.app/how-to/optimize-resume-for-ats</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <!-- Payment Success -->
   <url>
     <loc>https://rewriteme.app/payment-success</loc>
-    <lastmod>2025-12-06</lastmod>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
