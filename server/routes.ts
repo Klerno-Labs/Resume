@@ -603,6 +603,7 @@ export async function registerRoutes(
         const paymentIntent = await stripe.paymentIntents.create({
           amount,
           currency: 'usd',
+          return_url: env.STRIPE_RETURN_URL || `${env.APP_URL}/payments/return`,
           metadata: {
             userId,
             plan,

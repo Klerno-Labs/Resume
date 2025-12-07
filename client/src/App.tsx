@@ -12,6 +12,9 @@ import Auth from "@/pages/Auth";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import AiResumeBuilder from "@/pages/ai-resume-builder";
 import ResumeSoftwareEngineer from "@/pages/resume/software-engineer";
+import ResumeNurse from "@/pages/resume/nurse";
+import ResumeSalesRep from "@/pages/resume/sales-rep";
+import ResumeProductManager from "@/pages/resume/product-manager";
 import HowToOptimizeResumeForAts from "@/pages/how-to/optimize-resume-for-ats";
 
 function Router() {
@@ -27,6 +30,9 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/ai-resume-builder" component={AiResumeBuilder} />
       <Route path="/resume/software-engineer" component={ResumeSoftwareEngineer} />
+      <Route path="/resume/nurse" component={ResumeNurse} />
+      <Route path="/resume/sales-rep" component={ResumeSalesRep} />
+      <Route path="/resume/product-manager" component={ResumeProductManager} />
       <Route path="/how-to/optimize-resume-for-ats" component={HowToOptimizeResumeForAts} />
       <Route path="/auth" component={Auth} />
       <Route path="/editor" component={Editor} />

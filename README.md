@@ -72,9 +72,10 @@ An AI-powered resume optimization platform that helps job seekers improve their 
    CORS_ORIGIN=http://localhost:5000
 
    # Optional for payments (works without Stripe in development)
-   STRIPE_SECRET_KEY=sk_test_your-stripe-key
-   STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-key
-   STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
+STRIPE_SECRET_KEY=sk_test_your-stripe-key
+STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-key
+STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
+STRIPE_RETURN_URL=https://your-site.com/payments/return
 
    # Optional for emails (app works without email configured)
    EMAIL_HOST=smtp.gmail.com
