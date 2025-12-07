@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { serialize, parse } from 'cookie';
 import Stripe from 'stripe';
+import getRawBody from 'raw-body';
 
 // Initialize services
 const sql = neon(process.env.DATABASE_URL!);
@@ -413,11 +414,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Stripe webhook
     if (path === '/api/webhooks/stripe' && method === 'POST') {
       const sig = req.headers['stripe-signature'] as string;
-      
+
       let event: Stripe.Event;
       try {
-        // For webhooks, we need the raw body
-        const rawBody = JSON.stringify(body);
+        // For webhooks, we must use the raw request body exactly as received
+        const rawBody = await getRawBody(req);
         event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET!);
       } catch (err: any) {
         console.error('Webhook signature verification failed:', err.message);
