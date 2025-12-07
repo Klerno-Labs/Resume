@@ -3,10 +3,38 @@ import { ArrowRight, CheckCircle2, Zap, Award, FileText, Download, Wand2, LogOut
 import { FileUpload } from "@/components/FileUpload";
 import { PricingModal } from "@/components/PricingModal";
 import { useAuth } from "@/lib/auth";
+import { useState, useEffect } from "react";
+import { api, type Resume } from "@/lib/api";
+import BeforeAfter from "@/components/BeforeAfter";
 import heroBg from "@assets/generated_images/abstract_minimalist_tech_background_with_soft_geometric_shapes_in_white_and_light_gray..png";
 
 export default function Home() {
   const { user, logout } = useAuth();
+  const [resume, setResume] = useState<Resume | null>(null);
+  const [loadingResumeId, setLoadingResumeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function pollResume(id: string) {
+      // poll until status is not processing
+      for (let i = 0; i < 20 && mounted; i++) {
+        try {
+          const r = await api.getResume(id);
+          setResume(r);
+          if (r.status && r.status !== "processing") {
+            setLoadingResumeId(null);
+            break;
+          }
+        } catch (err) {
+          // ignore transient errors
+        }
+        await new Promise((res) => setTimeout(res, 1500));
+      }
+    }
+
+    if (loadingResumeId) pollResume(loadingResumeId);
+    return () => { mounted = false; };
+  }, [loadingResumeId]);
 
   return (
     <div className="min-h-screen bg-background font-sans">
@@ -19,6 +47,7 @@ export default function Home() {
           </div>
           <div className="hidden md:flex gap-8 text-sm font-medium text-muted-foreground">
             <a href="#features" className="hover:text-primary transition-colors">Features</a>
+            <a href="/ai-resume-builder" className="hover:text-primary transition-colors">AI Builder</a>
             <a href="#pricing" className="hover:text-primary transition-colors">Pricing</a>
             <a href="#testimonials" className="hover:text-primary transition-colors">Success Stories</a>
           </div>
@@ -90,9 +119,21 @@ export default function Home() {
 
           <div className="max-w-2xl mx-auto bg-card/50 backdrop-blur-sm p-2 rounded-2xl border shadow-2xl">
             <div className="bg-card rounded-xl p-8 border shadow-sm">
-              <FileUpload />
+              <FileUpload onUpload={(file, resumeId) => {
+                // show quick preview while redirect still happens
+                setLoadingResumeId(resumeId);
+              }} />
             </div>
           </div>
+
+          {/* Quick result preview shown after upload */}
+          {resume ? (
+            resume.status === "processing" ? (
+              <div className="mt-6 text-sm text-muted-foreground">Processing your resume — final results will be ready shortly. You can continue in the dashboard.</div>
+            ) : (
+              <BeforeAfter resume={resume} />
+            )
+          ) : null}
 
           <div className="mt-12 flex justify-center gap-8 grayscale opacity-60">
             {/* Mock Logos */}

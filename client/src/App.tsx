@@ -10,6 +10,9 @@ import Home from "@/pages/Home";
 import Editor from "@/pages/Editor";
 import Auth from "@/pages/Auth";
 import PaymentSuccess from "@/pages/PaymentSuccess";
+import AiResumeBuilder from "@/pages/ai-resume-builder";
+import ResumeSoftwareEngineer from "@/pages/resume/software-engineer";
+import HowToOptimizeResumeForAts from "@/pages/how-to/optimize-resume-for-ats";
 
 function Router() {
   const { restoreSession } = useAuth();
@@ -22,6 +25,9 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/ai-resume-builder" component={AiResumeBuilder} />
+      <Route path="/resume/software-engineer" component={ResumeSoftwareEngineer} />
+      <Route path="/how-to/optimize-resume-for-ats" component={HowToOptimizeResumeForAts} />
       <Route path="/auth" component={Auth} />
       <Route path="/editor" component={Editor} />
       <Route path="/payment-success" component={PaymentSuccess} />

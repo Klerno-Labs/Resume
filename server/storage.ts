@@ -293,6 +293,7 @@ export class PostgresStorage implements IStorage {
       userId: row.user_id,
       plan: row.plan,
       amount: row.amount,
+      stripeSessionId: row.stripe_session_id,
       stripePaymentId: row.stripe_payment_id,
       status: row.status,
       createdAt: row.created_at,

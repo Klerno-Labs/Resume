@@ -22,7 +22,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
 });
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
 // Resumes table
@@ -46,7 +46,7 @@ export const insertResumeSchema = createInsertSchema(resumes).omit({
   createdAt: true,
   updatedAt: true,
 });
-export type InsertResume = z.infer<typeof insertResumeSchema>;
+export type InsertResume = typeof resumes.$inferInsert;
 export type Resume = typeof resumes.$inferSelect;
 
 // Cover Letters table
@@ -64,7 +64,7 @@ export const insertCoverLetterSchema = createInsertSchema(coverLetters).omit({
   id: true,
   createdAt: true,
 });
-export type InsertCoverLetter = z.infer<typeof insertCoverLetterSchema>;
+export type InsertCoverLetter = typeof coverLetters.$inferInsert;
 export type CoverLetter = typeof coverLetters.$inferSelect;
 
 // Payments table
@@ -83,5 +83,5 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
   id: true,
   createdAt: true,
 });
-export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type InsertPayment = typeof payments.$inferInsert;
 export type Payment = typeof payments.$inferSelect;

@@ -81,8 +81,13 @@ An AI-powered resume optimization platform that helps job seekers improve their 
    EMAIL_PORT=587
    EMAIL_USER=your-email@gmail.com
    EMAIL_PASSWORD=your-app-password
-   EMAIL_FROM=noreply@resumerepairer.com
-   ```
+EMAIL_FROM=noreply@resumerepairer.com
+
+# Optional for design assist (Figma)
+FIGMA_TOKEN=your-figma-personal-access-token
+# Optional default file key so clients don't need to pass ?fileKey=
+# FIGMA_FILE_KEY=your-figma-file-key
+```
 
 4. **Set up the database**
 
@@ -147,6 +152,9 @@ Resume-Repairer/
 
 ### Cover Letters
 - `POST /api/cover-letters/generate` - Generate cover letter
+
+### Design
+- `GET /api/design/templates` - Fetch resume design frames from the configured Figma file (auth; optional `?fileKey=` override)
 
 ### Payments
 - `POST /api/payments/create` - Create payment

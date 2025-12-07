@@ -30,6 +30,10 @@ const envSchema = z.object({
 
   APP_URL: z.string().url().default("http://localhost:5000"),
   CORS_ORIGIN: z.string().default("http://localhost:5000"),
+
+  // Design integrations
+  FIGMA_TOKEN: z.string().optional(),
+  FIGMA_FILE_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

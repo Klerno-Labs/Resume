@@ -43,6 +43,15 @@ export interface Payment {
   createdAt: string;
 }
 
+export interface FigmaTemplate {
+  id: string;
+  name: string;
+  page: string;
+  type: string;
+  documentPath: string;
+  imageUrl?: string;
+}
+
 class ApiClient {
   private baseUrl = "/api";
 
@@ -185,6 +194,25 @@ class ApiClient {
     if (!res.ok) {
       const error = await res.json();
       throw new Error(error.error || "Failed to generate cover letter");
+    }
+    return res.json();
+  }
+
+  // Design templates (powered by Figma)
+  async getDesignTemplates(fileKey?: string): Promise<{ templates: FigmaTemplate[]; sourceFileKey: string }> {
+    const query = fileKey ? `?fileKey=${encodeURIComponent(fileKey)}` : "";
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/design/templates${query}`);
+    if (!res.ok) {
+      let message = "Failed to fetch design templates";
+      try {
+        const error = await res.json();
+        if (error?.error) {
+          message = error.error;
+        }
+      } catch {
+        // ignore JSON parse error
+      }
+      throw new Error(message);
     }
     return res.json();
   }

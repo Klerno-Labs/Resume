@@ -12,6 +12,7 @@ import { generateToken, requireAuth } from "./lib/jwt";
 import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from "./lib/email";
 import { env } from "./lib/env";
 import Stripe from "stripe";
+import { getResumeTemplates, isFigmaConfigured } from "./lib/figma";
 
 // File upload configuration with security limits
 const upload = multer({
@@ -35,9 +36,10 @@ const upload = multer({
 
 // Initialize Stripe if configured
 let stripe: Stripe | null = null;
-if (env.STRIPE_SECRET_KEY) {
+const isTestEnv = process.env.NODE_ENV === "test";
+if (env.STRIPE_SECRET_KEY && !isTestEnv) {
   stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-    apiVersion: '2024-11-20.acacia',
+    apiVersion: '2025-11-17.clover',
   });
 }
 
@@ -544,6 +546,34 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Cover letter generation error:", error);
       res.status(500).json({ error: "Failed to generate cover letter" });
+    }
+  });
+
+  // Fetch Figma-powered resume design templates
+  app.get("/api/design/templates", requireAuth, async (req, res) => {
+    try {
+      if (!isFigmaConfigured()) {
+        return res.status(503).json({ error: "Figma integration is not configured" });
+      }
+
+      const requestedFileKey = typeof req.query.fileKey === "string" ? req.query.fileKey : undefined;
+      const fileKey = requestedFileKey || env.FIGMA_FILE_KEY;
+
+      if (!fileKey) {
+        return res.status(400).json({
+          error: "Missing Figma file key. Provide ?fileKey=FILE_KEY or set FIGMA_FILE_KEY.",
+        });
+      }
+
+      const templates = await getResumeTemplates(fileKey);
+
+      res.json({
+        templates,
+        sourceFileKey: fileKey,
+      });
+    } catch (error: any) {
+      console.error("Figma template fetch error:", error);
+      res.status(500).json({ error: "Failed to fetch resume designs from Figma" });
     }
   });
 
