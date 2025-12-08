@@ -11,7 +11,7 @@ const mockStorage = {
   verifyUserEmail: vi.fn(),
 };
 
-vi.mock('../server/storage', () => ({
+vi.mock('../../server/storage', () => ({
   storage: mockStorage,
 }));
 

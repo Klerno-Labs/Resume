@@ -63,6 +63,13 @@ class ApiClient {
     });
   }
 
+  private toErrorMessage(error: any, fallback: string) {
+    if (error?.message) return error.message;
+    if (error?.error) return error.error;
+    if (typeof error === "string") return error;
+    return fallback;
+  }
+
   // Auth
   async register(email: string, password: string, name?: string): Promise<{ user: User }> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/auth/register`, {
@@ -72,7 +79,7 @@ class ApiClient {
     });
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || "Registration failed");
+      throw new Error(this.toErrorMessage(error, "Registration failed"));
     }
     return res.json();
   }
@@ -85,7 +92,7 @@ class ApiClient {
     });
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || "Login failed");
+      throw new Error(this.toErrorMessage(error, "Login failed"));
     }
     return res.json();
   }
@@ -115,7 +122,7 @@ class ApiClient {
     });
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || "Email verification failed");
+      throw new Error(this.toErrorMessage(error, "Email verification failed"));
     }
     return res.json();
   }
@@ -128,7 +135,7 @@ class ApiClient {
     });
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || "Failed to send reset email");
+      throw new Error(this.toErrorMessage(error, "Failed to send reset email"));
     }
     return res.json();
   }
@@ -141,7 +148,7 @@ class ApiClient {
     });
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || "Password reset failed");
+      throw new Error(this.toErrorMessage(error, "Password reset failed"));
     }
     return res.json();
   }
@@ -157,7 +164,7 @@ class ApiClient {
     });
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || "Upload failed");
+      throw new Error(this.toErrorMessage(error, "Upload failed"));
     }
     return res.json();
   }
@@ -166,7 +173,7 @@ class ApiClient {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/resumes/${id}`);
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || "Failed to fetch resume");
+      throw new Error(this.toErrorMessage(error, "Failed to fetch resume"));
     }
     return res.json();
   }
@@ -175,7 +182,7 @@ class ApiClient {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/users/${userId}/resumes`);
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || "Failed to fetch resumes");
+      throw new Error(this.toErrorMessage(error, "Failed to fetch resumes"));
     }
     return res.json();
   }
@@ -193,7 +200,7 @@ class ApiClient {
     });
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || "Failed to generate cover letter");
+      throw new Error(this.toErrorMessage(error, "Failed to generate cover letter"));
     }
     return res.json();
   }
@@ -206,9 +213,7 @@ class ApiClient {
       let message = "Failed to fetch design templates";
       try {
         const error = await res.json();
-        if (error?.error) {
-          message = error.error;
-        }
+        message = this.toErrorMessage(error, message);
       } catch {
         // ignore JSON parse error
       }
@@ -226,7 +231,7 @@ class ApiClient {
     });
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || "Failed to create checkout");
+      throw new Error(this.toErrorMessage(error, "Failed to create checkout"));
     }
     return res.json();
   }
@@ -239,7 +244,7 @@ class ApiClient {
     });
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || "Failed to verify payment");
+      throw new Error(this.toErrorMessage(error, "Failed to verify payment"));
     }
     return res.json();
   }
@@ -252,7 +257,7 @@ class ApiClient {
     });
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || "Failed to create payment");
+      throw new Error(this.toErrorMessage(error, "Failed to create payment"));
     }
     return res.json();
   }
@@ -261,7 +266,7 @@ class ApiClient {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/payments/${id}`);
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || "Failed to fetch payment");
+      throw new Error(this.toErrorMessage(error, "Failed to fetch payment"));
     }
     return res.json();
   }

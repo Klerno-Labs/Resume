@@ -22,12 +22,20 @@ export function verifyToken(token: string): JWTPayload {
 }
 
 // Express middleware to protect routes
+function extractToken(req: Request): string | undefined {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    return authHeader.slice("Bearer ".length);
+  }
+  return req.cookies?.token;
+}
+
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
-    const token = req.cookies?.token;
+    const token = extractToken(req);
 
     if (!token) {
-      return res.status(401).json({ error: "Authentication required" });
+      return res.status(401).json({ message: "Authentication required" });
     }
 
     const payload = verifyToken(token);
@@ -37,14 +45,14 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 
     next();
   } catch (error) {
-    return res.status(401).json({ error: "Invalid or expired token" });
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 }
 
 // Optional: Middleware that doesn't fail if no auth present
 export function optionalAuth(req: Request, res: Response, next: NextFunction) {
   try {
-    const token = req.cookies?.token;
+    const token = extractToken(req);
 
     if (token) {
       const payload = verifyToken(token);

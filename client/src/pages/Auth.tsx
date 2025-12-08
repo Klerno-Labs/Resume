@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, ArrowRight, Mail } from "lucide-react";
+import { emailSchema, passwordSchema } from "@shared/validators";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +17,8 @@ import { useAuth } from "@/lib/auth";
 
 // Login Schema
 const authSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  email: emailSchema,
+  password: passwordSchema,
 });
 
 type AuthFormValues = z.infer<typeof authSchema>;

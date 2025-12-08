@@ -2,8 +2,12 @@ import { z } from "zod";
 
 const envSchema = z.object({
   DATABASE_URL: z.string().url("DATABASE_URL must be a valid PostgreSQL URL"),
+  DATABASE_TEST_URL: z.string().url().optional(),
   OPENAI_API_KEY: z.string().min(1, "OPENAI_API_KEY is required"),
-  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters for security"),
+  JWT_SECRET: z
+    .string()
+    .min(32, "JWT_SECRET must be at least 32 characters for security"),
+  JWT_EXPIRY: z.string().default("7d"),
   PORT: z.string().default("5000"),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 
@@ -30,7 +34,16 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().optional(),
 
   APP_URL: z.string().url().default("http://localhost:5000"),
-  CORS_ORIGIN: z.string().default("http://localhost:5000"),
+  CORS_ORIGIN: z
+    .string()
+    .transform((val) => val.split(",").map((v) => v.trim()))
+    .refine(
+      (origins) => !origins.some((origin) => origin.includes("*")),
+      "Wildcards not allowed in production CORS origins",
+    ),
+
+  // Redis / caching
+  REDIS_URL: z.string().optional(),
 
   // Design integrations
   FIGMA_TOKEN: z.string().optional(),
@@ -44,11 +57,11 @@ export function validateEnv(): Env {
     return envSchema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error("❌ Environment validation failed:");
+      console.error("Environment validation failed:");
       error.errors.forEach((err) => {
         console.error(`  - ${err.path.join(".")}: ${err.message}`);
       });
-      console.error("\n💡 Please check your .env file and compare with .env.example");
+      console.error("\nPlease check your .env file and compare with .env.example");
       process.exit(1);
     }
     throw error;

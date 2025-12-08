@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 
 // Mock environment variables for testing
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test_db';
+process.env.DATABASE_TEST_URL = process.env.DATABASE_URL;
 process.env.JWT_SECRET = 'test-secret-key-that-is-at-least-32-characters-long';
 process.env.OPENAI_API_KEY = 'sk-test-key';
 process.env.NODE_ENV = 'test';

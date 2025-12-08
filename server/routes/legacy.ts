@@ -1,18 +1,24 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import type { Server } from "http";
+import { storage } from "../storage";
 import multer from "multer";
-import { parseFile } from "./lib/fileParser";
-import { optimizeResume, generateCoverLetter } from "./lib/openai";
+import { parseFile } from "../lib/fileParser";
+import { optimizeResume, generateCoverLetter } from "../lib/openai";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import rateLimit from "express-rate-limit";
-import { generateToken, requireAuth } from "./lib/jwt";
-import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from "./lib/email";
-import { env } from "./lib/env";
+import { generateToken, requireAuth } from "../lib/jwt";
+import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from "../lib/email";
+import { env } from "../lib/env";
 import Stripe from "stripe";
-import { getResumeTemplates, isFigmaConfigured } from "./lib/figma";
+import { getResumeTemplates, isFigmaConfigured } from "../lib/figma";
+import { authLimiter, uploadLimiter } from "../lib/rateLimiter";
+import { validateRequest } from "../middleware/validation";
+import { registerSchema, loginSchema } from "../validators/auth.validators";
+import { sanitizeText } from "../lib/sanitize";
+import { AuthService } from "../services/auth.service";
+import { passwordSchema } from "../../shared/validators";
+import type { User } from "../../shared/schema";
 
 // File upload configuration with security limits
 const upload = multer({
@@ -43,147 +49,92 @@ if (env.STRIPE_SECRET_KEY && !isTestEnv) {
   });
 }
 
-// Rate limiting configurations
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts per window
-  message: "Too many authentication attempts, please try again later.",
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const uploadLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // 10 uploads per hour
-  message: "Too many uploads, please try again later.",
-});
-
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
-  message: "Too many requests, please try again later.",
-});
-
-export async function registerRoutes(
+export async function registerLegacyRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-
-  // Apply general API rate limiting
-  app.use("/api", apiLimiter);
+  const authService = new AuthService();
 
   // Auth routes
-  app.post("/api/auth/register", authLimiter, async (req, res) => {
-    try {
-      const { email, password, name } = req.body;
+  app.post(
+    "/api/auth/register",
+    authLimiter,
+    validateRequest(registerSchema),
+    async (req, res, next) => {
+      try {
+        const { email, password, name } = req.body as {
+          email: string;
+          password: string;
+          name?: string;
+        };
 
-      if (!email || !password) {
-        return res.status(400).json({ error: "Email and password are required" });
+        const safeName = name ? sanitizeText(name) : undefined;
+        const { user, token, verificationToken } = await authService.register({
+          email,
+          password,
+          name: safeName,
+        });
+
+        sendVerificationEmail(email, verificationToken).catch((err) => {
+          console.error("Failed to send verification email:", err);
+        });
+
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
+        res.status(201).json({
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            plan: user.plan,
+            creditsRemaining: user.creditsRemaining,
+            emailVerified: !!user.emailVerified,
+          },
+          token,
+        });
+      } catch (error) {
+        next(error);
       }
+    },
+  );
 
-      // Password strength validation
-      if (password.length < 8) {
-        return res.status(400).json({ error: "Password must be at least 8 characters long" });
+  app.post(
+    "/api/auth/login",
+    authLimiter,
+    validateRequest(loginSchema),
+    async (req, res, next) => {
+      try {
+        const { email, password } = req.body as { email: string; password: string };
+        const { user, token } = await authService.login({ email, password });
+
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
+        res.json({
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            plan: user.plan,
+            creditsRemaining: user.creditsRemaining,
+            emailVerified: !!user.emailVerified,
+          },
+          token,
+        });
+      } catch (error) {
+        next(error);
       }
-
-      // Check if user exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ error: "User already exists" });
-      }
-
-      // Hash password
-      const passwordHash = await bcrypt.hash(password, 10);
-
-      // Generate verification token
-      const verificationToken = crypto.randomBytes(32).toString('hex');
-
-      // Create user with free plan and 1 free credit
-      const user = await storage.createUser({
-        email,
-        passwordHash,
-        name,
-        plan: "free",
-        creditsRemaining: 1,
-        verificationToken,
-      });
-
-      // Send verification email (non-blocking)
-      sendVerificationEmail(email, verificationToken).catch(err => {
-        console.error("Failed to send verification email:", err);
-      });
-
-      // Generate JWT token
-      const token = generateToken({ userId: user.id, email: user.email });
-
-      // Set cookie
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-
-      res.json({
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          plan: user.plan,
-          creditsRemaining: user.creditsRemaining,
-          emailVerified: !!user.emailVerified,
-        }
-      });
-    } catch (error: any) {
-      console.error("Registration error:", error);
-      res.status(500).json({ error: "Failed to register user" });
-    }
-  });
-
-  app.post("/api/auth/login", authLimiter, async (req, res) => {
-    try {
-      const { email, password } = req.body;
-
-      if (!email || !password) {
-        return res.status(400).json({ error: "Email and password are required" });
-      }
-
-      const user = await storage.getUserByEmail(email);
-      if (!user) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-
-      const validPassword = await bcrypt.compare(password, user.passwordHash);
-      if (!validPassword) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-
-      // Generate JWT token
-      const token = generateToken({ userId: user.id, email: user.email });
-
-      // Set cookie
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-
-      res.json({
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          plan: user.plan,
-          creditsRemaining: user.creditsRemaining,
-          emailVerified: !!user.emailVerified,
-        }
-      });
-    } catch (error: any) {
-      console.error("Login error:", error);
-      res.status(500).json({ error: "Failed to login" });
-    }
-  });
+    },
+  );
 
   app.post("/api/auth/logout", (req, res) => {
     res.clearCookie("token");
@@ -388,8 +339,14 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Token and password are required" });
       }
 
-      if (password.length < 8) {
-        return res.status(400).json({ error: "Password must be at least 8 characters long" });
+      try {
+        passwordSchema.parse(password);
+      } catch (error) {
+        const message =
+          error instanceof z.ZodError && error.errors[0]?.message
+            ? error.errors[0].message
+            : "Invalid password";
+        return res.status(400).json({ error: message });
       }
 
       const user = await storage.getUserByResetToken(token);
@@ -398,7 +355,7 @@ export async function registerRoutes(
       }
 
       // Hash new password
-      const passwordHash = await bcrypt.hash(password, 10);
+      const passwordHash = await bcrypt.hash(password, 12);
       await storage.updatePassword(user.id, passwordHash);
 
       res.json({ success: true, message: "Password reset successfully" });
@@ -531,13 +488,14 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Unauthorized" });
       }
 
+      const cleanJobDescription = sanitizeText(jobDescription);
       const resumeText = resume.improvedText || resume.originalText;
-      const result = await generateCoverLetter(resumeText, jobDescription, tone || "professional");
+      const result = await generateCoverLetter(resumeText, cleanJobDescription, tone || "professional");
 
       const coverLetter = await storage.createCoverLetter({
         userId,
         resumeId,
-        jobDescription,
+        jobDescription: cleanJobDescription,
         tone: tone || "professional",
         content: result.content,
       });
@@ -584,123 +542,156 @@ export async function registerRoutes(
       const { plan } = req.body;
 
       if (!plan) {
-        return res.status(400).json({ error: "Missing required fields" });
+        return res.status(400).json({ message: "Plan is required" });
       }
 
-      const amounts: Record<string, number> = {
-        basic: 700,   // $7.00
-        pro: 1900,    // $19.00
-        premium: 2900, // $29.00
+      const amounts: Record<User["plan"], number> = {
+        free: 0,
+        admin: 0,
+        basic: 700,
+        pro: 1900,
+        premium: 2900,
       };
 
-      const amount = amounts[plan];
+      const normalizedPlan = plan as User["plan"];
+      const amount = amounts[normalizedPlan];
       if (!amount) {
-        return res.status(400).json({ error: "Invalid plan" });
+        return res.status(400).json({ message: "Invalid plan" });
       }
 
-      // If Stripe is configured, create real payment intent
+      const credits: Record<User["plan"], number> = {
+        free: 0,
+        admin: 9999,
+        basic: 1,
+        pro: 3,
+        premium: 999,
+      };
+
+      let sessionId: string;
+      let url: string;
+      let paymentId: string;
+
       if (stripe) {
-        const paymentIntent = await stripe.paymentIntents.create({
-          amount,
-          currency: 'usd',
-          return_url: env.STRIPE_RETURN_URL || `${env.APP_URL}/payments/return`,
-          metadata: {
-            userId,
-            plan,
-          },
+        const session = await stripe.checkout.sessions.create({
+          mode: "payment",
+          currency: "usd",
+          success_url: env.STRIPE_RETURN_URL || `${env.APP_URL}/payments/return`,
+          cancel_url: env.STRIPE_RETURN_URL || `${env.APP_URL}/payments/cancel`,
+          line_items: [
+            {
+              price_data: {
+                currency: "usd",
+                product_data: { name: `${plan} plan` },
+                unit_amount: amount,
+              },
+              quantity: 1,
+            },
+          ],
+          metadata: { userId, plan },
         });
 
         const payment = await storage.createPayment({
           userId,
-          plan,
+          plan: normalizedPlan,
           amount,
           status: "pending",
-          stripePaymentId: paymentIntent.id,
+          stripeSessionId: session.id,
         });
 
-        res.json({
-          paymentId: payment.id,
-          clientSecret: paymentIntent.client_secret,
-          status: "pending"
-        });
+        sessionId = session.id;
+        url = session.url || "";
+        paymentId = payment.id;
       } else {
-        // Fallback to mock payment for development
         const payment = await storage.createPayment({
           userId,
-          plan,
+          plan: normalizedPlan,
           amount,
           status: "pending",
         });
 
-        // Simulate success after 1 second
+        sessionId = `cs_test_${payment.id}`;
+        url = `https://checkout.stripe.com/pay/${sessionId}`;
+        paymentId = payment.id;
+
         setTimeout(async () => {
-          await storage.updatePaymentStatus(payment.id, "completed", "mock_stripe_" + payment.id);
-
-          // Update user plan and credits
-          const credits: Record<string, number> = {
-            basic: 1,
-            pro: 3,
-            premium: 999, // unlimited
-          };
-
-          await storage.updateUserPlan(userId, plan);
-          await storage.updateUserCredits(userId, credits[plan]);
+          await storage.updatePaymentStatus(payment.id, "completed", sessionId);
+          await storage.updateUserPlan(userId, normalizedPlan);
+          await storage.updateUserCredits(userId, credits[normalizedPlan] ?? 0);
         }, 1000);
-
-        res.json({ paymentId: payment.id, status: "pending", mock: true });
       }
+
+      res.json({
+        paymentId,
+        sessionId,
+        url,
+        status: "pending",
+      });
     } catch (error: any) {
       console.error("Payment creation error:", error);
-      res.status(500).json({ error: "Failed to create payment" });
+      res.status(500).json({ message: "Failed to create payment" });
     }
   });
 
   // Stripe webhook handler
-  if (stripe && env.STRIPE_WEBHOOK_SECRET) {
-    app.post("/api/webhooks/stripe", async (req, res) => {
-      const sig = req.headers['stripe-signature'];
+  app.post("/api/webhooks/stripe", async (req, res) => {
+    const sig = req.headers["stripe-signature"];
 
-      if (!sig) {
-        return res.status(400).send('No signature');
-      }
+    if (!sig) {
+      return res.status(400).json({ message: "Stripe signature required" });
+    }
 
+    // If Stripe is configured, verify and process the event
+    if (stripe && env.STRIPE_WEBHOOK_SECRET) {
       try {
-        const event = stripe!.webhooks.constructEvent(
+        const event = stripe.webhooks.constructEvent(
           req.rawBody as Buffer,
           sig,
-          env.STRIPE_WEBHOOK_SECRET!
+          env.STRIPE_WEBHOOK_SECRET,
         );
 
-        if (event.type === 'payment_intent.succeeded') {
-          const paymentIntent = event.data.object as Stripe.PaymentIntent;
-          const { userId, plan } = paymentIntent.metadata;
+        if (event.type === "checkout.session.completed") {
+          const session = event.data.object as Stripe.Checkout.Session;
+          const { userId, plan: planMetadata } = (session.metadata || {}) as {
+            userId: string;
+            plan: User["plan"];
+          };
 
-          // Find payment by Stripe ID
-          const payments = await storage.getPaymentsByUser(userId);
-          const payment = payments.find(p => p.stripePaymentId === paymentIntent.id);
-
-          if (payment) {
-            await storage.updatePaymentStatus(payment.id, "completed", paymentIntent.id);
-
-            // Update user plan and credits
-            const credits: Record<string, number> = {
+          if (session.payment_status === "paid" && userId && planMetadata) {
+            const credits: Record<User["plan"], number> = {
+              free: 0,
+              admin: 9999,
               basic: 1,
               pro: 3,
               premium: 999,
             };
 
+            const plan = planMetadata || "basic";
             await storage.updateUserPlan(userId, plan);
-            await storage.updateUserCredits(userId, credits[plan]);
+            await storage.updateUserCredits(userId, credits[plan] ?? 0);
           }
         }
 
-        res.json({ received: true });
+        return res.json({ received: true });
       } catch (error: any) {
         console.error("Webhook error:", error);
-        res.status(400).send(`Webhook Error: ${error.message}`);
+        return res.status(400).json({ message: `Webhook Error: ${error.message}` });
       }
-    });
-  }
+    }
+
+    // If Stripe is not configured, acknowledge the webhook for testing
+    return res.json({ received: true });
+  });
+
+  app.get("/api/payments/history", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const payments = await storage.getPaymentsByUser(userId);
+      return res.json({ payments });
+    } catch (error) {
+      console.error("Payment history error:", error);
+      return res.status(500).json({ message: "Failed to fetch payment history" });
+    }
+  });
 
   // Get payment status (protected)
   app.get("/api/payments/:id", requireAuth, async (req, res) => {

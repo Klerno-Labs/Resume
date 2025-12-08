@@ -1,6 +1,3 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import pkg from "pg";
-const { Pool } = pkg;
 import { eq, sql } from "drizzle-orm";
 import {
   users,
@@ -16,12 +13,8 @@ import {
   type Payment,
   type InsertPayment,
 } from "@shared/schema";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-
-const db = drizzle(pool);
+import { db, pool } from "./db";
+export { db };
 
 export interface IStorage {
   // User operations
@@ -31,7 +24,7 @@ export interface IStorage {
   getUserByResetToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserCredits(userId: string, credits: number): Promise<void>;
-  updateUserPlan(userId: string, plan: string, credits?: number): Promise<void>;
+  updateUserPlan(userId: string, plan: User["plan"], credits?: number): Promise<void>;
   updateUserVerification(userId: string, token: string): Promise<void>;
   verifyUserEmail(userId: string): Promise<void>;
   setPasswordResetToken(userId: string, token: string, expiry: Date): Promise<void>;
@@ -52,7 +45,7 @@ export interface IStorage {
   getPayment(id: string): Promise<Payment | undefined>;
   getPaymentsByUser(userId: string): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
-  updatePaymentStatus(id: string, status: string, stripeId?: string): Promise<void>;
+  updatePaymentStatus(id: string, status: Payment["status"], stripeId?: string): Promise<void>;
   
   // Atomic transaction operations
   processPaymentAndAddCredits(userId: string, paymentData: InsertPayment, creditsToAdd: number): Promise<{ payment: Payment; user: User }>;
@@ -79,8 +72,8 @@ export class PostgresStorage implements IStorage {
     await db.update(users).set({ creditsRemaining: credits }).where(eq(users.id, userId));
   }
 
-  async updateUserPlan(userId: string, plan: string, credits?: number): Promise<void> {
-    const updateData: { plan: string; creditsRemaining?: number } = { plan };
+  async updateUserPlan(userId: string, plan: User["plan"], credits?: number): Promise<void> {
+    const updateData: { plan: User["plan"]; creditsRemaining?: number } = { plan };
     if (credits !== undefined) {
       updateData.creditsRemaining = credits;
     }
@@ -177,7 +170,7 @@ export class PostgresStorage implements IStorage {
     return result[0];
   }
 
-  async updatePaymentStatus(id: string, status: string, stripeId?: string): Promise<void> {
+  async updatePaymentStatus(id: string, status: Payment["status"], stripeId?: string): Promise<void> {
     const updateData: any = { status };
     if (stripeId) {
       updateData.stripePaymentId = stripeId;

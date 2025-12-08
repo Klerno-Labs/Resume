@@ -30,7 +30,7 @@ test.describe('Authentication Flow', () => {
     await page.getByTestId('button-submit-auth').click();
     
     // Should show validation error for email
-    await expect(page.getByText(/please enter a valid email/i)).toBeVisible();
+    await expect(page.getByText(/invalid email/i)).toBeVisible();
   });
 
   test('should show validation error for short password', async ({ page }) => {
@@ -40,7 +40,7 @@ test.describe('Authentication Flow', () => {
     await page.getByTestId('input-password').fill('short');
     await page.getByTestId('button-submit-auth').click();
     
-    await expect(page.getByText(/password must be at least 8 characters/i)).toBeVisible();
+    await expect(page.getByText(/password must be at least 12 characters/i)).toBeVisible();
   });
 
   test('should have Google sign-in button', async ({ page }) => {

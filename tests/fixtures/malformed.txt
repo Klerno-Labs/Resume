@@ -1,0 +1,1 @@
+This is not a valid resume file and should trigger validation errors during upload tests.
