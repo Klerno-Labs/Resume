@@ -4,6 +4,7 @@ export interface ResumeData {
   improvedText: string;
   fileName: string;
   atsScore?: number;
+  watermarkText?: string;
 }
 
 interface ParsedResume {
@@ -85,6 +86,18 @@ export async function exportResumeToPDF(resumeData: ResumeData): Promise<void> {
       y = margin;
     }
   };
+
+  // Optional watermark for free tier
+  if (resumeData.watermarkText) {
+    pdf.saveGraphicsState();
+    pdf.setTextColor(200, 200, 200);
+    pdf.setFontSize(48);
+    pdf.text(resumeData.watermarkText, pageWidth / 2, pageHeight / 2, {
+      align: 'center',
+      angle: 45,
+    });
+    pdf.restoreGraphicsState();
+  }
 
   // Name - Large, elegant
   pdf.setFont('helvetica', 'bold');

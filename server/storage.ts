@@ -55,17 +55,20 @@ export class PostgresStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
-    return result[0];
+    const [user] = result as User[];
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    return result[0];
+    const [user] = result as User[];
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const result = await db.insert(users).values(insertUser).returning();
-    return result[0];
+    const [user] = result as User[];
+    return user;
   }
 
   async updateUserCredits(userId: string, credits: number): Promise<void> {
@@ -82,12 +85,14 @@ export class PostgresStorage implements IStorage {
 
   async getUserByVerificationToken(token: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.verificationToken, token)).limit(1);
-    return result[0];
+    const [user] = result as User[];
+    return user;
   }
 
   async getUserByResetToken(token: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.resetToken, token)).limit(1);
-    return result[0];
+    const [user] = result as User[];
+    return user;
   }
 
   async updateUserVerification(userId: string, token: string): Promise<void> {
@@ -119,7 +124,8 @@ export class PostgresStorage implements IStorage {
   // Resume operations
   async getResume(id: string): Promise<Resume | undefined> {
     const result = await db.select().from(resumes).where(eq(resumes.id, id)).limit(1);
-    return result[0];
+    const [resume] = result as Resume[];
+    return resume;
   }
 
   async getResumesByUser(userId: string): Promise<Resume[]> {
@@ -128,7 +134,8 @@ export class PostgresStorage implements IStorage {
 
   async createResume(insertResume: InsertResume): Promise<Resume> {
     const result = await db.insert(resumes).values(insertResume).returning();
-    return result[0];
+    const [resume] = result as Resume[];
+    return resume;
   }
 
   async updateResume(id: string, data: Partial<Resume>): Promise<Resume | undefined> {
@@ -137,13 +144,15 @@ export class PostgresStorage implements IStorage {
       .set({ ...data, updatedAt: new Date() })
       .where(eq(resumes.id, id))
       .returning();
-    return result[0];
+    const [resume] = result as Resume[];
+    return resume;
   }
 
   // Cover letter operations
   async getCoverLetter(id: string): Promise<CoverLetter | undefined> {
     const result = await db.select().from(coverLetters).where(eq(coverLetters.id, id)).limit(1);
-    return result[0];
+    const [coverLetter] = result as CoverLetter[];
+    return coverLetter;
   }
 
   async getCoverLettersByUser(userId: string): Promise<CoverLetter[]> {
@@ -152,13 +161,15 @@ export class PostgresStorage implements IStorage {
 
   async createCoverLetter(insertCoverLetter: InsertCoverLetter): Promise<CoverLetter> {
     const result = await db.insert(coverLetters).values(insertCoverLetter).returning();
-    return result[0];
+    const [coverLetter] = result as CoverLetter[];
+    return coverLetter;
   }
 
   // Payment operations
   async getPayment(id: string): Promise<Payment | undefined> {
     const result = await db.select().from(payments).where(eq(payments.id, id)).limit(1);
-    return result[0];
+    const [payment] = result as Payment[];
+    return payment;
   }
 
   async getPaymentsByUser(userId: string): Promise<Payment[]> {
@@ -167,7 +178,8 @@ export class PostgresStorage implements IStorage {
 
   async createPayment(insertPayment: InsertPayment): Promise<Payment> {
     const result = await db.insert(payments).values(insertPayment).returning();
-    return result[0];
+    const [payment] = result as Payment[];
+    return payment;
   }
 
   async updatePaymentStatus(id: string, status: Payment["status"], stripeId?: string): Promise<void> {
@@ -276,6 +288,15 @@ export class PostgresStorage implements IStorage {
       resetToken: row.reset_token,
       resetTokenExpiry: row.reset_token_expiry,
       createdAt: row.created_at,
+    // Optional customer/subscription metadata
+      stripeCustomerId: row.stripe_customer_id,
+      currentSubscriptionId: row.current_subscription_id,
+      lifetimeValue: row.lifetime_value,
+      totalCreditsUsed: row.total_credits_used,
+      lastActiveAt: row.last_active_at,
+      onboardingCompleted: row.onboarding_completed,
+      referralCode: row.referral_code,
+      referredBy: row.referred_by,
     };
   }
 

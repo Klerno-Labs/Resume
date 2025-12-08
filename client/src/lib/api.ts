@@ -270,6 +270,51 @@ class ApiClient {
     }
     return res.json();
   }
+
+  // Subscriptions
+  async createSubscriptionCheckout(planId: string): Promise<{ sessionId: string; url?: string }> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/subscriptions/checkout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ planId }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(this.toErrorMessage(error, "Failed to start subscription checkout"));
+    }
+    return res.json();
+  }
+
+  async cancelSubscription(): Promise<{ success: boolean; endsAt?: string }> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/subscriptions/cancel`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(this.toErrorMessage(error, "Failed to cancel subscription"));
+    }
+    return res.json();
+  }
+
+  async reactivateSubscription(): Promise<{ success: boolean }> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/subscriptions/reactivate`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(this.toErrorMessage(error, "Failed to reactivate subscription"));
+    }
+    return res.json();
+  }
+
+  async getUsage(): Promise<any> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/subscriptions/usage`);
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(this.toErrorMessage(error, "Failed to fetch usage analytics"));
+    }
+    return res.json();
+  }
 }
 
 export const api = new ApiClient();

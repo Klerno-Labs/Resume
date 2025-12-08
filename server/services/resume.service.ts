@@ -1,7 +1,9 @@
 import type { Express } from "express";
 import { parseFile } from "../lib/fileParser";
 import { ForbiddenError, NotFoundError, ValidationError } from "../lib/errors";
-import { storage } from "../storage";
+import { storage, db } from "../storage";
+import { usageRecords } from "../../shared/schema";
+import { and, eq, gte } from "drizzle-orm";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME_TYPES = [
@@ -29,6 +31,29 @@ export class ResumeService {
       throw new NotFoundError("User not found");
     }
 
+    if (user.plan === "free") {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const freeUsageThisMonth = await db
+        .select()
+        .from(usageRecords)
+        .where(
+          and(
+            eq(usageRecords.userId, userId),
+            eq(usageRecords.action, "resume_optimization"),
+            gte(usageRecords.createdAt, startOfMonth),
+          ),
+        );
+
+      if (freeUsageThisMonth.length >= 1) {
+        throw new ForbiddenError(
+          "Free plan limit reached for this month. Upgrade to continue optimizing.",
+        );
+      }
+    }
+
     if (user.creditsRemaining <= 0) {
       throw new ForbiddenError("Insufficient credits");
     }
@@ -44,6 +69,13 @@ export class ResumeService {
     });
 
     await storage.updateUserCredits(userId, user.creditsRemaining - 1);
+    await db.insert(usageRecords).values({
+      userId,
+      subscriptionId: user.currentSubscriptionId,
+      action: "resume_optimization",
+      creditsUsed: 1,
+      metadata: { fileName: file.originalname },
+    });
 
     return resume;
   }

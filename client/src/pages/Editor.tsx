@@ -155,6 +155,7 @@ export default function Editor() {
                   improvedText: resume.improvedText || resume.originalText,
                   fileName: resume.fileName,
                   atsScore: resume.atsScore,
+                  watermarkText: user?.plan === "free" ? "Resume Repairer • Free Plan" : undefined,
                 });
 
                 toast({
