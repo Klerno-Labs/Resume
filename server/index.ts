@@ -24,7 +24,7 @@ declare module "http" {
 
 // Security middleware with comprehensive headers
 app.use(helmet({
-  // Content Security Policy
+  // Content Security Policy (replaces X-Frame-Options)
   contentSecurityPolicy: process.env.NODE_ENV === "production" ? {
     directives: {
       defaultSrc: ["'self'"],
@@ -34,6 +34,7 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       connectSrc: ["'self'", "https://accounts.google.com", "https://oauth2.googleapis.com", env.SENTRY_DSN ? "https://*.sentry.io" : ""].filter(Boolean),
       frameSrc: ["'self'", "https://accounts.google.com"],
+      frameAncestors: ["'none'"], // Replaces X-Frame-Options
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
     },
@@ -44,12 +45,12 @@ app.use(helmet({
     includeSubDomains: true,
     preload: true,
   },
-  // Prevent clickjacking
-  frameguard: { action: 'deny' },
-  // Prevent MIME type sniffing
+  // Disable X-Frame-Options (replaced by CSP frame-ancestors)
+  frameguard: false,
+  // X-Content-Type-Options: nosniff
   noSniff: true,
-  // XSS Protection
-  xssFilter: true,
+  // Disable deprecated X-XSS-Protection header
+  xssFilter: false,
   // Referrer Policy
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   // Cross-Origin policies
