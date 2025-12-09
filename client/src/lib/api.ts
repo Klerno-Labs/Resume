@@ -71,11 +71,16 @@ class ApiClient {
   }
 
   // Auth
-  async register(email: string, password: string, name?: string): Promise<{ user: User }> {
+  async register(
+    email: string,
+    password: string,
+    name?: string,
+    referralCode?: string,
+  ): Promise<{ user: User }> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, name }),
+      body: JSON.stringify({ email, password, name, referralCode }),
     });
     if (!res.ok) {
       const error = await res.json();
@@ -272,15 +277,31 @@ class ApiClient {
   }
 
   // Subscriptions
-  async createSubscriptionCheckout(planId: string): Promise<{ sessionId: string; url?: string }> {
+  async createSubscriptionCheckout(
+    planId: string,
+    billingInterval: "month" | "year" = "month",
+  ): Promise<{ sessionUrl?: string; url?: string }> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/subscriptions/checkout`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ planId }),
+      body: JSON.stringify({ planId, billingInterval }),
     });
     if (!res.ok) {
       const error = await res.json();
       throw new Error(this.toErrorMessage(error, "Failed to start subscription checkout"));
+    }
+    return res.json();
+  }
+
+  async createCreditCheckout(packSize: "small" | "medium" | "large"): Promise<{ sessionUrl: string }> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/subscriptions/credits/checkout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ packSize }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(this.toErrorMessage(error, "Failed to start credit checkout"));
     }
     return res.json();
   }

@@ -1,6 +1,6 @@
 import { db } from "../db";
 import { users, referrals } from "../../shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 export class ReferralService {
   async generateReferralCode(userId: string): Promise<string> {
@@ -30,7 +30,7 @@ export class ReferralService {
       .update(users)
       .set({
         referredBy: referrer.id,
-        creditsRemaining: referrer.creditsRemaining + 5,
+        creditsRemaining: sql`credits_remaining + 5`,
       })
       .where(eq(users.id, newUserId));
 

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useLocation, Link, useSearch } from "wouter";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { Analytics } from "@/lib/analytics";
 
 // Login Schema
 const authSchema = z.object({
@@ -26,6 +27,7 @@ type AuthFormValues = z.infer<typeof authSchema>;
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [referralCode, setReferralCode] = useState("");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { setUser } = useAuth();
@@ -34,6 +36,10 @@ export default function Auth() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
+    const ref = params.get("ref");
+    if (ref) {
+      setReferralCode(ref);
+    }
     if (error) {
       const errorMessages: Record<string, string> = {
         no_code: "Google authentication failed. Please try again.",
@@ -65,13 +71,17 @@ export default function Auth() {
     try {
       const response = isLogin 
         ? await api.login(data.email, data.password)
-        : await api.register(data.email, data.password);
+        : await api.register(data.email, data.password, undefined, referralCode);
       
       setUser(response.user);
       toast({
         title: isLogin ? "Welcome back!" : "Account created",
         description: `You have ${response.user.creditsRemaining} credits remaining`,
       });
+      if (!isLogin) {
+        Analytics.funnelStep("signup_completed");
+        Analytics.track("signup", { method: "email", referralCode: referralCode || undefined });
+      }
       setLocation("/editor");
     } catch (error: any) {
       // If login fails with "Invalid credentials", offer to create account
@@ -196,6 +206,18 @@ export default function Auth() {
                 </p>
               )}
             </div>
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="referral">Referral code (optional)</Label>
+                <Input
+                  id="referral"
+                  type="text"
+                  placeholder="Referral code"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
+                />
+              </div>
+            )}
 
             <Button
               type="submit"

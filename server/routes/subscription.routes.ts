@@ -1,59 +1,75 @@
 import { Router } from "express";
+import { z } from "zod";
 import { PaymentService } from "../services/payment.service";
 import { requireAuth } from "../lib/jwt";
-import { validateRequest } from "../middleware/validation";
-import { z } from "zod";
 
 const router = Router();
 const paymentService = new PaymentService();
 
-const checkoutSchema = z.object({
-  planId: z.string().min(1),
-});
-
-router.post(
-  "/checkout",
-  requireAuth,
-  validateRequest(checkoutSchema),
-  async (req, res, next) => {
-    try {
-      const { planId } = req.body as { planId: string };
-      const userId = (req as any).userId;
-      const session = await paymentService.createSubscriptionCheckout(userId, planId);
-      res.json(session);
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-router.post("/cancel", requireAuth, async (req, res, next) => {
+router.post("/checkout", requireAuth, async (req, res) => {
   try {
-    const userId = (req as any).userId;
-    const result = await paymentService.cancelSubscription(userId);
-    res.json(result);
+    const { planId } = z
+      .object({
+        planId: z.enum(["starter", "professional", "business"]),
+        billingInterval: z.enum(["month", "year"]).optional(),
+      })
+      .parse(req.body);
+
+    const session = await paymentService.createSubscriptionCheckout(
+      (req as any).userId,
+      planId,
+      { billingInterval: (req.body as any).billingInterval },
+    );
+    res.json({ sessionUrl: session.url });
   } catch (error) {
-    next(error);
+    console.error("Checkout error:", error);
+    res.status(400).json({
+      error: error instanceof Error ? error.message : "Checkout failed",
+    });
   }
 });
 
-router.post("/reactivate", requireAuth, async (req, res, next) => {
+router.post("/credits/checkout", requireAuth, async (req, res) => {
   try {
-    const userId = (req as any).userId;
-    const result = await paymentService.reactivateSubscription(userId);
-    res.json(result);
+    const { packSize } = z
+      .object({
+        packSize: z.enum(["small", "medium", "large"]),
+      })
+      .parse(req.body);
+
+    const session = await paymentService.createCreditCheckout((req as any).userId, packSize);
+    res.json({ sessionUrl: session.url });
   } catch (error) {
-    next(error);
+    res.status(400).json({ error: "Credit purchase failed" });
   }
 });
 
-router.get("/usage", requireAuth, async (req, res, next) => {
+router.get("/details", requireAuth, async (req, res) => {
   try {
-    const userId = (req as any).userId;
-    const result = await paymentService.getSubscriptionAnalytics(userId);
+    const details = await paymentService.getSubscriptionDetails((req as any).userId);
+    res.json(details);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch subscription" });
+  }
+});
+
+router.post("/cancel", requireAuth, async (req, res) => {
+  try {
+    const result = await paymentService.cancelSubscription((req as any).userId);
     res.json(result);
   } catch (error) {
-    next(error);
+    res.status(400).json({
+      error: error instanceof Error ? error.message : "Cancellation failed",
+    });
+  }
+});
+
+router.post("/portal", requireAuth, async (req, res) => {
+  try {
+    const session = await paymentService.createPortalSession((req as any).userId);
+    res.json({ portalUrl: session.url });
+  } catch {
+    res.status(400).json({ error: "Failed to open billing portal" });
   }
 });
 

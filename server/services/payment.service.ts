@@ -1,12 +1,12 @@
 import Stripe from "stripe";
-import { eq, and, desc } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db";
 import {
-  users,
-  subscriptions,
   payments,
-  usageRecords,
   pricingPlans,
+  subscriptions,
+  usageRecords,
+  users,
 } from "../../shared/schema";
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY;
@@ -20,7 +20,7 @@ export class PaymentService {
   async createSubscriptionCheckout(
     userId: string,
     planId: string,
-    options?: { skipTrial?: boolean },
+    options?: { skipTrial?: boolean; billingInterval?: "month" | "year" },
   ) {
     if (!stripe) {
       throw new Error("Stripe is not configured");
@@ -64,6 +64,7 @@ export class PaymentService {
       cancel_url: `${process.env.APP_URL}/pricing?payment=cancelled`,
       subscription_data: {
         metadata: { userId, planId, trialAwarded: "no" },
+        trial_period_days: options?.skipTrial ? 0 : undefined,
       },
       payment_method_collection: "always",
       allow_promotion_codes: true,
@@ -81,6 +82,100 @@ export class PaymentService {
     });
 
     return { sessionId: session.id, url: session.url };
+  }
+
+  /**
+   * Create one-time credit purchase
+   */
+  async createCreditCheckout(userId: string, packSize: "small" | "medium" | "large") {
+    if (!stripe) {
+      throw new Error("Stripe is not configured");
+    }
+    const { CREDIT_PACKAGES } = await import("../config/pricing");
+    const pack = CREDIT_PACKAGES[packSize];
+    const [user] = (await db.select().from(users).where(eq(users.id, userId)).limit(1)) as any[];
+    if (!user) throw new Error("User not found");
+
+    let customerId = user.stripeCustomerId;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: user.name || undefined,
+        metadata: { userId },
+      });
+      customerId = customer.id;
+      await db.update(users).set({ stripeCustomerId: customerId }).where(eq(users.id, userId));
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: "payment",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price: pack.stripePriceId,
+          quantity: 1,
+        },
+      ],
+      success_url: `${process.env.APP_URL}/dashboard?payment=success&type=credits`,
+      cancel_url: `${process.env.APP_URL}/pricing?payment=cancelled`,
+      metadata: {
+        userId,
+        packSize,
+        credits: pack.credits.toString(),
+        type: "credits",
+      },
+    });
+
+    return { url: session.url };
+  }
+
+  /**
+   * Get subscription details for user
+   */
+  async getSubscriptionDetails(userId: string) {
+    const [user] = (await db.select().from(users).where(eq(users.id, userId)).limit(1)) as any[];
+
+    if (!user?.currentSubscriptionId) {
+      return {
+        plan: "free",
+        status: "active",
+        creditsRemaining: user?.creditsRemaining || 0,
+      };
+    }
+
+    const [subscription] = (await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.id, user.currentSubscriptionId))
+      .limit(1)) as any[];
+
+    return {
+      plan: user.plan,
+      status: subscription?.status || "unknown",
+      currentPeriodEnd: subscription?.currentPeriodEnd,
+      cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd,
+      creditsRemaining: user.creditsRemaining,
+    };
+  }
+
+  /**
+   * Create billing portal session
+   */
+  async createPortalSession(userId: string) {
+    if (!stripe) throw new Error("Stripe is not configured");
+    const [user] = (await db.select().from(users).where(eq(users.id, userId)).limit(1)) as any[];
+
+    if (!user?.stripeCustomerId) {
+      throw new Error("No payment method on file");
+    }
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: user.stripeCustomerId,
+      return_url: `${process.env.APP_URL}/dashboard`,
+    });
+
+    return { url: session.url };
   }
 
   async handleWebhook(payload: Buffer, signature: string) {
@@ -200,7 +295,7 @@ export class PaymentService {
       .set({ cancelAtPeriodEnd: true, updatedAt: new Date() })
       .where(eq(subscriptions.id, subscription.id));
 
-    return { success: true, endsAt: subscription.currentPeriodEnd };
+    return { success: true, cancelAtPeriodEnd: true };
   }
 
   async reactivateSubscription(userId: string) {

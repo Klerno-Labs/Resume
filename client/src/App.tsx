@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -16,14 +16,20 @@ import ResumeNurse from "@/pages/resume/nurse";
 import ResumeSalesRep from "@/pages/resume/sales-rep";
 import ResumeProductManager from "@/pages/resume/product-manager";
 import HowToOptimizeResumeForAts from "@/pages/how-to/optimize-resume-for-ats";
+import { Analytics } from "@/lib/analytics";
 
 function Router() {
   const { restoreSession } = useAuth();
+  const [location] = useLocation();
 
   // Restore session on mount and when returning from OAuth
   useEffect(() => {
     restoreSession();
   }, [restoreSession]);
+
+  useEffect(() => {
+    Analytics.pageView(location);
+  }, [location]);
 
   return (
     <Switch>

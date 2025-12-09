@@ -145,6 +145,17 @@ export const appReady = (async () => {
       await setupVite(httpServer, app);
     }
 
+    if (process.env.NODE_ENV === "production") {
+      const { EmailScheduler } = await import("./services/email-scheduler.service");
+      const scheduler = new EmailScheduler();
+      setInterval(async () => {
+        const now = new Date();
+        if (now.getHours() === 9 && now.getMinutes() === 0) {
+          await scheduler.runDailySchedule();
+        }
+      }, 60 * 1000);
+    }
+
     // ALWAYS serve the app on the port specified in the environment variable PORT
     // Other ports are firewalled. Default to 5000 if not specified.
     // this serves both the API and the client.
