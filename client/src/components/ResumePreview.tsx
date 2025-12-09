@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { Mail, Phone, MapPin, Linkedin, Globe, Github } from "lucide-react";
 
 interface ResumePreviewProps {
   text: string;

@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, FileText, Check, AlertCircle } from "lucide-react";
+import { Upload, FileText, Check } from "lucide-react";
 import { useLocation } from "wouter";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -60,10 +60,10 @@ export function FileUpload({ onUpload }: FileUploadProps) {
       setTimeout(() => {
         setLocation(`/editor?resumeId=${result.resumeId}`);
       }, 1500);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Upload failed",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to upload file",
         variant: "destructive",
       });
       setFile(null);
@@ -84,12 +84,12 @@ export function FileUpload({ onUpload }: FileUploadProps) {
         `}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
+        onDrop={(e) => void handleDrop(e)}
       >
         <input
           type="file"
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
-          onChange={handleFileChange}
+          onChange={(e) => void handleFileChange(e)}
           accept=".pdf,.docx,.doc,.txt"
           data-testid="input-file-upload"
         />

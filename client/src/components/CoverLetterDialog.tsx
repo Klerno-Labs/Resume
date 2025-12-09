@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Sparkles, Copy, Check, FileText } from "lucide-react";
+import { Sparkles, Copy, Check, FileText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -54,10 +54,10 @@ export function CoverLetterDialog({ resumeId }: CoverLetterDialogProps) {
       const coverLetter = await api.generateCoverLetter(resumeId, jobDescription, tone);
       setResult(coverLetter.content);
       setStep("result");
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to generate cover letter",
         variant: "destructive",
       });
       setStep("input");
@@ -65,7 +65,7 @@ export function CoverLetterDialog({ resumeId }: CoverLetterDialogProps) {
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(result);
+    void navigator.clipboard.writeText(result);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -170,7 +170,7 @@ export function CoverLetterDialog({ resumeId }: CoverLetterDialogProps) {
 
         <DialogFooter>
           {step === "input" && (
-            <Button onClick={handleGenerate} disabled={!jobDescription}>
+            <Button onClick={() => void handleGenerate()} disabled={!jobDescription}>
               Generate Draft
             </Button>
           )}

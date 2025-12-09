@@ -24,7 +24,7 @@ function Router() {
 
   // Restore session on mount and when returning from OAuth
   useEffect(() => {
-    restoreSession();
+    void restoreSession();
   }, [restoreSession]);
 
   useEffect(() => {
