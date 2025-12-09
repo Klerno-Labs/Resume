@@ -11,45 +11,8 @@ import { toast } from "@/hooks/use-toast";
 import { api, type Resume } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { exportResumeToPDF } from "@/lib/pdfExport";
-
-// Mock Data
-const MOCK_ORIGINAL = `Jane Doe
-Software Engineer
-San Francisco, CA
-
-Experience:
-Worked at Tech Corp from 2020 to Present.
-- Did coding in React and Python.
-- Helped with the team projects.
-- Fixed bugs in the system.
-- Made the website faster.
-
-Education:
-University of Technology
-Computer Science Degree
-
-Skills:
-React, JavaScript, HTML, CSS`;
-
-const MOCK_IMPROVED = `Jane Doe
-Software Engineer
-San Francisco, CA
-
-Experience:
-Senior Software Engineer | Tech Corp | 2020 – Present
-- Spearheaded the migration of a legacy monolith to a microservices architecture using Python and React, reducing deployment time by 40%.
-- Collaborated with cross-functional teams to deliver 5+ major product features, resulting in a 15% increase in user engagement.
-- Resolved critical system bugs, improving application stability to 99.9% uptime.
-- Optimized frontend performance, achieving a 50% reduction in page load times through code splitting and lazy loading.
-
-Education:
-Bachelor of Science in Computer Science
-University of Technology | Graduated with Honors
-
-Skills:
-Frontend: React.js, TypeScript, HTML5, CSS3, Tailwind CSS
-Backend: Python, Node.js, PostgreSQL
-Tools: Git, Docker, AWS, Jira`;
+import { useUpgradePrompt } from "@/hooks/useUpgradePrompt";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 export default function Editor() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -57,6 +20,7 @@ export default function Editor() {
   const [resume, setResume] = useState<Resume | null>(null);
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const { showUpgrade, upgradeTrigger, featureName, triggerUpgrade, closeUpgrade } = useUpgradePrompt();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -116,11 +80,12 @@ export default function Editor() {
   }
 
   const isCompleted = resume.status === "completed";
-  const originalText = resume.originalText || MOCK_ORIGINAL;
-  const improvedText = resume.improvedText || (isCompleted ? MOCK_IMPROVED : "Processing...");
-  const atsScore = resume.atsScore || 50;
+  const originalText = resume.originalText || "";
+  const improvedText = resume.improvedText || (isCompleted ? "" : "Processing your resume...");
+  const atsScore = resume.atsScore ?? 0;
 
   return (
+    <>
     <div className="h-screen flex flex-col bg-background font-sans overflow-hidden">
       {/* Header */}
       <header className="h-16 border-b flex items-center justify-between px-6 bg-white dark:bg-slate-950 z-20 shrink-0">
@@ -150,6 +115,10 @@ export default function Editor() {
                   title: "Exporting PDF...",
                   description: "Generating your resume PDF...",
                 });
+
+                if (user?.plan === "free") {
+                  triggerUpgrade("watermark_notice");
+                }
 
                 await exportResumeToPDF({
                   improvedText: resume.improvedText || resume.originalText,
@@ -257,5 +226,12 @@ export default function Editor() {
 
       </div>
     </div>
+    <UpgradeModal
+      isOpen={showUpgrade}
+      onClose={closeUpgrade}
+      trigger={upgradeTrigger}
+      featureName={featureName}
+    />
+    </>
   );
 }

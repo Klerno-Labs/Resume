@@ -17,6 +17,8 @@ import { validateRequest } from "../middleware/validation";
 import { registerSchema, loginSchema } from "../validators/auth.validators";
 import { sanitizeText } from "../lib/sanitize";
 import { AuthService } from "../services/auth.service";
+import { ReferralService } from "../services/referral.service";
+import { EmailCampaignService } from "../services/email-campaigns.service";
 import { passwordSchema } from "../../shared/validators";
 import type { User } from "../../shared/schema";
 
@@ -54,6 +56,8 @@ export async function registerLegacyRoutes(
   app: Express
 ): Promise<Server> {
   const authService = new AuthService();
+  const referralService = new ReferralService();
+  const emailCampaignService = new EmailCampaignService();
 
   // Auth routes
   app.post(
@@ -62,10 +66,11 @@ export async function registerLegacyRoutes(
     validateRequest(registerSchema),
     async (req, res, next) => {
       try {
-        const { email, password, name } = req.body as {
+        const { email, password, name, referralCode } = req.body as {
           email: string;
           password: string;
           name?: string;
+          referralCode?: string;
         };
 
         const safeName = name ? sanitizeText(name) : undefined;
@@ -75,8 +80,20 @@ export async function registerLegacyRoutes(
           name: safeName,
         });
 
+        if (referralCode) {
+          try {
+            await referralService.applyReferralCode(user.id, referralCode);
+          } catch (err) {
+            console.warn("Referral code not applied:", err);
+          }
+        }
+
         sendVerificationEmail(email, verificationToken).catch((err) => {
           console.error("Failed to send verification email:", err);
+        });
+
+        emailCampaignService.sendWelcomeEmail(user.id).catch((err) => {
+          console.error("Failed to send welcome email:", err);
         });
 
         res.cookie("token", token, {
@@ -209,9 +226,11 @@ export async function registerLegacyRoutes(
 
       if (!user) {
         // Create new user with Google OAuth (no password needed)
+        // Use a cryptographically secure random token instead of predictable placeholder
+        const secureOAuthToken = crypto.randomBytes(32).toString('hex');
         user = await storage.createUser({
           email: googleUser.email,
-          passwordHash: `google_oauth_${googleUser.id}`, // Placeholder for OAuth users
+          passwordHash: `oauth_${secureOAuthToken}`,
           name: googleUser.name,
           plan: isAdmin ? "admin" : "free",
           creditsRemaining: isAdmin ? 9999 : 1,
@@ -301,6 +320,9 @@ export async function registerLegacyRoutes(
 
   // Request password reset
   app.post("/api/auth/forgot-password", authLimiter, async (req, res) => {
+    const startTime = Date.now();
+    const MINIMUM_RESPONSE_TIME = 200; // milliseconds
+
     try {
       const { email } = req.body;
 
@@ -309,23 +331,36 @@ export async function registerLegacyRoutes(
       }
 
       const user = await storage.getUserByEmail(email);
-      if (!user) {
-        // Don't reveal if user exists
-        return res.json({ success: true, message: "If the email exists, a reset link has been sent" });
+
+      if (user) {
+        // Generate reset token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+        await storage.setPasswordResetToken(user.id, resetToken, resetTokenExpiry);
+
+        // Send reset email (don't await to avoid timing differences)
+        sendPasswordResetEmail(email, resetToken).catch((err) => {
+          console.error("Failed to send password reset email:", err);
+        });
       }
 
-      // Generate reset token
-      const resetToken = crypto.randomBytes(32).toString('hex');
-      const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      // Add constant-time delay to prevent timing attacks
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, MINIMUM_RESPONSE_TIME - elapsed);
 
-      await storage.setPasswordResetToken(user.id, resetToken, resetTokenExpiry);
+      await new Promise(resolve => setTimeout(resolve, remainingDelay));
 
-      // Send reset email
-      await sendPasswordResetEmail(email, resetToken);
-
+      // Always return the same message regardless of whether user exists
       res.json({ success: true, message: "If the email exists, a reset link has been sent" });
     } catch (error: any) {
       console.error("Password reset request error:", error);
+
+      // Ensure minimum response time even on error
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, MINIMUM_RESPONSE_TIME - elapsed);
+      await new Promise(resolve => setTimeout(resolve, remainingDelay));
+
       res.status(500).json({ error: "Failed to process password reset request" });
     }
   });
@@ -374,17 +409,31 @@ export async function registerLegacyRoutes(
 
       const userId = (req as any).userId;
 
-      // Check user credits
-      const user = await storage.getUser(userId);
-      if (!user || user.creditsRemaining <= 0) {
+      // Atomically check and deduct credit in one operation to prevent race conditions
+      const userAfterDeduction = await storage.deductCreditAtomic(userId);
+      if (!userAfterDeduction) {
         return res.status(403).json({ error: "No credits remaining" });
       }
 
-      // Parse file
-      const originalText = await parseFile(req.file.buffer, req.file.mimetype);
+      // Parse file with safer handling
+      let originalText: string | undefined;
+      try {
+        originalText = await parseFile(req.file.buffer, req.file.mimetype);
+      } catch (err: any) {
+        console.error("File parse error:", err);
+        // Refund the credit on parse failure
+        await storage.updateUserCredits(userId, userAfterDeduction.creditsRemaining + 1);
+        return res
+          .status(400)
+          .json({ error: "We couldn't read that file. Please upload a PDF, DOCX, or TXT under 10MB." });
+      }
 
       if (!originalText || originalText.length < 100) {
-        return res.status(400).json({ error: "Resume content is too short or could not be parsed" });
+        // Refund the credit on validation failure
+        await storage.updateUserCredits(userId, userAfterDeduction.creditsRemaining + 1);
+        return res
+          .status(400)
+          .json({ error: "Resume content is too short or could not be parsed. Please try another file." });
       }
 
       // Create resume record
@@ -406,15 +455,15 @@ export async function registerLegacyRoutes(
             issues: result.issues,
             status: "completed",
           });
-
-          // Deduct credit
-          await storage.updateUserCredits(userId, user.creditsRemaining - 1);
+          // Credit already deducted atomically above
         })
         .catch(async (error) => {
           console.error("Optimization error:", error);
           await storage.updateResume(resume.id, {
             status: "failed",
           });
+          // Refund credit on optimization failure
+          await storage.updateUserCredits(userId, userAfterDeduction.creditsRemaining + 1);
         });
 
       res.json({ resumeId: resume.id, status: "processing" });
@@ -640,46 +689,46 @@ export async function registerLegacyRoutes(
       return res.status(400).json({ message: "Stripe signature required" });
     }
 
-    // If Stripe is configured, verify and process the event
-    if (stripe && env.STRIPE_WEBHOOK_SECRET) {
-      try {
-        const event = stripe.webhooks.constructEvent(
-          req.rawBody as Buffer,
-          sig,
-          env.STRIPE_WEBHOOK_SECRET,
-        );
-
-        if (event.type === "checkout.session.completed") {
-          const session = event.data.object as Stripe.Checkout.Session;
-          const { userId, plan: planMetadata } = (session.metadata || {}) as {
-            userId: string;
-            plan: User["plan"];
-          };
-
-          if (session.payment_status === "paid" && userId && planMetadata) {
-            const credits: Record<User["plan"], number> = {
-              free: 0,
-              admin: 9999,
-              basic: 1,
-              pro: 3,
-              premium: 999,
-            };
-
-            const plan = planMetadata || "basic";
-            await storage.updateUserPlan(userId, plan);
-            await storage.updateUserCredits(userId, credits[plan] ?? 0);
-          }
-        }
-
-        return res.json({ received: true });
-      } catch (error: any) {
-        console.error("Webhook error:", error);
-        return res.status(400).json({ message: `Webhook Error: ${error.message}` });
-      }
+    // Always require valid Stripe configuration and signature verification
+    if (!stripe || !env.STRIPE_WEBHOOK_SECRET) {
+      console.error("Stripe webhook received but Stripe is not properly configured");
+      return res.status(503).json({ message: "Payment system not configured" });
     }
 
-    // If Stripe is not configured, acknowledge the webhook for testing
-    return res.json({ received: true });
+    try {
+      const event = stripe.webhooks.constructEvent(
+        req.rawBody as Buffer,
+        sig,
+        env.STRIPE_WEBHOOK_SECRET,
+      );
+
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const { userId, plan: planMetadata } = (session.metadata || {}) as {
+          userId: string;
+          plan: User["plan"];
+        };
+
+        if (session.payment_status === "paid" && userId && planMetadata) {
+          const credits: Record<User["plan"], number> = {
+            free: 0,
+            admin: 9999,
+            basic: 1,
+            pro: 3,
+            premium: 999,
+          };
+
+          const plan = planMetadata || "basic";
+          await storage.updateUserPlan(userId, plan);
+          await storage.updateUserCredits(userId, credits[plan] ?? 0);
+        }
+      }
+
+      return res.json({ received: true });
+    } catch (error: any) {
+      console.error("Webhook error:", error);
+      return res.status(400).json({ message: `Webhook Error: ${error.message}` });
+    }
   });
 
   app.get("/api/payments/history", requireAuth, async (req, res) => {
