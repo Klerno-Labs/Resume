@@ -63,10 +63,18 @@ class ApiClient {
     });
   }
 
-  private toErrorMessage(error: any, fallback: string) {
-    if (error?.message) return error.message;
-    if (error?.error) return error.error;
-    if (typeof error === "string") return error;
+  private toErrorMessage(error: unknown, fallback: string): string {
+    if (error && typeof error === "object") {
+      if ("message" in error && typeof error.message === "string") {
+        return error.message;
+      }
+      if ("error" in error && typeof error.error === "string") {
+        return error.error;
+      }
+    }
+    if (typeof error === "string") {
+      return error;
+    }
     return fallback;
   }
 

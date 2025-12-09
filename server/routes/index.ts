@@ -7,10 +7,10 @@ import subscriptionRoutes from "./subscription.routes";
 import stripeWebhookRoutes from "../webhooks/stripe";
 import analyticsRoutes from "./analytics.routes";
 
-export async function registerRoutes(
+export function registerRoutes(
   httpServer: Server,
   app: Express,
-): Promise<Server> {
+): Server {
   // Register webhooks first (before body parser and rate limiter)
   app.use("/api/webhooks", stripeWebhookRoutes);
 

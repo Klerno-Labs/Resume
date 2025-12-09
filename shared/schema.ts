@@ -106,7 +106,7 @@ export const resumes = pgTable(
     issues: jsonb("issues").$type<
       Array<{ type: string; message: string; severity: string }>
     >(),
-    analysis: jsonb("analysis").$type<Record<string, any>>(),
+    analysis: jsonb("analysis").$type<Record<string, unknown>>(),
     status: resumeStatusEnum("status").notNull().default("pending"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -202,7 +202,7 @@ export const subscriptions = pgTable(
     cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
     trialStart: timestamp("trial_start"),
     trialEnd: timestamp("trial_end"),
-    metadata: jsonb("metadata").$type<Record<string, any>>(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -224,7 +224,7 @@ export const usageRecords = pgTable(
     }),
     action: text("action").notNull(),
     creditsUsed: integer("credits_used").notNull().default(1),
-    metadata: jsonb("metadata").$type<Record<string, any>>(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => ({
@@ -328,7 +328,7 @@ export const analyticsEvents = pgTable(
     userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
     sessionId: text("session_id").notNull(),
     event: text("event").notNull(),
-    properties: jsonb("properties").$type<Record<string, any>>(),
+    properties: jsonb("properties").$type<Record<string, unknown>>(),
     page: text("page"),
     referrer: text("referrer"),
     userAgent: text("user_agent"),

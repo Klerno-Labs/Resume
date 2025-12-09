@@ -59,7 +59,7 @@ function parseResumeText(text: string): ParsedResume {
   return { name, title, contact, sections };
 }
 
-export async function exportResumeToPDF(resumeData: ResumeData): Promise<void> {
+export function exportResumeToPDF(resumeData: ResumeData): void {
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',

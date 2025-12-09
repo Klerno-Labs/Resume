@@ -68,7 +68,7 @@ export class PostgresStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const result = await db.insert(users).values(insertUser).returning();
-    const [user] = result as User[];
+    const [user] = result;
     return user;
   }
 
@@ -135,7 +135,7 @@ export class PostgresStorage implements IStorage {
 
   async createResume(insertResume: InsertResume): Promise<Resume> {
     const result = await db.insert(resumes).values(insertResume).returning();
-    const [resume] = result as Resume[];
+    const [resume] = result;
     return resume;
   }
 
@@ -162,7 +162,7 @@ export class PostgresStorage implements IStorage {
 
   async createCoverLetter(insertCoverLetter: InsertCoverLetter): Promise<CoverLetter> {
     const result = await db.insert(coverLetters).values(insertCoverLetter).returning();
-    const [coverLetter] = result as CoverLetter[];
+    const [coverLetter] = result;
     return coverLetter;
   }
 
@@ -179,7 +179,7 @@ export class PostgresStorage implements IStorage {
 
   async createPayment(insertPayment: InsertPayment): Promise<Payment> {
     const result = await db.insert(payments).values(insertPayment).returning();
-    const [payment] = result as Payment[];
+    const [payment] = result;
     return payment;
   }
 

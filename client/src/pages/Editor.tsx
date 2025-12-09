@@ -109,7 +109,7 @@ export default function Editor() {
           <Button
             size="sm"
             className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
-            onClick={async () => {
+            onClick={() => {
               try {
                 toast({
                   title: "Exporting PDF...",
@@ -120,7 +120,7 @@ export default function Editor() {
                   triggerUpgrade("watermark_notice");
                 }
 
-                await exportResumeToPDF({
+                exportResumeToPDF({
                   improvedText: resume.improvedText || resume.originalText,
                   fileName: resume.fileName,
                   atsScore: resume.atsScore,

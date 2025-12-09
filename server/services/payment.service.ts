@@ -48,7 +48,7 @@ export class PaymentService {
       await db.update(users).set({ stripeCustomerId: customerId }).where(eq(users.id, userId));
     }
 
-    const isFirstPurchase = (user as any).lifetimeValue === 0;
+    const isFirstPurchase = (user).lifetimeValue === 0;
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -192,16 +192,16 @@ export class PaymentService {
     switch (event.type) {
       case "customer.subscription.created":
       case "customer.subscription.updated":
-        await this.handleSubscriptionUpdate(event.data.object as Stripe.Subscription);
+        await this.handleSubscriptionUpdate(event.data.object);
         break;
       case "customer.subscription.deleted":
-        await this.handleSubscriptionCanceled(event.data.object as Stripe.Subscription);
+        await this.handleSubscriptionCanceled(event.data.object);
         break;
       case "invoice.payment_succeeded":
-        await this.handleInvoicePaid(event.data.object as Stripe.Invoice);
+        await this.handleInvoicePaid(event.data.object);
         break;
       case "invoice.payment_failed":
-        await this.handlePaymentFailed(event.data.object as Stripe.Invoice);
+        this.handlePaymentFailed(event.data.object);
         break;
       default:
         console.log(`Unhandled event type: ${event.type}`);
@@ -429,7 +429,7 @@ export class PaymentService {
     }
   }
 
-  private async handlePaymentFailed(invoice: Stripe.Invoice) {
+  private handlePaymentFailed(invoice: Stripe.Invoice) {
     console.log("Payment failed for invoice:", invoice.id);
   }
 }

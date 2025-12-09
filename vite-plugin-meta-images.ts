@@ -71,8 +71,9 @@ function getDeploymentUrl(): string | null {
   return null;
 }
 
-function log(...args: any[]): void {
+function log(...args: unknown[]): void {
   if (process.env.NODE_ENV === 'production') {
+    // eslint-disable-next-line no-console
     console.log(...args);
   }
 }

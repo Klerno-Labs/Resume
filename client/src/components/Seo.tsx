@@ -20,7 +20,7 @@ export const Seo: React.FC<MetaProps> = ({ title, description, canonical, ogImag
       md.setAttribute('content', description);
     }
     if (canonical) {
-      let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+      let link = document.querySelector('link[rel="canonical"]');
       if (!link) {
         link = document.createElement('link');
         link.setAttribute('rel', 'canonical');
@@ -29,7 +29,7 @@ export const Seo: React.FC<MetaProps> = ({ title, description, canonical, ogImag
       link.href = canonical;
     }
     if (ogImage) {
-      let og = document.querySelector('meta[property="og:image"]') as HTMLMetaElement | null;
+      let og = document.querySelector('meta[property="og:image"]');
       if (!og) {
         og = document.createElement('meta');
         og.setAttribute('property', 'og:image');

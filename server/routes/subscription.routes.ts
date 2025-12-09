@@ -18,7 +18,7 @@ router.post("/checkout", requireAuth, async (req, res) => {
     const session = await paymentService.createSubscriptionCheckout(
       (req as any).userId,
       planId,
-      { billingInterval: (req.body as any).billingInterval },
+      { billingInterval: (req.body).billingInterval },
     );
     res.json({ sessionUrl: session.url });
   } catch (error) {

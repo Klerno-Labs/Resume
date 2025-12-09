@@ -11,8 +11,10 @@ router.post("/stripe", async (req, res, next) => {
       return res.status(400).json({ message: "Stripe signature required" });
     }
 
-    const rawBody = (req as any).rawBody as Buffer;
-    const result = await paymentService.handleWebhook(rawBody, signature);
+    if (!req.rawBody || !(req.rawBody instanceof Buffer)) {
+      return res.status(400).json({ message: "Invalid request body" });
+    }
+    const result = await paymentService.handleWebhook(req.rawBody, signature);
     res.json(result);
   } catch (error) {
     next(error);

@@ -51,10 +51,10 @@ if (env.STRIPE_SECRET_KEY && !isTestEnv) {
   });
 }
 
-export async function registerLegacyRoutes(
+export function registerLegacyRoutes(
   httpServer: Server,
   app: Express
-): Promise<Server> {
+): Server {
   const authService = new AuthService();
   const referralService = new ReferralService();
   const emailCampaignService = new EmailCampaignService();
@@ -712,7 +712,7 @@ export async function registerLegacyRoutes(
       );
 
       if (event.type === "checkout.session.completed") {
-        const session = event.data.object as Stripe.Checkout.Session;
+        const session = event.data.object;
         const { userId, plan: planMetadata } = (session.metadata || {}) as {
           userId: string;
           plan: User["plan"];

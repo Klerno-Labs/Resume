@@ -126,7 +126,7 @@ app.use((req, res, next) => {
 const isTestEnv = process.env.NODE_ENV === "test";
 
 export const appReady = (async () => {
-  await registerRoutes(httpServer, app);
+  registerRoutes(httpServer, app);
 
   // Sentry error handler (must be before other error handlers)
   if (env.SENTRY_DSN) {
