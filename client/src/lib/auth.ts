@@ -31,7 +31,7 @@ export const useAuth = create<AuthState>()(
         try {
           const { user } = await api.getCurrentUser();
           set({ user, isLoading: false });
-        } catch (error) {
+        } catch (_error) {
           set({ user: null, isLoading: false });
         }
       },
@@ -53,5 +53,5 @@ export const useAuth = create<AuthState>()(
 
 // Restore session on app load
 if (typeof window !== 'undefined') {
-  useAuth.getState().restoreSession();
+  void useAuth.getState().restoreSession();
 }

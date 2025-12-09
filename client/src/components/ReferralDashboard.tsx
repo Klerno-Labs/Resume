@@ -20,7 +20,7 @@ export function ReferralDashboard() {
   const referralLink = `https://resumerepairer.com/?ref=${referralCode}`;
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(referralLink);
+    void navigator.clipboard.writeText(referralLink);
     setCopied(true);
     toast({ title: "Copied!", description: "Referral link copied to clipboard" });
     setTimeout(() => setCopied(false), 2000);

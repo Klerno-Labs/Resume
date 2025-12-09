@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, ArrowRight, Mail } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
 import { emailSchema, passwordSchema } from "@shared/validators";
 
 import { Button } from "@/components/ui/button";

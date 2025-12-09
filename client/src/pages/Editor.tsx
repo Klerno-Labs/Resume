@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Download, RefreshCw, Wand2, Check, AlertTriangle, FileText } from "lucide-react";
+import { ArrowLeft, Download, RefreshCw, Wand2, AlertTriangle } from "lucide-react";
 import { AtsScore } from "@/components/AtsScore";
 import { ComparisonView } from "@/components/ComparisonView";
 import { CoverLetterDialog } from "@/components/CoverLetterDialog";
@@ -49,7 +49,7 @@ export default function Editor() {
       }
     };
 
-    fetchResume();
+    void fetchResume();
   }, [navigate]);
 
   const handleOptimize = () => {
@@ -131,7 +131,7 @@ export default function Editor() {
                   title: "Success!",
                   description: "Your resume has been downloaded.",
                 });
-              } catch (error) {
+              } catch (_error) {
                 toast({
                   title: "Export Failed",
                   description: "Failed to export PDF. Please try again.",

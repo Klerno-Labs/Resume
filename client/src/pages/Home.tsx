@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ArrowRight, CheckCircle2, Zap, Award, FileText, Download, Wand2, LogOut, User } from "lucide-react";
+import { CheckCircle2, Zap, Award, LogOut, User } from "lucide-react";
 import { FileUpload } from "@/components/FileUpload";
 import { PricingModal } from "@/components/PricingModal";
 import { useAuth } from "@/lib/auth";
@@ -25,14 +25,14 @@ export default function Home() {
             setLoadingResumeId(null);
             break;
           }
-        } catch (err) {
+        } catch (_err) {
           // ignore transient errors
         }
         await new Promise((res) => setTimeout(res, 1500));
       }
     }
 
-    if (loadingResumeId) pollResume(loadingResumeId);
+    if (loadingResumeId) void pollResume(loadingResumeId);
     return () => { mounted = false; };
   }, [loadingResumeId]);
 

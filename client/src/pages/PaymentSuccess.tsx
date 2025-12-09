@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, Link } from "wouter";
+import { useLocation } from "wouter";
 import { CheckCircle2, Loader2, XCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
@@ -39,7 +39,7 @@ export default function PaymentSuccess() {
       }
     };
 
-    verifyPayment();
+    void verifyPayment();
   }, [refreshUser]);
 
   return (
