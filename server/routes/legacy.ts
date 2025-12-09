@@ -469,10 +469,19 @@ export async function registerLegacyRoutes(
       res.json({ resumeId: resume.id, status: "processing" });
     } catch (error: any) {
       console.error("Upload error:", error);
+      console.error("Error stack:", error.stack);
+
+      // Provide detailed error information
       if (error.message.includes('Invalid file type')) {
         return res.status(400).json({ error: error.message });
       }
-      res.status(500).json({ error: error.message || "Failed to upload file" });
+
+      // Database or other errors
+      const errorMessage = error.message || "Failed to upload file";
+      res.status(500).json({
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   });
 

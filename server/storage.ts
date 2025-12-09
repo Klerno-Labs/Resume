@@ -29,6 +29,7 @@ export interface IStorage {
   verifyUserEmail(userId: string): Promise<void>;
   setPasswordResetToken(userId: string, token: string, expiry: Date): Promise<void>;
   updatePassword(userId: string, passwordHash: string): Promise<void>;
+  deductCreditAtomic(userId: string): Promise<User | null>;
 
   // Resume operations
   getResume(id: string): Promise<Resume | undefined>;
