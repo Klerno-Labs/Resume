@@ -90,7 +90,7 @@ export function FileUpload({ onUpload }: FileUploadProps) {
           type="file"
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
           onChange={handleFileChange}
-          accept=".pdf,.docx,.txt"
+          accept=".pdf,.docx,.doc,.txt"
           data-testid="input-file-upload"
         />
 
@@ -111,7 +111,7 @@ export function FileUpload({ onUpload }: FileUploadProps) {
                   Drop your resume here
                 </h3>
                 <p className="text-muted-foreground mt-2 max-w-xs">
-                  Support for PDF, DOCX, and TXT files. We'll analyze it instantly.
+                  Support for PDF, DOCX, DOC, and TXT files. We'll analyze it instantly.
                 </p>
                 <div className="mt-8">
                   <span className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-primary bg-primary/10 rounded-full hover:bg-primary/20 transition-colors">

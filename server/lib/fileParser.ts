@@ -19,6 +19,11 @@ export async function parseFile(buffer: Buffer, mimetype: string): Promise<strin
       return result.value;
     }
 
+    // Legacy .doc files are not parsed by the server. Advise users to upload DOCX or PDF.
+    if (mimetype === "application/msword") {
+      throw new Error("Legacy .doc files are not supported. Please convert to .docx or PDF before uploading.");
+    }
+
     // Plain text
     if (mimetype === "text/plain") {
       return buffer.toString("utf-8");
