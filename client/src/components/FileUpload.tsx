@@ -17,41 +17,67 @@ export function FileUpload({ onUpload }: FileUploadProps) {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
+  const validateFile = useCallback((file: File): { valid: boolean; error?: string } => {
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.doc', '.txt'];
+    const ALLOWED_MIME_TYPES = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+      'application/vnd.ms-word',
+      'text/plain',
+      'application/zip',
+      'application/x-zip',
+      'application/octet-stream'
+    ];
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const droppedFile = e.dataTransfer.files[0];
-      await processFile(droppedFile);
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        valid: false,
+        error: `File size exceeds 10MB limit (${(file.size / 1024 / 1024).toFixed(2)}MB)`
+      };
     }
+
+    // Check file extension
+    const fileName = file.name.toLowerCase();
+    const hasValidExtension = ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext));
+
+    if (!hasValidExtension) {
+      return {
+        valid: false,
+        error: `Invalid file type. Please upload PDF, DOCX, DOC, or TXT files.`
+      };
+    }
+
+    // Check MIME type (if available)
+    if (file.type && !ALLOWED_MIME_TYPES.includes(file.type)) {
+      // Extension is valid but MIME type doesn't match - could be a renamed file
+      console.warn(`MIME type mismatch: ${file.type} for ${fileName}`);
+    }
+
+    return { valid: true };
   }, []);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      await processFile(selectedFile);
-    }
-  };
-
-  const processFile = async (uploadedFile: File) => {
+  const processFile = useCallback(async (uploadedFile: File) => {
     if (!user) {
       setLocation("/auth");
       return;
     }
 
+    // Validate file before upload
+    const validation = validateFile(uploadedFile);
+    if (!validation.valid) {
+      toast({
+        title: "Invalid file",
+        description: validation.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setFile(uploadedFile);
-    
+
     try {
       const result = await api.uploadResume(uploadedFile);
       if (onUpload) onUpload(uploadedFile, result.resumeId);
@@ -68,7 +94,34 @@ export function FileUpload({ onUpload }: FileUploadProps) {
       });
       setFile(null);
     }
-  };
+  }, [user, setLocation, validateFile, toast, onUpload]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const droppedFile = e.dataTransfer.files[0];
+      void processFile(droppedFile);
+    }
+  }, [processFile]);
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      void processFile(selectedFile);
+    }
+  }, [processFile]);
 
   return (
     <div className="w-full max-w-xl mx-auto">
@@ -84,13 +137,13 @@ export function FileUpload({ onUpload }: FileUploadProps) {
         `}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        onDrop={(e) => void handleDrop(e)}
+        onDrop={handleDrop}
       >
         <input
           type="file"
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
-          onChange={(e) => void handleFileChange(e)}
-          accept=".pdf,.docx,.doc,.txt"
+          onChange={handleFileChange}
+          accept=".pdf,.docx,.doc,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain"
           data-testid="input-file-upload"
         />
 

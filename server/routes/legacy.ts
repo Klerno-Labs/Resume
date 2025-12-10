@@ -32,12 +32,28 @@ const upload = multer({
     const allowedMimes = [
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain'
+      'application/msword',
+      'application/vnd.ms-word',
+      'text/plain',
+      'application/zip',
+      'application/x-zip',
+      'application/x-zip-compressed',
+      'application/octet-stream'
     ];
+
+    const allowedExtensions = ['.pdf', '.docx', '.doc', '.txt'];
+    const fileName = file.originalname.toLowerCase();
+    const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+
+    // Check MIME type first
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
+    } else if (hasValidExtension) {
+      // Fallback to extension-based validation (some browsers send incorrect MIME types for DOCX)
+      console.log(`[FileFilter] Accepting file with MIME type fallback: ${file.originalname} (MIME: ${file.mimetype})`);
+      cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only PDF, DOCX, and TXT files are allowed.'));
+      cb(new Error(`Invalid file type. Only PDF, DOCX, DOC, and TXT files are allowed. Received: ${file.mimetype}`));
     }
   }
 });
@@ -418,14 +434,15 @@ export function registerLegacyRoutes(
       // Parse file with safer handling
       let originalText: string | undefined;
       try {
-        originalText = await parseFile(req.file.buffer, req.file.mimetype);
-      } catch (err: any) {
-        console.error("File parse error:", err);
+        originalText = await parseFile(req.file.buffer, req.file.mimetype, req.file.originalname);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Unknown error";
+        console.error("File parse error:", errorMessage);
         // Refund the credit on parse failure
         await storage.updateUserCredits(userId, userAfterDeduction.creditsRemaining + 1);
         return res
           .status(400)
-          .json({ error: "We couldn't read that file. Please upload a PDF, DOCX, or TXT under 10MB." });
+          .json({ error: errorMessage });
       }
 
       if (!originalText || originalText.length < 100) {

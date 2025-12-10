@@ -3,34 +3,76 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const pdfParse = require("pdf-parse");
 
-export async function parseFile(buffer: Buffer, mimetype: string): Promise<string> {
+function cleanExtractedText(text: string): string {
+  return text
+    .replace(/\r\n/g, '\n') // Normalize line endings
+    .replace(/\n{3,}/g, '\n\n') // Remove excessive blank lines
+    .replace(/[ \t]+/g, ' ') // Normalize whitespace
+    .trim();
+}
+
+function validateExtractedText(text: string, filename: string): void {
+  const MIN_TEXT_LENGTH = 50;
+
+  if (!text || text.trim().length === 0) {
+    throw new Error(`File appears to be empty or corrupted: ${filename}`);
+  }
+
+  if (text.trim().length < MIN_TEXT_LENGTH) {
+    throw new Error(`File contains insufficient text content (minimum ${MIN_TEXT_LENGTH} characters required): ${filename}`);
+  }
+}
+
+export async function parseFile(buffer: Buffer, mimetype: string, filename: string = 'unknown'): Promise<string> {
   try {
+    let rawText = '';
+
     // PDF parsing
     if (mimetype === "application/pdf") {
       const data = await pdfParse(buffer);
-      return data.text;
+      rawText = data.text;
     }
-
-    // DOCX parsing
-    if (
-      mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    // DOCX parsing - handle multiple MIME types
+    else if (
+      mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      mimetype === "application/zip" ||
+      mimetype === "application/x-zip" ||
+      mimetype === "application/x-zip-compressed" ||
+      mimetype === "application/octet-stream"
     ) {
-      const result = await mammoth.extractRawText({ buffer });
-      return result.value;
-    }
+      try {
+        const result = await mammoth.extractRawText({ buffer });
 
-    // Legacy .doc files are not parsed by the server. Advise users to upload DOCX or PDF.
-    if (mimetype === "application/msword") {
+        if (result.messages.length > 0) {
+          console.log(`[FileParser] Mammoth warnings for ${filename}:`, result.messages);
+        }
+
+        rawText = result.value;
+      } catch (mammothError) {
+        throw new Error(`Failed to parse DOCX file. The file may be corrupted or in an unsupported format.`);
+      }
+    }
+    // Legacy .doc files are not parsed by the server
+    else if (mimetype === "application/msword" || mimetype === "application/vnd.ms-word") {
       throw new Error("Legacy .doc files are not supported. Please convert to .docx or PDF before uploading.");
     }
-
     // Plain text
-    if (mimetype === "text/plain") {
-      return buffer.toString("utf-8");
+    else if (mimetype === "text/plain") {
+      rawText = buffer.toString("utf-8");
+    }
+    else {
+      throw new Error(`Unsupported file type: ${mimetype}. Please upload PDF, DOCX, or TXT files.`);
     }
 
-    throw new Error("Unsupported file type. Please upload PDF, DOCX, or TXT files.");
-  } catch (error: any) {
-    throw new Error(`Failed to parse file: ${error.message}`);
+    // Clean and validate the extracted text
+    const cleanedText = cleanExtractedText(rawText);
+    validateExtractedText(cleanedText, filename);
+
+    return cleanedText;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(`Failed to parse file: ${String(error)}`);
   }
 }
