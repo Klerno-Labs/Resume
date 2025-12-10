@@ -98,8 +98,6 @@ export const resumes = pgTable(
     id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
     userId: varchar("user_id").references(() => users.id),
     fileName: text("file_name").notNull(),
-    contentHash: text("content_hash"), // SHA-256 of originalText for duplicate detection (optional for backwards compatibility)
-    originalFileName: text("original_file_name"), // Preserve original filename (optional for backwards compatibility)
     originalText: text("original_text").notNull(),
     improvedText: text("improved_text"),
     atsScore: integer("ats_score"),
@@ -118,7 +116,6 @@ export const resumes = pgTable(
     statusIdx: index("resumes_status_idx").on(table.status),
     createdAtIdx: index("resumes_created_at_idx").on(table.createdAt),
     userStatusIdx: index("resumes_user_status_idx").on(table.userId, table.status),
-    userContentHashIdx: index("resumes_user_content_hash_idx").on(table.userId, table.contentHash), // Fast duplicate detection
   }),
 );
 

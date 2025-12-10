@@ -85,5 +85,24 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script nomodule>
+      document.addEventListener('DOMContentLoaded', () => {
+        const root = document.getElementById('root');
+        if (root && !root.hasChildNodes()) {
+          const warning = document.createElement('div');
+          warning.setAttribute(
+            'style',
+            'min-height:100vh;font-family:sans-serif;background:#111;color:#fefefe;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;',
+          );
+          warning.innerHTML = `
+            <h1 style="font-size:2rem;margin-bottom:0.5rem;">RewriteMe requires a modern browser</h1>
+            <p style="max-width:30rem;margin:0 auto;font-size:1rem;">
+              Please upgrade to the latest version of Chrome, Edge, Safari, or Firefox for the best experience.
+            </p>
+          `;
+          root.appendChild(warning);
+        }
+      });
+    </script>
   </body>
 </html>

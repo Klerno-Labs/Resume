@@ -8,10 +8,55 @@ import { api, type Resume } from "@/lib/api";
 import BeforeAfter from "@/components/BeforeAfter";
 import heroBg from "@assets/generated_images/abstract_minimalist_tech_background_with_soft_geometric_shapes_in_white_and_light_gray..png";
 
+const faqItems = [
+  {
+    q: "What is an ATS resume checker?",
+    a: "An ATS (Applicant Tracking System) resume checker analyzes your resume to ensure it can be properly read by the automated systems that 98% of Fortune 500 companies use to screen applicants. Our AI checks formatting, keywords, and structure to maximize your chances of passing ATS screening.",
+  },
+  {
+    q: "How does AI resume optimization work?",
+    a: "Our AI analyzes your resume content and rewrites weak bullets using strong action verbs and quantifiable achievements. It identifies missing keywords, fixes formatting issues, and restructures your content to highlight your impact and skills that match job requirements.",
+  },
+  {
+    q: "Is the ATS checker really free?",
+    a: "Yes! Every new user gets 1 free credit to test our resume optimizer. You can upload your resume, get a complete ATS compatibility score, and see detailed feedback on what to improve - completely free.",
+  },
+  {
+    q: "What file formats do you support?",
+    a: "We support PDF, DOCX (Microsoft Word), and plain text. You can also paste your resume text directly into our editor. After optimization, you can download your improved resume in both PDF and DOCX formats.",
+  },
+  {
+    q: "How long does resume optimization take?",
+    a: "Our AI processes your resume in 30-60 seconds. You'll get instant ATS scoring, keyword analysis, and a completely rewritten version optimized for applicant tracking systems and hiring managers.",
+  },
+  {
+    q: "Will this work for my industry?",
+    a: "Yes! Our AI is trained on resumes across all industries - tech, healthcare, finance, marketing, engineering, and more. It adapts its recommendations based on your field and the specific terminology used in your industry.",
+  },
+  {
+    q: "What makes your resume optimizer better than others?",
+    a: "Unlike basic ATS checkers, we don't just scan - we rewrite. Our GPT-4 powered AI completely transforms weak content into compelling, achievement-focused bullets. Plus, we provide actionable feedback on formatting, keywords, and specific improvements.",
+  },
+  {
+    q: "Can I use this for multiple job applications?",
+    a: "Absolutely! With our Pro and Premium plans, you can optimize your resume multiple times. We recommend tailoring your resume for each application by adjusting keywords and achievements to match specific job descriptions.",
+  },
+] as const;
+
+const faqSchemaEntities = faqItems.map((faq) => ({
+  "@type": "Question",
+  name: faq.q,
+  acceptedAnswer: {
+    "@type": "Answer",
+    text: faq.a,
+  },
+}));
+
 export default function Home() {
   const { user, logout } = useAuth();
   const [resume, setResume] = useState<Resume | null>(null);
   const [loadingResumeId, setLoadingResumeId] = useState<string | null>(null);
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -284,122 +329,48 @@ export default function Home() {
             <p className="text-muted-foreground">Everything you need to know about optimizing your resume</p>
           </div>
 
-          <div className="space-y-4">
-            {[
-              {
-                q: "What is an ATS resume checker?",
-                a: "An ATS (Applicant Tracking System) resume checker analyzes your resume to ensure it can be properly read by the automated systems that 98% of Fortune 500 companies use to screen applicants. Our AI checks formatting, keywords, and structure to maximize your chances of passing ATS screening."
-              },
-              {
-                q: "How does AI resume optimization work?",
-                a: "Our AI analyzes your resume content and rewrites weak bullets using strong action verbs and quantifiable achievements. It identifies missing keywords, fixes formatting issues, and restructures your content to highlight your impact and skills that match job requirements."
-              },
-              {
-                q: "Is the ATS checker really free?",
-                a: "Yes! Every new user gets 1 free credit to test our resume optimizer. You can upload your resume, get a complete ATS compatibility score, and see detailed feedback on what to improve - completely free."
-              },
-              {
-                q: "What file formats do you support?",
-                a: "We support PDF, DOCX (Microsoft Word), and plain text. You can also paste your resume text directly into our editor. After optimization, you can download your improved resume in both PDF and DOCX formats."
-              },
-              {
-                q: "How long does resume optimization take?",
-                a: "Our AI processes your resume in 30-60 seconds. You'll get instant ATS scoring, keyword analysis, and a completely rewritten version optimized for applicant tracking systems and hiring managers."
-              },
-              {
-                q: "Will this work for my industry?",
-                a: "Yes! Our AI is trained on resumes across all industries - tech, healthcare, finance, marketing, engineering, and more. It adapts its recommendations based on your field and the specific terminology used in your industry."
-              },
-              {
-                q: "What makes your resume optimizer better than others?",
-                a: "Unlike basic ATS checkers, we don't just scan - we rewrite. Our GPT-4 powered AI completely transforms weak content into compelling, achievement-focused bullets. Plus, we provide actionable feedback on formatting, keywords, and specific improvements."
-              },
-              {
-                q: "Can I use this for multiple job applications?",
-                a: "Absolutely! With our Pro and Premium plans, you can optimize your resume multiple times. We recommend tailoring your resume for each application by adjusting keywords and achievements to match specific job descriptions."
-              }
-            ].map((faq, i) => (
-              <details key={i} className="group bg-card border rounded-xl p-6 hover:shadow-md transition-shadow">
-                <summary className="flex justify-between items-center cursor-pointer list-none font-semibold text-lg">
-                  <span>{faq.q}</span>
-                  <span className="text-muted-foreground group-open:rotate-180 transition-transform">▼</span>
-                </summary>
-                <p className="mt-4 text-muted-foreground leading-relaxed">{faq.a}</p>
-              </details>
-            ))}
-          </div>
-
-          {/* Schema.org FAQ Markup */}
-          <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            "mainEntity": [
-              {
-                "@type": "Question",
-                "name": "What is an ATS resume checker?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "An ATS (Applicant Tracking System) resume checker analyzes your resume to ensure it can be properly read by the automated systems that 98% of Fortune 500 companies use to screen applicants. Our AI checks formatting, keywords, and structure to maximize your chances of passing ATS screening."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "How does AI resume optimization work?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Our AI analyzes your resume content and rewrites weak bullets using strong action verbs and quantifiable achievements. It identifies missing keywords, fixes formatting issues, and restructures your content to highlight your impact and skills that match job requirements."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "Is the ATS checker really free?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Yes! Every new user gets 1 free credit to test our resume optimizer. You can upload your resume, get a complete ATS compatibility score, and see detailed feedback on what to improve - completely free."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "What file formats do you support?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "We support PDF, DOCX (Microsoft Word), and plain text. You can also paste your resume text directly into our editor. After optimization, you can download your improved resume in both PDF and DOCX formats."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "How long does resume optimization take?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Our AI processes your resume in 30-60 seconds. You'll get instant ATS scoring, keyword analysis, and a completely rewritten version optimized for applicant tracking systems and hiring managers."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "Will this work for my industry?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Yes! Our AI is trained on resumes across all industries - tech, healthcare, finance, marketing, engineering, and more. It adapts its recommendations based on your field and the specific terminology used in your industry."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "What makes your resume optimizer better than others?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Unlike basic ATS checkers, we don't just scan - we rewrite. Our GPT-4 powered AI completely transforms weak content into compelling, achievement-focused bullets. Plus, we provide actionable feedback on formatting, keywords, and specific improvements."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "Can I use this for multiple job applications?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Absolutely! With our Pro and Premium plans, you can optimize your resume multiple times. We recommend tailoring your resume for each application by adjusting keywords and achievements to match specific job descriptions."
-                }
-              }
-            ]
-          })}} />
+            <div className="space-y-4">
+              {faqItems.map((faq, index) => {
+                const isOpen = activeFaq === index;
+                return (
+                  <div
+                    key={faq.q}
+                    className="bg-card border rounded-xl p-6 hover:shadow-md transition-shadow"
+                  >
+                    <button
+                      type="button"
+                      className="flex w-full justify-between items-center text-left font-semibold text-lg"
+                      aria-expanded={isOpen}
+                      aria-controls={"faq-" + index}
+                      onClick={() => setActiveFaq(isOpen ? null : index)}
+                    >
+                      <span>{faq.q}</span>
+                      <span
+                        className={"text-muted-foreground transition-transform " + (isOpen ? "rotate-90" : "rotate-0")}
+                        aria-hidden="true"
+                      >
+                        &gt;
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <p id={"faq-" + index} className="mt-4 text-muted-foreground leading-relaxed">
+                        {faq.a}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                  "@context": "https://schema.org",
+                  "@type": "FAQPage",
+                  mainEntity: faqSchemaEntities,
+                }),
+              }}
+            />
         </div>
       </section>
 

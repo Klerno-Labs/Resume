@@ -66,6 +66,7 @@ app.use((req, res, next) => {
 
   // Add Permissions-Policy to restrict browser features
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
 
   next();
 });

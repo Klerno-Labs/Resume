@@ -442,39 +442,8 @@ export function registerLegacyRoutes(
         });
       }
 
-      // STEP 3: Optional duplicate detection (graceful degradation)
-      let contentHash: string | undefined;
-      try {
-        const crypto = require('crypto');
-        contentHash = crypto
-          .createHash('sha256')
-          .update(originalText)
-          .digest('hex');
-
-        console.log(`[Upload] User ${userId} uploaded "${req.file.originalname}" (hash: ${contentHash.substring(0, 12)}...)`);
-
-        // STEP 4: Check for existing resume with same content (if method exists)
-        if (storage.getResumeByUserAndHash) {
-          const existingResume = await storage.getResumeByUserAndHash(userId, contentHash);
-
-          if (existingResume) {
-            console.log(`[Duplicate] Resume ${existingResume.id} already exists for user ${userId}`);
-
-            // Return existing resume without processing or charging credits
-            return res.status(200).json({
-              resumeId: existingResume.id,
-              status: existingResume.status,
-              isDuplicate: true,
-              message: "This resume has already been analyzed. Redirecting to existing results.",
-              originalUploadDate: existingResume.createdAt
-            });
-          }
-        }
-      } catch (dupCheckError) {
-        // Duplicate check failed - log but continue with upload
-        console.warn('[Upload] Duplicate detection unavailable, continuing with upload:', dupCheckError);
-        contentHash = undefined;
-      }
+      // STEP 3: Log upload
+      console.log(`[Upload] User ${userId} uploaded "${req.file.originalname}"`);
 
       // STEP 5: New resume - deduct credit atomically
       const userAfterDeduction = await storage.deductCreditAtomic(userId);
@@ -485,21 +454,12 @@ export function registerLegacyRoutes(
 
       console.log(`[Credit] Deducted 1 credit from user ${userId}. Remaining: ${userAfterDeduction.creditsRemaining}`);
 
-      // STEP 6: Create resume record (with optional duplicate detection fields)
-      const resumeData: any = {
+      const resume = await storage.createResume({
         userId,
         fileName: req.file.originalname,
         originalText,
         status: "processing",
-      };
-
-      // Add duplicate detection fields only if they're supported
-      if (contentHash) {
-        resumeData.contentHash = contentHash;
-        resumeData.originalFileName = req.file.originalname;
-      }
-
-      const resume = await storage.createResume(resumeData);
+      });
 
       console.log(`[Resume] Created resume ${resume.id} for user ${userId}`);
 
@@ -529,7 +489,6 @@ export function registerLegacyRoutes(
       res.json({
         resumeId: resume.id,
         status: "processing",
-        isDuplicate: false
       });
 
     } catch (error: unknown) {

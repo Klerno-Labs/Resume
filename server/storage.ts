@@ -34,7 +34,6 @@ export interface IStorage {
   // Resume operations
   getResume(id: string): Promise<Resume | undefined>;
   getResumesByUser(userId: string): Promise<Resume[]>;
-  getResumeByUserAndHash(userId: string, contentHash: string): Promise<Resume | undefined>;
   createResume(resume: InsertResume): Promise<Resume>;
   updateResume(id: string, data: Partial<Resume>): Promise<Resume | undefined>;
 
@@ -132,16 +131,6 @@ export class PostgresStorage implements IStorage {
 
   async getResumesByUser(userId: string): Promise<Resume[]> {
     return await db.select().from(resumes).where(eq(resumes.userId, userId));
-  }
-
-  async getResumeByUserAndHash(userId: string, contentHash: string): Promise<Resume | undefined> {
-    const result = await db
-      .select()
-      .from(resumes)
-      .where(and(eq(resumes.userId, userId), eq(resumes.contentHash, contentHash)))
-      .limit(1);
-    const [resume] = result as Resume[];
-    return resume;
   }
 
   async createResume(insertResume: InsertResume): Promise<Resume> {
