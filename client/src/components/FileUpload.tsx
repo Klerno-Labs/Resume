@@ -162,6 +162,8 @@ export function FileUpload({ onUpload }: FileUploadProps) {
           onChange={handleFileChange}
           accept=".pdf,.docx,.doc,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain"
           data-testid="input-file-upload"
+          aria-label="Upload resume file (PDF, DOCX, DOC, or TXT)"
+          title="Click to select or drag and drop your resume"
         />
 
         <div className="p-12 flex flex-col items-center justify-center text-center space-y-4 min-h-[320px]">

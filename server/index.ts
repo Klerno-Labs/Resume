@@ -59,6 +59,37 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
+// Remove deprecated headers and add additional security headers
+app.use((req, res, next) => {
+  // Remove X-Powered-By to prevent server fingerprinting
+  res.removeHeader('X-Powered-By');
+
+  // Add Permissions-Policy to restrict browser features
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+
+  next();
+});
+
+// Optimal cache strategy for performance
+app.use((req, res, next) => {
+  // API requests - no cache (always fresh data)
+  if (req.path.startsWith('/api/')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  // Static assets with hash/version - cache aggressively
+  else if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+  // HTML and other files - short cache with stale-while-revalidate
+  else {
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+  }
+
+  next();
+});
+
 // Force HTTPS in production
 if (process.env.NODE_ENV === "production") {
   app.use((req, res, next) => {
