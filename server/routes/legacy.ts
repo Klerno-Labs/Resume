@@ -442,29 +442,38 @@ export function registerLegacyRoutes(
         });
       }
 
-      // STEP 3: Generate content hash for duplicate detection
-      const crypto = require('crypto');
-      const contentHash = crypto
-        .createHash('sha256')
-        .update(originalText)
-        .digest('hex');
+      // STEP 3: Optional duplicate detection (graceful degradation)
+      let contentHash: string | undefined;
+      try {
+        const crypto = require('crypto');
+        contentHash = crypto
+          .createHash('sha256')
+          .update(originalText)
+          .digest('hex');
 
-      console.log(`[Upload] User ${userId} uploaded "${req.file.originalname}" (hash: ${contentHash.substring(0, 12)}...)`);
+        console.log(`[Upload] User ${userId} uploaded "${req.file.originalname}" (hash: ${contentHash.substring(0, 12)}...)`);
 
-      // STEP 4: Check for existing resume with same content
-      const existingResume = await storage.getResumeByUserAndHash(userId, contentHash);
+        // STEP 4: Check for existing resume with same content (if method exists)
+        if (storage.getResumeByUserAndHash) {
+          const existingResume = await storage.getResumeByUserAndHash(userId, contentHash);
 
-      if (existingResume) {
-        console.log(`[Duplicate] Resume ${existingResume.id} already exists for user ${userId}`);
+          if (existingResume) {
+            console.log(`[Duplicate] Resume ${existingResume.id} already exists for user ${userId}`);
 
-        // Return existing resume without processing or charging credits
-        return res.status(200).json({
-          resumeId: existingResume.id,
-          status: existingResume.status,
-          isDuplicate: true,
-          message: "This resume has already been analyzed. Redirecting to existing results.",
-          originalUploadDate: existingResume.createdAt
-        });
+            // Return existing resume without processing or charging credits
+            return res.status(200).json({
+              resumeId: existingResume.id,
+              status: existingResume.status,
+              isDuplicate: true,
+              message: "This resume has already been analyzed. Redirecting to existing results.",
+              originalUploadDate: existingResume.createdAt
+            });
+          }
+        }
+      } catch (dupCheckError) {
+        // Duplicate check failed - log but continue with upload
+        console.warn('[Upload] Duplicate detection unavailable, continuing with upload:', dupCheckError);
+        contentHash = undefined;
       }
 
       // STEP 5: New resume - deduct credit atomically
@@ -476,15 +485,21 @@ export function registerLegacyRoutes(
 
       console.log(`[Credit] Deducted 1 credit from user ${userId}. Remaining: ${userAfterDeduction.creditsRemaining}`);
 
-      // STEP 6: Create resume record with content hash
-      const resume = await storage.createResume({
+      // STEP 6: Create resume record (with optional duplicate detection fields)
+      const resumeData: any = {
         userId,
         fileName: req.file.originalname,
-        originalFileName: req.file.originalname,
-        contentHash,
         originalText,
         status: "processing",
-      });
+      };
+
+      // Add duplicate detection fields only if they're supported
+      if (contentHash) {
+        resumeData.contentHash = contentHash;
+        resumeData.originalFileName = req.file.originalname;
+      }
+
+      const resume = await storage.createResume(resumeData);
 
       console.log(`[Resume] Created resume ${resume.id} for user ${userId}`);
 

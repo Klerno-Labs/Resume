@@ -98,8 +98,8 @@ export const resumes = pgTable(
     id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
     userId: varchar("user_id").references(() => users.id),
     fileName: text("file_name").notNull(),
-    contentHash: text("content_hash").notNull(), // SHA-256 of originalText for duplicate detection
-    originalFileName: text("original_file_name").notNull(), // Preserve original filename
+    contentHash: text("content_hash"), // SHA-256 of originalText for duplicate detection (optional for backwards compatibility)
+    originalFileName: text("original_file_name"), // Preserve original filename (optional for backwards compatibility)
     originalText: text("original_text").notNull(),
     improvedText: text("improved_text"),
     atsScore: integer("ats_score"),
