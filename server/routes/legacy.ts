@@ -425,43 +425,70 @@ export function registerLegacyRoutes(
 
       const userId = (req as any).userId;
 
-      // Atomically check and deduct credit in one operation to prevent race conditions
-      const userAfterDeduction = await storage.deductCreditAtomic(userId);
-      if (!userAfterDeduction) {
-        return res.status(403).json({ error: "No credits remaining" });
-      }
-
-      // Parse file with safer handling
+      // STEP 1: Parse file BEFORE deducting credits
       let originalText: string | undefined;
       try {
         originalText = await parseFile(req.file.buffer, req.file.mimetype, req.file.originalname);
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : "Unknown error";
         console.error("File parse error:", errorMessage);
-        // Refund the credit on parse failure
-        await storage.updateUserCredits(userId, userAfterDeduction.creditsRemaining + 1);
-        return res
-          .status(400)
-          .json({ error: errorMessage });
+        return res.status(400).json({ error: errorMessage });
       }
 
+      // STEP 2: Validate parsed content
       if (!originalText || originalText.length < 100) {
-        // Refund the credit on validation failure
-        await storage.updateUserCredits(userId, userAfterDeduction.creditsRemaining + 1);
-        return res
-          .status(400)
-          .json({ error: "Resume content is too short or could not be parsed. Please try another file." });
+        return res.status(400).json({
+          error: "Resume content is too short or could not be parsed. Please try another file."
+        });
       }
 
-      // Create resume record
+      // STEP 3: Generate content hash for duplicate detection
+      const crypto = require('crypto');
+      const contentHash = crypto
+        .createHash('sha256')
+        .update(originalText)
+        .digest('hex');
+
+      console.log(`[Upload] User ${userId} uploaded "${req.file.originalname}" (hash: ${contentHash.substring(0, 12)}...)`);
+
+      // STEP 4: Check for existing resume with same content
+      const existingResume = await storage.getResumeByUserAndHash(userId, contentHash);
+
+      if (existingResume) {
+        console.log(`[Duplicate] Resume ${existingResume.id} already exists for user ${userId}`);
+
+        // Return existing resume without processing or charging credits
+        return res.status(200).json({
+          resumeId: existingResume.id,
+          status: existingResume.status,
+          isDuplicate: true,
+          message: "This resume has already been analyzed. Redirecting to existing results.",
+          originalUploadDate: existingResume.createdAt
+        });
+      }
+
+      // STEP 5: New resume - deduct credit atomically
+      const userAfterDeduction = await storage.deductCreditAtomic(userId);
+
+      if (!userAfterDeduction) {
+        return res.status(403).json({ error: "No credits remaining" });
+      }
+
+      console.log(`[Credit] Deducted 1 credit from user ${userId}. Remaining: ${userAfterDeduction.creditsRemaining}`);
+
+      // STEP 6: Create resume record with content hash
       const resume = await storage.createResume({
         userId,
         fileName: req.file.originalname,
+        originalFileName: req.file.originalname,
+        contentHash,
         originalText,
         status: "processing",
       });
 
-      // Start optimization in background
+      console.log(`[Resume] Created resume ${resume.id} for user ${userId}`);
+
+      // STEP 7: Start optimization in background
       optimizeResume(originalText)
         .then(async (result) => {
           await storage.updateResume(resume.id, {
@@ -472,32 +499,40 @@ export function registerLegacyRoutes(
             issues: result.issues,
             status: "completed",
           });
-          // Credit already deducted atomically above
+          console.log(`[Optimize] Completed optimization for resume ${resume.id}`);
         })
         .catch(async (error) => {
-          console.error("Optimization error:", error);
+          console.error(`[Optimize] Failed for resume ${resume.id}:`, error);
           await storage.updateResume(resume.id, {
             status: "failed",
           });
           // Refund credit on optimization failure
           await storage.updateUserCredits(userId, userAfterDeduction.creditsRemaining + 1);
+          console.log(`[Credit] Refunded 1 credit to user ${userId} due to optimization failure`);
         });
 
-      res.json({ resumeId: resume.id, status: "processing" });
-    } catch (error: any) {
+      res.json({
+        resumeId: resume.id,
+        status: "processing",
+        isDuplicate: false
+      });
+
+    } catch (error: unknown) {
       console.error("Upload error:", error);
-      console.error("Error stack:", error.stack);
+      if (error instanceof Error) {
+        console.error("Error stack:", error.stack);
+      }
 
       // Provide detailed error information
-      if (error.message.includes('Invalid file type')) {
+      if (error instanceof Error && error.message.includes('Invalid file type')) {
         return res.status(400).json({ error: error.message });
       }
 
       // Database or other errors
-      const errorMessage = error.message || "Failed to upload file";
+      const errorMessage = error instanceof Error ? error.message : "Failed to upload file";
       res.status(500).json({
         error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
       });
     }
   });

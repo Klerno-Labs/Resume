@@ -80,6 +80,23 @@ export function FileUpload({ onUpload }: FileUploadProps) {
 
     try {
       const result = await api.uploadResume(uploadedFile);
+
+      // Handle duplicate detection response
+      if (result.isDuplicate) {
+        toast({
+          title: "Resume Already Analyzed",
+          description: "You've uploaded this resume before. Redirecting to your existing analysis...",
+          duration: 3000,
+        });
+
+        // Redirect to existing resume after showing message
+        setTimeout(() => {
+          setLocation(`/editor?resumeId=${result.resumeId}`);
+        }, 1000);
+        return;
+      }
+
+      // Normal flow for new uploads
       if (onUpload) onUpload(uploadedFile, result.resumeId);
 
       // Wait a bit for UI then redirect
