@@ -1,8 +1,14 @@
-import { Crown, TrendingUp, Zap } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Crown, TrendingUp, Zap } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
-type Trigger = "limit_reached" | "premium_feature" | "watermark_notice";
+type Trigger = 'limit_reached' | 'premium_feature' | 'watermark_notice';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -12,38 +18,35 @@ interface UpgradeModalProps {
 }
 
 export function UpgradeModal({ isOpen, onClose, trigger, featureName }: UpgradeModalProps) {
-  const messages: Record<
-    Trigger,
-    { title: string; description: string; benefits: string[] }
-  > = {
+  const messages: Record<Trigger, { title: string; description: string; benefits: string[] }> = {
     limit_reached: {
       title: "You've Hit Your Monthly Limit 🎯",
       description: "You're making great progress! Upgrade to keep optimizing your resume.",
       benefits: [
-        "Unlimited optimizations this month",
-        "No watermarks on exports",
-        "GPT-4o for best results",
-        "Cover letter generator included",
+        'Unlimited optimizations this month',
+        'No watermarks on exports',
+        'GPT-4o for best results',
+        'Cover letter generator included',
       ],
     },
     premium_feature: {
-      title: `${featureName || "This"} is a Premium Feature 👑`,
-      description: "Get access to advanced features that land interviews.",
+      title: `${featureName || 'This'} is a Premium Feature 👑`,
+      description: 'Get access to advanced features that land interviews.',
       benefits: [
-        `Unlock ${featureName || "this feature"} instantly`,
-        "Custom resume templates",
-        "LinkedIn profile optimization",
-        "Priority support (24h response)",
+        `Unlock ${featureName || 'this feature'} instantly`,
+        'Custom resume templates',
+        'LinkedIn profile optimization',
+        'Priority support (24h response)',
       ],
     },
     watermark_notice: {
-      title: "Remove the Watermark 📄",
-      description: "Present a polished, professional resume to employers.",
+      title: 'Remove the Watermark 📄',
+      description: 'Present a polished, professional resume to employers.',
       benefits: [
-        "Clean, professional exports",
-        "Multiple export formats (PDF, DOCX, TXT)",
-        "Premium template designs",
-        "Stand out from other candidates",
+        'Clean, professional exports',
+        'Multiple export formats (PDF, DOCX, TXT)',
+        'Premium template designs',
+        'Stand out from other candidates',
       ],
     },
   };
@@ -77,8 +80,8 @@ export function UpgradeModal({ isOpen, onClose, trigger, featureName }: UpgradeM
               <span className="font-semibold text-sm">Limited Time Offer</span>
             </div>
             <p className="text-xs text-muted-foreground mb-3">
-              Use code <code className="bg-white px-2 py-1 rounded">WELCOME50</code> for 50% off your
-              first month
+              Use code <code className="bg-white px-2 py-1 rounded">WELCOME50</code> for 50% off
+              your first month
             </p>
           </div>
 
@@ -88,7 +91,7 @@ export function UpgradeModal({ isOpen, onClose, trigger, featureName }: UpgradeM
             </Button>
             <Button
               onClick={() => {
-                window.location.href = "/pricing";
+                window.location.href = '/pricing';
               }}
               className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600"
             >

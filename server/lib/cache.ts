@@ -1,6 +1,6 @@
-import Redis from "ioredis";
+import Redis from 'ioredis';
 
-export const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379", {
+export const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
   retryStrategy(times) {
     const delay = Math.min(times * 50, 2000);
     return delay;
@@ -8,12 +8,12 @@ export const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379"
   maxRetriesPerRequest: 3,
 });
 
-redis.on("error", (err) => {
-  console.error("Redis error:", err);
+redis.on('error', (err) => {
+  console.error('Redis error:', err);
 });
 
-redis.on("connect", () => {
-  console.log("Redis connected");
+redis.on('connect', () => {
+  console.log('Redis connected');
 });
 
 // ATS Score Caching

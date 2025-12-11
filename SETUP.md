@@ -29,11 +29,13 @@ cp .env.example .env
 ### Generating a secure JWT_SECRET
 
 **Option 1 - Using Node.js:**
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 **Option 2 - Using OpenSSL:**
+
 ```bash
 openssl rand -hex 32
 ```
@@ -94,6 +96,7 @@ Visit http://localhost:5000 - you should see the Resume Repairer homepage!
 **Error:** `Error: connect ECONNREFUSED 127.0.0.1:5432`
 
 **Solution:** Make sure PostgreSQL is running:
+
 ```bash
 # Check if PostgreSQL is running
 pg_isready
@@ -110,11 +113,13 @@ sudo systemctl start postgresql
 **Error:** `DATABASE_URL must be a valid PostgreSQL URL`
 
 **Solution:** Make sure your DATABASE_URL is formatted correctly:
+
 ```
 postgresql://username:password@host:port/database
 ```
 
 Example:
+
 ```
 postgresql://postgres:mypassword@localhost:5432/resume_repairer
 ```
@@ -124,6 +129,7 @@ postgresql://postgres:mypassword@localhost:5432/resume_repairer
 **Error:** `Incorrect API key provided`
 
 **Solution:**
+
 - Verify your API key starts with `sk-`
 - Check you have credits in your OpenAI account
 - Ensure there are no extra spaces in your `.env` file
@@ -160,6 +166,7 @@ EMAIL_FROM=noreply@resumerepairer.com
 ```
 
 **For Gmail:**
+
 1. Enable 2FA on your Google account
 2. Generate an "App Password" from [account settings](https://myaccount.google.com/apppasswords)
 3. Use the app password as `EMAIL_PASSWORD`

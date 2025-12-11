@@ -1,16 +1,10 @@
-import fs from "fs";
-import path from "path";
-import bcrypt from "bcryptjs";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { drizzle } from "drizzle-orm/node-postgres";
-import pkg from "pg";
-import {
-  users,
-  resumes,
-  payments,
-  sessions,
-  coverLetters,
-} from "../../shared/schema";
+import fs from 'fs';
+import path from 'path';
+import bcrypt from 'bcryptjs';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import pkg from 'pg';
+import { users, resumes, payments, sessions, coverLetters } from '../../shared/schema';
 
 const { Pool } = pkg;
 
@@ -21,17 +15,17 @@ function getConnectionString() {
 export async function setupTestDb() {
   const connectionString = getConnectionString();
   if (!connectionString) {
-    throw new Error("DATABASE_TEST_URL or DATABASE_URL is required for tests");
+    throw new Error('DATABASE_TEST_URL or DATABASE_URL is required for tests');
   }
 
   const pool = new Pool({ connectionString });
   const db = drizzle(pool);
 
-  const migrationsFolder = path.resolve(process.cwd(), "drizzle");
+  const migrationsFolder = path.resolve(process.cwd(), 'drizzle');
   if (fs.existsSync(migrationsFolder)) {
     const migrationFiles = fs
       .readdirSync(migrationsFolder)
-      .filter((file) => file.endsWith(".js") || file.endsWith(".ts") || file.endsWith(".sql"));
+      .filter((file) => file.endsWith('.js') || file.endsWith('.ts') || file.endsWith('.sql'));
     if (migrationFiles.length > 0) {
       await migrate(db, { migrationsFolder });
     }
@@ -54,17 +48,17 @@ export async function clearDb(db: any) {
 
 export async function createTestUser(
   database: any,
-  email: string = `test-${Date.now()}@example.com`,
+  email: string = `test-${Date.now()}@example.com`
 ) {
-  const passwordHash = await bcrypt.hash("TestPassword123!", 10);
+  const passwordHash = await bcrypt.hash('TestPassword123!', 10);
   const [user] = await database
     .insert(users)
     .values({
       email,
       passwordHash,
-      name: "Test User",
+      name: 'Test User',
       creditsRemaining: 5,
-      plan: "free",
+      plan: 'free',
     })
     .returning();
 

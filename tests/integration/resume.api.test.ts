@@ -47,7 +47,7 @@ const createTestApp = () => {
 
   // Get user's resumes
   app.get('/api/resumes', requireAuth, (req: any, res) => {
-    const userResumes = Array.from(resumes.values()).filter(r => r.userId === req.userId);
+    const userResumes = Array.from(resumes.values()).filter((r) => r.userId === req.userId);
     res.json({ resumes: userResumes });
   });
 
@@ -122,9 +122,7 @@ describe('Resume API Integration Tests', () => {
       const user = createUser('test@example.com');
       const token = generateToken(user.id, user.email);
 
-      const res = await request(app)
-        .get('/api/resumes')
-        .set('Cookie', `token=${token}`);
+      const res = await request(app).get('/api/resumes').set('Cookie', `token=${token}`);
 
       expect(res.status).toBe(200);
       expect(res.body.resumes).toEqual([]);
@@ -201,9 +199,7 @@ describe('Resume API Integration Tests', () => {
 
       const resumeId = createRes.body.resume.id;
 
-      const res = await request(app)
-        .get(`/api/resume/${resumeId}`)
-        .set('Cookie', `token=${token}`);
+      const res = await request(app).get(`/api/resume/${resumeId}`).set('Cookie', `token=${token}`);
 
       expect(res.status).toBe(200);
       expect(res.body.resume.id).toBe(resumeId);

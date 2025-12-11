@@ -15,6 +15,7 @@ An AI-powered resume optimization platform that helps job seekers improve their 
 ## Tech Stack
 
 ### Frontend
+
 - **React 19** with TypeScript
 - **Tailwind CSS v4** + shadcn/ui components
 - **Wouter** for routing
@@ -24,6 +25,7 @@ An AI-powered resume optimization platform that helps job seekers improve their 
 - **jsPDF** for PDF generation
 
 ### Backend
+
 - **Node.js + Express** with TypeScript
 - **PostgreSQL** database
 - **Drizzle ORM** for database management
@@ -45,12 +47,14 @@ An AI-powered resume optimization platform that helps job seekers improve their 
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd Resume-Repairer
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
@@ -72,37 +76,44 @@ An AI-powered resume optimization platform that helps job seekers improve their 
    CORS_ORIGIN=http://localhost:5000
 
    # Optional for payments (works without Stripe in development)
-STRIPE_SECRET_KEY=sk_test_your-stripe-key
-STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-key
-STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
-STRIPE_RETURN_URL=https://your-site.com/payments/return
+   STRIPE_SECRET_KEY=sk_test_your-stripe-key
+   STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-key
+   STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
+   STRIPE_RETURN_URL=https://your-site.com/payments/return
 
    # Optional for emails (app works without email configured)
    EMAIL_HOST=smtp.gmail.com
    EMAIL_PORT=587
    EMAIL_USER=your-email@gmail.com
    EMAIL_PASSWORD=your-app-password
-EMAIL_FROM=noreply@resumerepairer.com
+   EMAIL_FROM=noreply@resumerepairer.com
+   ```
 
 # Optional for design assist (Figma)
+
 FIGMA_TOKEN=your-figma-personal-access-token
+
 # Optional default file key so clients don't need to pass ?fileKey=
+
 # FIGMA_FILE_KEY=your-figma-file-key
-```
+
+````
 
 4. **Set up the database**
 
    Create a PostgreSQL database:
    ```bash
    createdb resume_repairer
-   ```
+````
 
-   Run database migrations:
-   ```bash
-   npm run db:push
-   ```
+Run database migrations:
+
+```bash
+npm run db:push
+```
 
 5. **Start the development server**
+
    ```bash
    npm run dev
    ```
@@ -138,6 +149,7 @@ Resume-Repairer/
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/register` - Create account
 - `POST /api/auth/login` - Login
 - `POST /api/auth/logout` - Logout
@@ -147,17 +159,21 @@ Resume-Repairer/
 - `POST /api/auth/reset-password` - Reset password
 
 ### Resumes
+
 - `POST /api/resumes/upload` - Upload and optimize resume
 - `GET /api/resumes/:id` - Get resume by ID
 - `GET /api/users/:userId/resumes` - Get user's resumes
 
 ### Cover Letters
+
 - `POST /api/cover-letters/generate` - Generate cover letter
 
 ### Design
+
 - `GET /api/design/templates` - Fetch resume design frames from the configured Figma file (auth; optional `?fileKey=` override)
 
 ### Payments
+
 - `POST /api/payments/create` - Create payment
 - `GET /api/payments/:id` - Get payment status
 - `POST /api/webhooks/stripe` - Stripe webhook handler
@@ -167,6 +183,7 @@ Resume-Repairer/
 ### Resume Optimization
 
 The AI analyzes resumes and:
+
 - Rewrites weak, passive language into strong, active voice
 - Quantifies accomplishments with metrics and numbers
 - Removes clichés and vague statements
@@ -234,6 +251,7 @@ npm start
 ### Replit Deployment
 
 The app is pre-configured for Replit deployment:
+
 - `.replit` file includes run configuration
 - PostgreSQL database integration
 - Port 5000 mapped to port 80
@@ -243,6 +261,7 @@ The app is pre-configured for Replit deployment:
 ### Environment Variable Errors
 
 If you see validation errors on startup:
+
 - Check `.env` file exists and all required variables are set
 - Ensure `DATABASE_URL` is a valid PostgreSQL URL
 - Verify `OPENAI_API_KEY` starts with `sk-`
@@ -303,6 +322,7 @@ MIT
 ## Support
 
 For issues and questions:
+
 - Check existing issues on GitHub
 - Review this README and `.env.example`
 - Check server logs for error messages

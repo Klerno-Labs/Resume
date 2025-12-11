@@ -1,19 +1,19 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation } from "wouter";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Loader2, ArrowRight } from "lucide-react";
-import { emailSchema, passwordSchema } from "@shared/validators";
+import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'wouter';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Loader2, ArrowRight } from 'lucide-react';
+import { emailSchema, passwordSchema } from '@shared/validators';
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
-import { Analytics } from "@/lib/analytics";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { Analytics } from '@/lib/analytics';
 
 // Login Schema
 const authSchema = z.object({
@@ -26,7 +26,7 @@ type AuthFormValues = z.infer<typeof authSchema>;
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [referralCode, setReferralCode] = useState("");
+  const [referralCode, setReferralCode] = useState('');
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { setUser } = useAuth();
@@ -34,67 +34,67 @@ export default function Auth() {
   // Check for OAuth errors in URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const error = params.get("error");
-    const ref = params.get("ref");
+    const error = params.get('error');
+    const ref = params.get('ref');
     if (ref) {
       setReferralCode(ref);
     }
     if (error) {
       const errorMessages: Record<string, string> = {
-        no_code: "Google authentication failed. Please try again.",
-        oauth_not_configured: "Google sign-in is not configured.",
-        token_exchange_failed: "Failed to authenticate with Google. Please try again.",
-        user_info_failed: "Failed to get your Google account info. Please try again.",
-        oauth_failed: "Google authentication failed. Please try again.",
+        no_code: 'Google authentication failed. Please try again.',
+        oauth_not_configured: 'Google sign-in is not configured.',
+        token_exchange_failed: 'Failed to authenticate with Google. Please try again.',
+        user_info_failed: 'Failed to get your Google account info. Please try again.',
+        oauth_failed: 'Google authentication failed. Please try again.',
       };
       toast({
-        title: "Authentication Error",
-        description: errorMessages[error] || "An error occurred during authentication.",
-        variant: "destructive",
+        title: 'Authentication Error',
+        description: errorMessages[error] || 'An error occurred during authentication.',
+        variant: 'destructive',
       });
       // Clean up URL
-      window.history.replaceState({}, "", "/auth");
+      window.history.replaceState({}, '', '/auth');
     }
   }, [toast]);
 
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(authSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
   });
 
   const onSubmit = async (data: AuthFormValues) => {
     setIsLoading(true);
     try {
-      const response = isLogin 
+      const response = isLogin
         ? await api.login(data.email, data.password)
         : await api.register(data.email, data.password, undefined, referralCode);
-      
+
       setUser(response.user);
       toast({
-        title: isLogin ? "Welcome back!" : "Account created",
+        title: isLogin ? 'Welcome back!' : 'Account created',
         description: `You have ${response.user.creditsRemaining} credits remaining`,
       });
       if (!isLogin) {
-        Analytics.funnelStep("signup_completed");
-        Analytics.track("signup", { method: "email", referralCode: referralCode || undefined });
+        Analytics.funnelStep('signup_completed');
+        Analytics.track('signup', { method: 'email', referralCode: referralCode || undefined });
       }
-      setLocation("/editor");
+      setLocation('/editor');
     } catch (error: any) {
       // If login fails with "Invalid credentials", offer to create account
-      if (isLogin && error.message?.toLowerCase().includes("invalid")) {
+      if (isLogin && error.message?.toLowerCase().includes('invalid')) {
         toast({
-          title: "Account not found",
-          description: "Would you like to create a new account with this email?",
+          title: 'Account not found',
+          description: 'Would you like to create a new account with this email?',
         });
         setIsLogin(false);
       } else {
         toast({
-          title: "Error",
+          title: 'Error',
           description: error.message,
-          variant: "destructive",
+          variant: 'destructive',
         });
       }
     } finally {
@@ -109,26 +109,30 @@ export default function Auth() {
         <div className="w-full max-w-md space-y-8">
           <div className="space-y-2 text-center">
             <Link href="/">
-              <img src="/rewritemelogo.png" alt="RewriteMe" className="h-28 w-auto mx-auto mb-4 cursor-pointer" />
+              <img
+                src="/rewritemelogo.png"
+                alt="RewriteMe"
+                className="h-28 w-auto mx-auto mb-4 cursor-pointer"
+              />
             </Link>
             <h1 className="text-3xl font-display font-bold tracking-tight">
-              {isLogin ? "Welcome back" : "Create an account"}
+              {isLogin ? 'Welcome back' : 'Create an account'}
             </h1>
             <p className="text-muted-foreground">
               {isLogin
-                ? "Enter your credentials to access your saved resumes"
-                : "Start optimizing your resume with AI today"}
+                ? 'Enter your credentials to access your saved resumes'
+                : 'Start optimizing your resume with AI today'}
             </p>
           </div>
 
           <div className="space-y-4">
-            <Button 
-              variant="outline" 
-              className="w-full gap-2 min-h-[44px]" 
+            <Button
+              variant="outline"
+              className="w-full gap-2 min-h-[44px]"
               type="button"
               onClick={(e) => {
                 e.preventDefault();
-                window.location.href = "/api/auth/google";
+                window.location.href = '/api/auth/google';
               }}
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -171,13 +175,11 @@ export default function Auth() {
                 id="email"
                 type="email"
                 placeholder="m@example.com"
-                {...form.register("email")}
+                {...form.register('email')}
                 data-testid="input-email"
               />
               {form.formState.errors.email && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.email.message}
-                </p>
+                <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -196,13 +198,11 @@ export default function Auth() {
               <Input
                 id="password"
                 type="password"
-                {...form.register("password")}
+                {...form.register('password')}
                 data-testid="input-password"
               />
               {form.formState.errors.password && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.password.message}
-                </p>
+                <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
               )}
             </div>
             {!isLogin && (
@@ -225,20 +225,20 @@ export default function Auth() {
               data-testid="button-submit-auth"
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLogin ? "Sign In" : "Create Account"}
+              {isLogin ? 'Sign In' : 'Create Account'}
             </Button>
           </form>
 
           <div className="text-center text-sm">
             <span className="text-muted-foreground">
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
+              {isLogin ? "Don't have an account? " : 'Already have an account? '}
             </span>
             <button
               className="font-medium text-primary hover:underline"
               onClick={() => setIsLogin(!isLogin)}
               data-testid="button-toggle-auth"
             >
-              {isLogin ? "Sign up" : "Sign in"}
+              {isLogin ? 'Sign up' : 'Sign in'}
             </button>
           </div>
         </div>
@@ -257,7 +257,8 @@ export default function Auth() {
             Join 10,000+ professionals landing their dream jobs
           </h2>
           <p className="text-slate-400 text-lg">
-            "The AI optimization helped me get past the ATS and land an interview at Google within a week."
+            "The AI optimization helped me get past the ATS and land an interview at Google within a
+            week."
           </p>
           <div className="mt-8 flex items-center justify-center gap-4">
             <div className="flex -space-x-2">
@@ -268,9 +269,7 @@ export default function Auth() {
                 ></div>
               ))}
             </div>
-            <div className="text-white font-medium">
-              4.9/5 from verified users
-            </div>
+            <div className="text-white font-medium">4.9/5 from verified users</div>
           </div>
         </div>
       </div>

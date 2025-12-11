@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Copy, Check, FileText } from "lucide-react";
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, Copy, Check, FileText } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -9,31 +9,31 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { api } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 interface CoverLetterDialogProps {
   resumeId?: string;
 }
 
 export function CoverLetterDialog({ resumeId }: CoverLetterDialogProps) {
-  const [step, setStep] = useState<"input" | "generating" | "result">("input");
-  const [jobDescription, setJobDescription] = useState("");
-  const [tone, setTone] = useState("professional");
-  const [result, setResult] = useState("");
+  const [step, setStep] = useState<'input' | 'generating' | 'result'>('input');
+  const [jobDescription, setJobDescription] = useState('');
+  const [tone, setTone] = useState('professional');
+  const [result, setResult] = useState('');
   const [copied, setCopied] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -41,26 +41,26 @@ export function CoverLetterDialog({ resumeId }: CoverLetterDialogProps) {
   const handleGenerate = async () => {
     if (!user || !resumeId) {
       toast({
-        title: "Error",
-        description: "Please upload a resume first",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Please upload a resume first',
+        variant: 'destructive',
       });
       return;
     }
 
-    setStep("generating");
-    
+    setStep('generating');
+
     try {
       const coverLetter = await api.generateCoverLetter(resumeId, jobDescription, tone);
       setResult(coverLetter.content);
-      setStep("result");
+      setStep('result');
     } catch (error) {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate cover letter",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to generate cover letter',
+        variant: 'destructive',
       });
-      setStep("input");
+      setStep('input');
     }
   };
 
@@ -91,7 +91,7 @@ export function CoverLetterDialog({ resumeId }: CoverLetterDialogProps) {
 
         <div className="py-4">
           <AnimatePresence mode="wait">
-            {step === "input" && (
+            {step === 'input' && (
               <motion.div
                 key="input"
                 initial={{ opacity: 0 }}
@@ -126,7 +126,7 @@ export function CoverLetterDialog({ resumeId }: CoverLetterDialogProps) {
               </motion.div>
             )}
 
-            {step === "generating" && (
+            {step === 'generating' && (
               <motion.div
                 key="generating"
                 initial={{ opacity: 0 }}
@@ -143,12 +143,14 @@ export function CoverLetterDialog({ resumeId }: CoverLetterDialogProps) {
                 </div>
                 <div className="text-center">
                   <h3 className="font-medium text-foreground">Drafting your letter...</h3>
-                  <p className="text-sm text-muted-foreground">Matching keywords from job description</p>
+                  <p className="text-sm text-muted-foreground">
+                    Matching keywords from job description
+                  </p>
                 </div>
               </motion.div>
             )}
 
-            {step === "result" && (
+            {step === 'result' && (
               <motion.div
                 key="result"
                 initial={{ opacity: 0 }}
@@ -169,19 +171,19 @@ export function CoverLetterDialog({ resumeId }: CoverLetterDialogProps) {
         </div>
 
         <DialogFooter>
-          {step === "input" && (
+          {step === 'input' && (
             <Button onClick={() => void handleGenerate()} disabled={!jobDescription}>
               Generate Draft
             </Button>
           )}
-          {step === "result" && (
+          {step === 'result' && (
             <div className="flex gap-2 w-full justify-end">
-              <Button variant="outline" onClick={() => setStep("input")}>
+              <Button variant="outline" onClick={() => setStep('input')}>
                 Try Again
               </Button>
               <Button onClick={handleCopy} className="gap-2">
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? "Copied!" : "Copy to Clipboard"}
+                {copied ? 'Copied!' : 'Copy to Clipboard'}
               </Button>
             </div>
           )}

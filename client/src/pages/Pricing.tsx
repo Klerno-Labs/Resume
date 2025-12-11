@@ -1,12 +1,12 @@
-import { useMemo, useState } from "react";
-import { Check, Shield, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth";
-import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
-import { useLocation } from "wouter";
+import { useMemo, useState } from 'react';
+import { Check, Shield, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
+import { useLocation } from 'wouter';
 
-type PlanId = "free" | "starter" | "professional" | "business";
+type PlanId = 'free' | 'starter' | 'professional' | 'business';
 
 const basePlans: Record<
   PlanId,
@@ -18,57 +18,57 @@ const basePlans: Record<
   }
 > = {
   free: {
-    name: "Free",
+    name: 'Free',
     monthly: 0,
-    description: "1 optimization per month to try us out",
+    description: '1 optimization per month to try us out',
     features: [
-      "1 resume optimization/month",
-      "Basic ATS score",
-      "Standard PDF export (watermark)",
-      "GPT-3.5 model",
+      '1 resume optimization/month',
+      'Basic ATS score',
+      'Standard PDF export (watermark)',
+      'GPT-3.5 model',
     ],
   },
   starter: {
-    name: "Starter",
+    name: 'Starter',
     monthly: 19,
-    description: "For active job seekers",
+    description: 'For active job seekers',
     features: [
-      "5 optimizations/month",
-      "3 cover letters",
-      "Premium exports (no watermark)",
-      "GPT-4o-mini model",
+      '5 optimizations/month',
+      '3 cover letters',
+      'Premium exports (no watermark)',
+      'GPT-4o-mini model',
     ],
   },
   professional: {
-    name: "Professional",
+    name: 'Professional',
     monthly: 49,
-    description: "Unlimited optimizations and pro features",
+    description: 'Unlimited optimizations and pro features',
     features: [
-      "Unlimited optimizations",
-      "Unlimited cover letters",
-      "Premium exports (PDF/DOCX/TXT)",
-      "GPT-4o model",
-      "Priority support",
+      'Unlimited optimizations',
+      'Unlimited cover letters',
+      'Premium exports (PDF/DOCX/TXT)',
+      'GPT-4o model',
+      'Priority support',
     ],
   },
   business: {
-    name: "Business",
+    name: 'Business',
     monthly: 99,
-    description: "For teams and coaches",
+    description: 'For teams and coaches',
     features: [
-      "Everything in Professional",
-      "5 team seats",
-      "Team analytics",
-      "Custom branding",
-      "Dedicated success manager",
+      'Everything in Professional',
+      '5 team seats',
+      'Team analytics',
+      'Custom branding',
+      'Dedicated success manager',
     ],
   },
 };
 
 const creditPacks = [
-  { id: "small" as const, name: "5 Credits", price: 7, credits: 5 },
-  { id: "medium" as const, name: "15 Credits", price: 19, credits: 15 },
-  { id: "large" as const, name: "50 Credits", price: 49, credits: 50 },
+  { id: 'small' as const, name: '5 Credits', price: 7, credits: 5 },
+  { id: 'medium' as const, name: '15 Credits', price: 19, credits: 15 },
+  { id: 'large' as const, name: '50 Credits', price: 49, credits: 50 },
 ];
 
 export default function PricingPage() {
@@ -87,15 +87,15 @@ export default function PricingPage() {
 
   const ensureAuthed = (): boolean => {
     if (!user) {
-      navigate("/auth");
+      navigate('/auth');
       return false;
     }
     return true;
   };
 
   const startSubscription = async (planId: PlanId) => {
-    if (planId === "free") {
-      navigate("/dashboard");
+    if (planId === 'free') {
+      navigate('/dashboard');
       return;
     }
     if (!ensureAuthed()) return;
@@ -103,21 +103,21 @@ export default function PricingPage() {
     try {
       const { sessionUrl, url } = await api.createSubscriptionCheckout(
         planId,
-        annual ? "year" : "month",
+        annual ? 'year' : 'month'
       );
-      window.location.href = sessionUrl || url || "/pricing";
+      window.location.href = sessionUrl || url || '/pricing';
     } catch (error: any) {
       toast({
-        title: "Checkout failed",
-        description: error.message || "Please try again.",
-        variant: "destructive",
+        title: 'Checkout failed',
+        description: error.message || 'Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(null);
     }
   };
 
-  const buyCredits = async (packId: "small" | "medium" | "large") => {
+  const buyCredits = async (packId: 'small' | 'medium' | 'large') => {
     if (!ensureAuthed()) return;
     setLoading(packId);
     try {
@@ -125,9 +125,9 @@ export default function PricingPage() {
       window.location.href = sessionUrl;
     } catch (error: any) {
       toast({
-        title: "Purchase failed",
-        description: error.message || "Please try again.",
-        variant: "destructive",
+        title: 'Purchase failed',
+        description: error.message || 'Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(null);
@@ -145,11 +145,11 @@ export default function PricingPage() {
       </div>
 
       <div className="flex items-center justify-center gap-2 mb-6">
-        <span className={!annual ? "font-semibold" : "text-muted-foreground"}>Monthly</span>
+        <span className={!annual ? 'font-semibold' : 'text-muted-foreground'}>Monthly</span>
         <Button variant="outline" size="sm" onClick={() => setAnnual((a) => !a)}>
-          {annual ? "Switch to Monthly" : "Switch to Annual (save 20%)"}
+          {annual ? 'Switch to Monthly' : 'Switch to Annual (save 20%)'}
         </Button>
-        <span className={annual ? "font-semibold" : "text-muted-foreground"}>Annual</span>
+        <span className={annual ? 'font-semibold' : 'text-muted-foreground'}>Annual</span>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -157,16 +157,16 @@ export default function PricingPage() {
           <div
             key={plan.id}
             className={`border rounded-xl p-6 bg-card shadow-sm flex flex-col ${
-              plan.id === "professional" ? "border-primary shadow-primary/10" : ""
+              plan.id === 'professional' ? 'border-primary shadow-primary/10' : ''
             }`}
           >
             <div className="mb-4 space-y-2">
               <p className="text-sm text-muted-foreground">{plan.description}</p>
               <div className="text-3xl font-bold">
                 ${plan.displayPrice}
-                <span className="text-sm text-muted-foreground">/{annual ? "year" : "month"}</span>
+                <span className="text-sm text-muted-foreground">/{annual ? 'year' : 'month'}</span>
               </div>
-              {plan.id === "free" ? (
+              {plan.id === 'free' ? (
                 <p className="text-xs text-muted-foreground">No card required.</p>
               ) : (
                 <div className="space-y-1 text-xs text-muted-foreground">
@@ -194,10 +194,10 @@ export default function PricingPage() {
               disabled={loading === plan.id}
             >
               {loading === plan.id
-                ? "Redirecting..."
-                : plan.id === "free"
-                  ? "Get Started Free"
-                  : "Upgrade Now"}
+                ? 'Redirecting...'
+                : plan.id === 'free'
+                  ? 'Get Started Free'
+                  : 'Upgrade Now'}
             </Button>
           </div>
         ))}
@@ -212,7 +212,7 @@ export default function PricingPage() {
               <div className="text-muted-foreground text-sm mb-2">{pack.credits} credits</div>
               <div className="text-2xl font-bold mb-4">${pack.price}</div>
               <Button onClick={() => buyCredits(pack.id)} disabled={loading === pack.id}>
-                {loading === pack.id ? "Redirecting..." : "Buy credits"}
+                {loading === pack.id ? 'Redirecting...' : 'Buy credits'}
               </Button>
             </div>
           ))}

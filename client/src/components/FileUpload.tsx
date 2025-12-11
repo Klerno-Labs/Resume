@@ -1,10 +1,10 @@
-import { useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Upload, FileText, Check } from "lucide-react";
-import { useLocation } from "wouter";
-import { api } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Upload, FileText, Check } from 'lucide-react';
+import { useLocation } from 'wouter';
+import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 interface FileUploadProps {
   onUpload?: (file: File, resumeId: string) => void;
@@ -28,25 +28,25 @@ export function FileUpload({ onUpload }: FileUploadProps) {
       'text/plain',
       'application/zip',
       'application/x-zip',
-      'application/octet-stream'
+      'application/octet-stream',
     ];
 
     // Check file size
     if (file.size > MAX_FILE_SIZE) {
       return {
         valid: false,
-        error: `File size exceeds 10MB limit (${(file.size / 1024 / 1024).toFixed(2)}MB)`
+        error: `File size exceeds 10MB limit (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
       };
     }
 
     // Check file extension
     const fileName = file.name.toLowerCase();
-    const hasValidExtension = ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext));
+    const hasValidExtension = ALLOWED_EXTENSIONS.some((ext) => fileName.endsWith(ext));
 
     if (!hasValidExtension) {
       return {
         valid: false,
-        error: `Invalid file type. Please upload PDF, DOCX, DOC, or TXT files.`
+        error: `Invalid file type. Please upload PDF, DOCX, DOC, or TXT files.`,
       };
     }
 
@@ -59,59 +59,63 @@ export function FileUpload({ onUpload }: FileUploadProps) {
     return { valid: true };
   }, []);
 
-  const processFile = useCallback(async (uploadedFile: File) => {
-    if (!user) {
-      setLocation("/auth");
-      return;
-    }
-
-    // Validate file before upload
-    const validation = validateFile(uploadedFile);
-    if (!validation.valid) {
-      toast({
-        title: "Invalid file",
-        description: validation.error,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setFile(uploadedFile);
-
-    try {
-      const result = await api.uploadResume(uploadedFile);
-
-      // Handle duplicate detection response
-      if (result.isDuplicate) {
-        toast({
-          title: "Resume Already Analyzed",
-          description: "You've uploaded this resume before. Redirecting to your existing analysis...",
-          duration: 3000,
-        });
-
-        // Redirect to existing resume after showing message
-        setTimeout(() => {
-          setLocation(`/editor?resumeId=${result.resumeId}`);
-        }, 1000);
+  const processFile = useCallback(
+    async (uploadedFile: File) => {
+      if (!user) {
+        setLocation('/auth');
         return;
       }
 
-      // Normal flow for new uploads
-      if (onUpload) onUpload(uploadedFile, result.resumeId);
+      // Validate file before upload
+      const validation = validateFile(uploadedFile);
+      if (!validation.valid) {
+        toast({
+          title: 'Invalid file',
+          description: validation.error,
+          variant: 'destructive',
+        });
+        return;
+      }
 
-      // Wait a bit for UI then redirect
-      setTimeout(() => {
-        setLocation(`/editor?resumeId=${result.resumeId}`);
-      }, 1500);
-    } catch (error) {
-      toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to upload file",
-        variant: "destructive",
-      });
-      setFile(null);
-    }
-  }, [user, setLocation, validateFile, toast, onUpload]);
+      setFile(uploadedFile);
+
+      try {
+        const result = await api.uploadResume(uploadedFile);
+
+        // Handle duplicate detection response
+        if (result.isDuplicate) {
+          toast({
+            title: 'Resume Already Analyzed',
+            description:
+              "You've uploaded this resume before. Redirecting to your existing analysis...",
+            duration: 3000,
+          });
+
+          // Redirect to existing resume after showing message
+          setTimeout(() => {
+            setLocation(`/editor?resumeId=${result.resumeId}`);
+          }, 1000);
+          return;
+        }
+
+        // Normal flow for new uploads
+        if (onUpload) onUpload(uploadedFile, result.resumeId);
+
+        // Wait a bit for UI then redirect
+        setTimeout(() => {
+          setLocation(`/editor?resumeId=${result.resumeId}`);
+        }, 1500);
+      } catch (error) {
+        toast({
+          title: 'Upload failed',
+          description: error instanceof Error ? error.message : 'Failed to upload file',
+          variant: 'destructive',
+        });
+        setFile(null);
+      }
+    },
+    [user, setLocation, validateFile, toast, onUpload]
+  );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -123,22 +127,28 @@ export function FileUpload({ onUpload }: FileUploadProps) {
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const droppedFile = e.dataTransfer.files[0];
-      void processFile(droppedFile);
-    }
-  }, [processFile]);
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        const droppedFile = e.dataTransfer.files[0];
+        void processFile(droppedFile);
+      }
+    },
+    [processFile]
+  );
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      void processFile(selectedFile);
-    }
-  }, [processFile]);
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        const selectedFile = e.target.files[0];
+        void processFile(selectedFile);
+      }
+    },
+    [processFile]
+  );
 
   return (
     <div className="w-full max-w-xl mx-auto">
@@ -146,11 +156,12 @@ export function FileUpload({ onUpload }: FileUploadProps) {
         layout
         className={`
           relative overflow-hidden rounded-xl border-2 border-dashed transition-all duration-300 ease-out
-          ${isDragging 
-            ? "border-primary bg-primary/5 scale-[1.02]" 
-            : "border-border hover:border-primary/50 hover:bg-secondary/50"
+          ${
+            isDragging
+              ? 'border-primary bg-primary/5 scale-[1.02]'
+              : 'border-border hover:border-primary/50 hover:bg-secondary/50'
           }
-          ${file ? "bg-green-50 border-green-200" : "bg-background"}
+          ${file ? 'bg-green-50 border-green-200' : 'bg-background'}
         `}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -179,9 +190,7 @@ export function FileUpload({ onUpload }: FileUploadProps) {
                 <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                   <Upload className="w-10 h-10 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold text-foreground">
-                  Drop your resume here
-                </h3>
+                <h3 className="text-xl font-semibold text-foreground">Drop your resume here</h3>
                 <p className="text-muted-foreground mt-2 max-w-xs">
                   Support for PDF, DOCX, DOC, and TXT files. We'll analyze it instantly.
                 </p>
@@ -200,19 +209,27 @@ export function FileUpload({ onUpload }: FileUploadProps) {
               >
                 <div className="relative w-20 h-20 mb-6">
                   <svg className="animate-spin w-full h-full text-green-500" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <FileText className="w-8 h-8 text-green-600" />
                   </div>
                 </div>
-                <h3 className="text-xl font-semibold text-green-700">
-                  Analyzing {file.name}
-                </h3>
-                <p className="text-green-600 mt-2">
-                  Checking ATS compatibility...
-                </p>
+                <h3 className="text-xl font-semibold text-green-700">Analyzing {file.name}</h3>
+                <p className="text-green-600 mt-2">Checking ATS compatibility...</p>
               </motion.div>
             )}
           </AnimatePresence>

@@ -1,15 +1,13 @@
-import { useState } from "react";
-import { Gift, Users, TrendingUp, Copy, Check } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import { Gift, Users, TrendingUp, Copy, Check } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 export function ReferralDashboard() {
   const { toast } = useToast();
-  const [referralCode] = useState(
-    "RR" + Math.random().toString(36).substring(2, 10).toUpperCase(),
-  );
+  const [referralCode] = useState('RR' + Math.random().toString(36).substring(2, 10).toUpperCase());
   const [copied, setCopied] = useState(false);
   const [stats] = useState({
     totalReferrals: 0,
@@ -22,7 +20,7 @@ export function ReferralDashboard() {
   const copyToClipboard = () => {
     void navigator.clipboard.writeText(referralLink);
     setCopied(true);
-    toast({ title: "Copied!", description: "Referral link copied to clipboard" });
+    toast({ title: 'Copied!', description: 'Referral link copied to clipboard' });
     setTimeout(() => setCopied(false), 2000);
   };
 

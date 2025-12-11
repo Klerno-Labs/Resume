@@ -1,6 +1,6 @@
-import { db } from "../db";
-import { analyticsEvents, funnelSteps } from "../../shared/schema";
-import { sql } from "drizzle-orm";
+import { db } from '../db';
+import { analyticsEvents, funnelSteps } from '../../shared/schema';
+import { sql } from 'drizzle-orm';
 
 export class AnalyticsService {
   async trackEvent(data: {
@@ -37,33 +37,42 @@ export class AnalyticsService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const steps = await db.select().from(funnelSteps).where(sql`completed_at >= ${startDate}`);
+    const steps = await db
+      .select()
+      .from(funnelSteps)
+      .where(sql`completed_at >= ${startDate}`);
 
-    const stepCounts = steps.reduce((acc, step) => {
-      acc[step.step] = (acc[step.step] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const stepCounts = steps.reduce(
+      (acc, step) => {
+        acc[step.step] = (acc[step.step] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     const funnelOrder = [
-      "landing",
-      "signup_started",
-      "signup_completed",
-      "first_upload",
-      "first_optimization",
-      "upgrade_viewed",
-      "payment_initiated",
-      "payment_completed",
+      'landing',
+      'signup_started',
+      'signup_completed',
+      'first_upload',
+      'first_optimization',
+      'upgrade_viewed',
+      'payment_initiated',
+      'payment_completed',
     ];
 
-    const conversions = funnelOrder.reduce((acc, step, index) => {
-      const count = stepCounts[step] || 0;
-      const prev = index > 0 ? stepCounts[funnelOrder[index - 1]] || 1 : count;
-      acc[step] = {
-        count,
-        conversionRate: prev > 0 ? (count / prev) * 100 : 0,
-      };
-      return acc;
-    }, {} as Record<string, { count: number; conversionRate: number }>);
+    const conversions = funnelOrder.reduce(
+      (acc, step, index) => {
+        const count = stepCounts[step] || 0;
+        const prev = index > 0 ? stepCounts[funnelOrder[index - 1]] || 1 : count;
+        acc[step] = {
+          count,
+          conversionRate: prev > 0 ? (count / prev) * 100 : 0,
+        };
+        return acc;
+      },
+      {} as Record<string, { count: number; conversionRate: number }>
+    );
 
     return { conversions, stepCounts, funnelOrder };
   }

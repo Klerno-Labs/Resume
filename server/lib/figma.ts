@@ -1,6 +1,6 @@
-import { env } from "./env";
+import { env } from './env';
 
-const FIGMA_API_BASE = "https://api.figma.com/v1";
+const FIGMA_API_BASE = 'https://api.figma.com/v1';
 const CACHE_TTL_MS = 1000 * 60 * 5; // 5 minutes
 
 interface FigmaDocumentNode {
@@ -23,7 +23,7 @@ const templateCache = new Map<string, { data: FigmaTemplate[]; expiresAt: number
 
 function ensureFigmaConfigured() {
   if (!env.FIGMA_TOKEN) {
-    throw new Error("FIGMA_TOKEN is not configured");
+    throw new Error('FIGMA_TOKEN is not configured');
   }
 }
 
@@ -32,7 +32,7 @@ async function fetchFromFigma<T>(url: string): Promise<T> {
 
   const response = await fetch(url, {
     headers: {
-      "X-Figma-Token": env.FIGMA_TOKEN as string,
+      'X-Figma-Token': env.FIGMA_TOKEN as string,
     },
   });
 
@@ -51,11 +51,11 @@ function collectTemplates(
   templates: FigmaTemplate[],
   keywords: string[]
 ) {
-  const nodeName = node.name || "Untitled";
-  const nodeType = node.type || "NODE";
+  const nodeName = node.name || 'Untitled';
+  const nodeType = node.type || 'NODE';
   const nextPath = [...path, nodeName];
 
-  const isFrameLike = ["FRAME", "COMPONENT", "COMPONENT_SET", "INSTANCE"].includes(nodeType);
+  const isFrameLike = ['FRAME', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE'].includes(nodeType);
   if (isFrameLike) {
     const lowerName = nodeName.toLowerCase();
     const matchesKeyword = keywords.some((keyword) => lowerName.includes(keyword));
@@ -67,7 +67,7 @@ function collectTemplates(
         name: nodeName,
         page: pageName,
         type: nodeType,
-        documentPath: nextPath.join(" › "),
+        documentPath: nextPath.join(' › '),
       });
     }
   }
@@ -91,11 +91,11 @@ export async function getResumeTemplates(fileKey: string): Promise<FigmaTemplate
   );
 
   const pages = fileData.document?.children || [];
-  const keywords = ["resume", "cv", "template"];
+  const keywords = ['resume', 'cv', 'template'];
   const templates: FigmaTemplate[] = [];
 
   for (const page of pages) {
-    collectTemplates(page, page.name || "Page", [page.name || "Page"], templates, keywords);
+    collectTemplates(page, page.name || 'Page', [page.name || 'Page'], templates, keywords);
   }
 
   // Deduplicate by node id
@@ -104,11 +104,11 @@ export async function getResumeTemplates(fileKey: string): Promise<FigmaTemplate
   );
 
   if (uniqueTemplates.length === 0) {
-    throw new Error("No resume templates found in the Figma file");
+    throw new Error('No resume templates found in the Figma file');
   }
 
   // Fetch preview images for the collected nodes
-  const idsParam = uniqueTemplates.map((t) => t.id).join(",");
+  const idsParam = uniqueTemplates.map((t) => t.id).join(',');
   const imageData = await fetchFromFigma<{ images: Record<string, string> }>(
     `${FIGMA_API_BASE}/images/${fileKey}?ids=${encodeURIComponent(idsParam)}&format=png&scale=2`
   );

@@ -7,6 +7,7 @@
 **Go to:** https://search.google.com/search-console
 
 **Steps:**
+
 1. Click "Start Now" and sign in with your Google account
 2. Click "Add Property"
 3. Choose "URL prefix" and enter: `https://rewriteme.app`
@@ -31,6 +32,7 @@
 **Go to:** https://www.bing.com/webmasters
 
 **Steps:**
+
 1. Sign in with Microsoft account
 2. Click "Add a site"
 3. Enter: `https://rewriteme.app`
@@ -48,6 +50,7 @@
 **Go to:** https://analytics.google.com
 
 **Steps:**
+
 1. Click "Start Measuring"
 2. Create account for "RewriteMe"
 3. Create property: "RewriteMe Web App"
@@ -65,6 +68,7 @@
 **Go to:** https://search.google.com/test/rich-results
 
 **Steps:**
+
 1. Enter: `https://rewriteme.app`
 2. Click "Test URL"
 3. Wait for results
@@ -82,6 +86,7 @@
 **Go to:** https://search.google.com/test/mobile-friendly
 
 **Steps:**
+
 1. Enter: `https://rewriteme.app`
 2. Click "Test URL"
 3. Verify it says "Page is mobile friendly"
@@ -94,12 +99,14 @@
 **Go to:** https://pagespeed.web.dev/
 
 **Steps:**
+
 1. Enter: `https://rewriteme.app`
 2. Click "Analyze"
 3. Check scores for Mobile and Desktop
 4. Review suggestions (aim for 90+ score)
 
 **Common fixes:**
+
 - Compress images
 - Enable caching
 - Minify CSS/JS
@@ -112,6 +119,7 @@
 **Go to:** https://www.opengraph.xyz/
 
 **Steps:**
+
 1. Enter: `https://rewriteme.app`
 2. Click "Preview"
 3. Verify:
@@ -126,11 +134,13 @@
 ### Reddit Posts (30 min/day)
 
 **Target Subreddits:**
+
 - r/resumes (347k members)
 - r/jobs (550k members)
 - r/careerguidance (300k members)
 
 **Day 1 - Answer Questions:**
+
 1. Go to r/resumes
 2. Sort by "New"
 3. Find someone asking "Why isn't my resume getting responses?"
@@ -138,6 +148,7 @@
 5. Mention: "I also made a free ATS checker at [your site] if you want to test it"
 
 **Example Answer Template:**
+
 ```
 Most resumes fail because they don't pass ATS (Applicant Tracking Systems). Here's what to check:
 
@@ -166,6 +177,7 @@ Create post: "I analyzed 500 resumes rejected by ATS - here's what they had in c
 **Go to:** https://www.quora.com
 
 **Target Questions:**
+
 1. Search: "How to optimize resume for ATS"
 2. Search: "Why am I not getting interview callbacks"
 3. Search: "Best resume format"
@@ -174,6 +186,7 @@ Create post: "I analyzed 500 resumes rejected by ATS - here's what they had in c
 **Day 1-7: Answer 1 question per day**
 
 **Answer Template:**
+
 - 300-500 words
 - Provide real value first
 - Mention your tool naturally at end
@@ -200,6 +213,7 @@ Hope this helps!"
 Reality: 75% of resumes are read by robots first, not humans.
 
 ATS systems can't read:
+
 - Tables
 - Text boxes
 - Headers/footers
@@ -290,6 +304,7 @@ Friday: "Weekend resume fix: Swap these weak bullets for strong ones [examples]"
 **Title:** "The Ultimate ATS Resume Guide [2025]: How to Beat Applicant Tracking Systems"
 
 **Outline:**
+
 1. What is an ATS? (300 words)
 2. Why 75% of resumes fail ATS screening (400 words)
 3. Common ATS mistakes to avoid (500 words)
@@ -303,6 +318,7 @@ Friday: "Weekend resume fix: Swap these weak bullets for strong ones [examples]"
 **SEO Target:** "ATS resume guide", "beat ATS systems", "ATS optimization"
 
 **Where to publish:**
+
 - Your blog (create /blog page)
 - Medium (with canonical URL back to your site)
 - LinkedIn Articles
@@ -313,6 +329,7 @@ Friday: "Weekend resume fix: Swap these weak bullets for strong ones [examples]"
 ## 🎯 Quick Wins Checklist
 
 **Today:**
+
 - [ ] Submit sitemap to Google Search Console
 - [ ] Submit sitemap to Bing Webmaster Tools
 - [ ] Test rich results
@@ -320,6 +337,7 @@ Friday: "Weekend resume fix: Swap these weak bullets for strong ones [examples]"
 - [ ] Post 1 tip on LinkedIn
 
 **This Week:**
+
 - [ ] Answer 5 Reddit questions
 - [ ] Answer 3 Quora questions
 - [ ] Post 3 times on LinkedIn
@@ -328,6 +346,7 @@ Friday: "Weekend resume fix: Swap these weak bullets for strong ones [examples]"
 - [ ] Write first blog post
 
 **This Month:**
+
 - [ ] 20 Reddit answers
 - [ ] 10 Quora answers
 - [ ] 12 LinkedIn posts
@@ -342,12 +361,13 @@ Friday: "Weekend resume fix: Swap these weak bullets for strong ones [examples]"
 
 **Create a Spreadsheet:**
 
-| Date | Action | Platform | Link | Result |
-|------|--------|----------|------|--------|
+| Date       | Action | Platform  | Link  | Result    |
+| ---------- | ------ | --------- | ----- | --------- |
 | 2025-12-06 | Answer | r/resumes | [URL] | 5 upvotes |
-| 2025-12-06 | Post | LinkedIn | [URL] | 23 likes |
+| 2025-12-06 | Post   | LinkedIn  | [URL] | 23 likes  |
 
 **Key Metrics to Track:**
+
 - Reddit karma from helpful answers
 - Quora answer views
 - LinkedIn post impressions
@@ -383,6 +403,7 @@ Friday: "Weekend resume fix: Swap these weak bullets for strong ones [examples]"
 ## 🎁 Content Templates
 
 I've created templates for:
+
 - Reddit answers
 - Quora responses
 - LinkedIn posts
@@ -396,6 +417,7 @@ Use these as starting points, then customize!
 ## Need Help?
 
 If you need help with:
+
 - Adding Google Analytics code
 - Writing your first blog post
 - Creating social media graphics

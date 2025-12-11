@@ -43,7 +43,7 @@ describe('Payment Unit Tests', () => {
       const currentCredits = 5;
       const newCredits = 15;
       const total = currentCredits + newCredits;
-      
+
       expect(total).toBe(20);
     });
 
@@ -51,14 +51,14 @@ describe('Payment Unit Tests', () => {
       const currentCredits = 10;
       const used = 1;
       const remaining = currentCredits - used;
-      
+
       expect(remaining).toBe(9);
     });
 
     it('should not allow negative credits', () => {
       const currentCredits = 0;
       const canUse = currentCredits > 0;
-      
+
       expect(canUse).toBe(false);
     });
   });
@@ -66,7 +66,7 @@ describe('Payment Unit Tests', () => {
   describe('Payment Validation', () => {
     it('should validate plan names', () => {
       const validPlans = ['basic', 'pro', 'premium'];
-      
+
       expect(validPlans.includes('basic')).toBe(true);
       expect(validPlans.includes('pro')).toBe(true);
       expect(validPlans.includes('premium')).toBe(true);

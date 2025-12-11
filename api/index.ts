@@ -23,7 +23,12 @@ const PRICES = {
 } as const;
 
 // Helper to parse multipart form data
-async function parseMultipartForm(req: VercelRequest): Promise<{ fields: Record<string, string>, files: Array<{ name: string, filename: string, mimetype: string, data: Buffer }> }> {
+async function parseMultipartForm(
+  req: VercelRequest
+): Promise<{
+  fields: Record<string, string>;
+  files: Array<{ name: string; filename: string; mimetype: string; data: Buffer }>;
+}> {
   const contentType = req.headers['content-type'] || '';
   const boundary = contentType.split('boundary=')[1];
 
@@ -35,7 +40,7 @@ async function parseMultipartForm(req: VercelRequest): Promise<{ fields: Record<
   const parts = rawBody.toString('binary').split(`--${boundary}`);
 
   const fields: Record<string, string> = {};
-  const files: Array<{ name: string, filename: string, mimetype: string, data: Buffer }> = [];
+  const files: Array<{ name: string; filename: string; mimetype: string; data: Buffer }> = [];
 
   for (const part of parts) {
     if (part.trim() === '' || part.trim() === '--') continue;
@@ -68,7 +73,7 @@ async function parseMultipartForm(req: VercelRequest): Promise<{ fields: Record<
         name,
         filename,
         mimetype: contentType,
-        data: Buffer.from(body, 'binary')
+        data: Buffer.from(body, 'binary'),
       });
     } else if (name) {
       // It's a field
@@ -80,7 +85,11 @@ async function parseMultipartForm(req: VercelRequest): Promise<{ fields: Record<
 }
 
 // Helper to parse file content (PDF/DOCX/TXT)
-async function parseFileContent(buffer: Buffer, mimetype: string, filename: string): Promise<string> {
+async function parseFileContent(
+  buffer: Buffer,
+  mimetype: string,
+  filename: string
+): Promise<string> {
   let text = '';
 
   try {
@@ -102,7 +111,11 @@ async function parseFileContent(buffer: Buffer, mimetype: string, filename: stri
     }
 
     // Clean and validate
-    text = text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').replace(/[ \t]+/g, ' ').trim();
+    text = text
+      .replace(/\r\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]+/g, ' ')
+      .trim();
 
     if (!text || text.length < 50) {
       throw new Error('File contains insufficient text content (minimum 50 characters required)');
@@ -133,31 +146,33 @@ async function getUserFromRequest(req: VercelRequest): Promise<any | null> {
   const cookies = parse(req.headers.cookie || '');
   const token = cookies.token;
   if (!token) return null;
-  
+
   const decoded = verifyToken(token);
   if (!decoded) return null;
-  
+
   const users = await sql`SELECT * FROM users WHERE id = ${decoded.userId}`;
   return users[0] || null;
 }
 
 // Check if user is admin
 function isAdmin(email: string): boolean {
-  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase());
   return adminEmails.includes(email.toLowerCase());
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { url, method, body } = req;
   const path = url?.split('?')[0] || '';
-  
+
   // CORS - use request origin or default
   const origin = req.headers.origin || 'https://rewriteme.app';
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-  
+
   if (method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -182,7 +197,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           plan: user.plan,
           creditsRemaining: user.credits_remaining,
           emailVerified: user.email_verified,
-        }
+        },
       });
     }
 
@@ -192,24 +207,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password required' });
       }
-      
+
       const users = await sql`SELECT * FROM users WHERE email = ${email}`;
       const user = users[0];
-      
-      if (!user || !await bcrypt.compare(password, user.password_hash)) {
+
+      if (!user || !(await bcrypt.compare(password, user.password_hash))) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
-      
+
       const token = generateToken({ userId: user.id, email: user.email });
-      const isProduction = req.headers.host?.includes('rewriteme.app') || process.env.VERCEL === '1';
-      res.setHeader('Set-Cookie', serialize('token', token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60,
-        path: '/',
-      }));
-      
+      const isProduction =
+        req.headers.host?.includes('rewriteme.app') || process.env.VERCEL === '1';
+      res.setHeader(
+        'Set-Cookie',
+        serialize('token', token, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: 'lax',
+          maxAge: 7 * 24 * 60 * 60,
+          path: '/',
+        })
+      );
+
       return res.json({
         user: {
           id: user.id,
@@ -217,7 +236,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           name: user.name,
           plan: user.plan,
           creditsRemaining: user.credits_remaining,
-        }
+        },
       });
     }
 
@@ -227,32 +246,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password required' });
       }
-      
+
       const existing = await sql`SELECT id FROM users WHERE email = ${email}`;
       if (existing.length > 0) {
         return res.status(400).json({ error: 'Email already registered' });
       }
-      
+
       const passwordHash = await bcrypt.hash(password, 10);
       const admin = isAdmin(email);
-      
+
       const result = await sql`
         INSERT INTO users (email, password_hash, name, plan, credits_remaining, email_verified)
         VALUES (${email}, ${passwordHash}, ${name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 0}, NULL)
         RETURNING *
       `;
       const user = result[0];
-      
+
       const token = generateToken({ userId: user.id, email: user.email });
-      const isProduction = req.headers.host?.includes('rewriteme.app') || process.env.VERCEL === '1';
-      res.setHeader('Set-Cookie', serialize('token', token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60,
-        path: '/',
-      }));
-      
+      const isProduction =
+        req.headers.host?.includes('rewriteme.app') || process.env.VERCEL === '1';
+      res.setHeader(
+        'Set-Cookie',
+        serialize('token', token, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: 'lax',
+          maxAge: 7 * 24 * 60 * 60,
+          path: '/',
+        })
+      );
+
       return res.json({
         user: {
           id: user.id,
@@ -260,20 +283,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           name: user.name,
           plan: user.plan,
           creditsRemaining: user.credits_remaining,
-        }
+        },
       });
     }
 
     // Auth: Logout
     if (path === '/api/auth/logout' && method === 'POST') {
-      const isProductionLogout = req.headers.host?.includes('rewriteme.app') || process.env.VERCEL === '1';
-      res.setHeader('Set-Cookie', serialize('token', '', {
-        httpOnly: true,
-        secure: isProductionLogout,
-        sameSite: 'lax',
-        maxAge: 0,
-        path: '/',
-      }));
+      const isProductionLogout =
+        req.headers.host?.includes('rewriteme.app') || process.env.VERCEL === '1';
+      res.setHeader(
+        'Set-Cookie',
+        serialize('token', '', {
+          httpOnly: true,
+          secure: isProductionLogout,
+          sameSite: 'lax',
+          maxAge: 0,
+          path: '/',
+        })
+      );
       return res.json({ success: true });
     }
 
@@ -291,9 +318,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!code) {
         return res.redirect(302, '/auth?error=no_code');
       }
-      
+
       const redirectUri = `${process.env.APP_URL}/api/auth/google/callback`;
-      
+
       // Exchange code for tokens
       const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
@@ -306,29 +333,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           grant_type: 'authorization_code',
         }),
       });
-      
+
       if (!tokenRes.ok) {
         return res.redirect(302, '/auth?error=token_failed');
       }
-      
-      const tokens = await tokenRes.json() as { access_token: string };
-      
+
+      const tokens = (await tokenRes.json()) as { access_token: string };
+
       // Get user info
       const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       });
-      
+
       if (!userRes.ok) {
         return res.redirect(302, '/auth?error=user_info_failed');
       }
-      
-      const googleUser = await userRes.json() as { email: string; name?: string; id: string };
-      
+
+      const googleUser = (await userRes.json()) as { email: string; name?: string; id: string };
+
       // Find or create user
       let users = await sql`SELECT * FROM users WHERE email = ${googleUser.email}`;
       let user = users[0];
       const admin = isAdmin(googleUser.email);
-      
+
       if (!user) {
         const result = await sql`
           INSERT INTO users (email, password_hash, name, plan, credits_remaining, email_verified)
@@ -341,17 +368,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         user.plan = 'admin';
         user.credits_remaining = 9999;
       }
-      
+
       const token = generateToken({ userId: user.id, email: user.email });
-      const isProductionOAuth = req.headers.host?.includes('rewriteme.app') || process.env.VERCEL === '1';
-      res.setHeader('Set-Cookie', serialize('token', token, {
-        httpOnly: true,
-        secure: isProductionOAuth,
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60,
-        path: '/',
-      }));
-      
+      const isProductionOAuth =
+        req.headers.host?.includes('rewriteme.app') || process.env.VERCEL === '1';
+      res.setHeader(
+        'Set-Cookie',
+        serialize('token', token, {
+          httpOnly: true,
+          secure: isProductionOAuth,
+          sameSite: 'lax',
+          maxAge: 7 * 24 * 60 * 60,
+          path: '/',
+        })
+      );
+
       return res.redirect(302, '/');
     }
 
@@ -361,8 +392,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!user) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
-      
-      const resumes = await sql`SELECT * FROM resumes WHERE user_id = ${user.id} ORDER BY created_at DESC`;
+
+      const resumes =
+        await sql`SELECT * FROM resumes WHERE user_id = ${user.id} ORDER BY created_at DESC`;
       return res.json(resumes);
     }
 
@@ -371,11 +403,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const resumeId = path.split('/').pop();
       const resumes = await sql`SELECT * FROM resumes WHERE id = ${resumeId}`;
       const resume = resumes[0];
-      
+
       if (!resume) {
         return res.status(404).json({ error: 'Resume not found' });
       }
-      
+
       return res.json({
         id: resume.id,
         userId: resume.user_id,
@@ -435,7 +467,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               status: 'completed',
               isDuplicate: true,
               message: 'This resume has already been analyzed.',
-              originalUploadDate: existing.created_at
+              originalUploadDate: existing.created_at,
             });
           }
         } catch (dupError) {
@@ -481,14 +513,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!user) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
-      
+
       const { plan } = body;
       if (!plan || !PRICES[plan as keyof typeof PRICES]) {
         return res.status(400).json({ error: 'Invalid plan' });
       }
-      
+
       const priceConfig = PRICES[plan as keyof typeof PRICES];
-      
+
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [
@@ -514,7 +546,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           credits: priceConfig.credits.toString(),
         },
       });
-      
+
       return res.json({ url: session.url });
     }
 
@@ -524,14 +556,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!sessionId) {
         return res.status(400).json({ error: 'Session ID required' });
       }
-      
+
       const session = await stripe.checkout.sessions.retrieve(sessionId);
-      
+
       if (session.payment_status === 'paid') {
         const userId = session.metadata?.userId;
         const plan = session.metadata?.plan;
         const credits = parseInt(session.metadata?.credits || '0');
-        
+
         if (userId && plan) {
           // Update user plan and credits
           await sql`
@@ -539,18 +571,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             SET plan = ${plan}, credits_remaining = credits_remaining + ${credits}
             WHERE id = ${userId}
           `;
-          
+
           // Record payment
           await sql`
             INSERT INTO payments (user_id, stripe_session_id, plan, amount, status)
             VALUES (${userId}, ${sessionId}, ${plan}, ${session.amount_total}, 'completed')
             ON CONFLICT (stripe_session_id) DO NOTHING
           `;
-          
+
           return res.json({ success: true, plan, credits });
         }
       }
-      
+
       return res.status(400).json({ error: 'Payment not completed' });
     }
 
@@ -605,7 +637,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const userId = user?.id || null;
 
       const userAgent = req.headers['user-agent'] || null;
-      const ipAddress = req.headers['x-forwarded-for'] as string || req.headers['x-real-ip'] as string || null;
+      const ipAddress =
+        (req.headers['x-forwarded-for'] as string) || (req.headers['x-real-ip'] as string) || null;
 
       // Store analytics event (gracefully handle if table doesn't exist yet)
       try {
@@ -649,7 +682,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     return res.status(404).json({ error: 'Not found' });
-
   } catch (error: any) {
     console.error('API Error:', error);
     return res.status(500).json({ error: 'Internal server error', details: error.message });
@@ -664,7 +696,10 @@ async function processResume(resumeId: string, originalText: string) {
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: 'Optimize resumes. Output JSON only.' },
-          { role: 'user', content: `Rewrite this resume with strong action verbs and quantified achievements.\n\n${originalText}\n\n{"improvedText": "optimized resume"}` }
+          {
+            role: 'user',
+            content: `Rewrite this resume with strong action verbs and quantified achievements.\n\n${originalText}\n\n{"improvedText": "optimized resume"}`,
+          },
         ],
         response_format: { type: 'json_object' },
         max_tokens: 2500,
@@ -673,16 +708,19 @@ async function processResume(resumeId: string, originalText: string) {
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: 'Score resumes. Output JSON only.' },
-          { role: 'user', content: `Score this resume.\n\n${originalText.substring(0, 1500)}\n\n{"atsScore": 0-100, "keywordsScore": 0-10, "formattingScore": 0-10, "issues": [{"type": "issue", "message": "fix", "severity": "high"}]}` }
+          {
+            role: 'user',
+            content: `Score this resume.\n\n${originalText.substring(0, 1500)}\n\n{"atsScore": 0-100, "keywordsScore": 0-10, "formattingScore": 0-10, "issues": [{"type": "issue", "message": "fix", "severity": "high"}]}`,
+          },
         ],
         response_format: { type: 'json_object' },
         max_tokens: 500,
-      })
+      }),
     ]);
-    
+
     const optimization = JSON.parse(optimizationResult.choices[0].message.content || '{}');
     const scores = JSON.parse(scoreResult.choices[0].message.content || '{}');
-    
+
     await sql`
       UPDATE resumes SET
         improved_text = ${optimization.improvedText || originalText},

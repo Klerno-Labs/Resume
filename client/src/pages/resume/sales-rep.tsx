@@ -1,17 +1,26 @@
-import React from "react";
-import Seo from "@/components/Seo";
-import { Link } from "wouter";
+import React from 'react';
+import Seo from '@/components/Seo';
+import { Link } from 'wouter';
 
 export default function ResumeSalesRep() {
-  const title = "Sales Representative Resume Optimization | AI Resume Repair";
-  const description = "AI-crafted sales resume improvements — highlight quotas, pipeline management, and closed-won metrics to pass ATS and attract recruiters.";
+  const title = 'Sales Representative Resume Optimization | AI Resume Repair';
+  const description =
+    'AI-crafted sales resume improvements — highlight quotas, pipeline management, and closed-won metrics to pass ATS and attract recruiters.';
 
   return (
     <div className="min-h-screen bg-background font-sans">
-      <Seo title={title} description={description} canonical="https://rewriteme.app/resume/sales-rep" ogImage="https://rewriteme.app/og-image.png" />
+      <Seo
+        title={title}
+        description={description}
+        canonical="https://rewriteme.app/resume/sales-rep"
+        ogImage="https://rewriteme.app/og-image.png"
+      />
       <main className="container mx-auto px-4 py-20 max-w-4xl">
         <h1 className="text-3xl font-bold mb-4">Sales Representative Resume Optimization</h1>
-        <p className="text-muted-foreground mb-6">Optimize your sales resume with AI to showcase quota attainment, deal sizes, and territory growth.</p>
+        <p className="text-muted-foreground mb-6">
+          Optimize your sales resume with AI to showcase quota attainment, deal sizes, and territory
+          growth.
+        </p>
 
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-3">What we optimize</h2>
@@ -24,10 +33,16 @@ export default function ResumeSalesRep() {
 
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-3">Try it now</h2>
-          <Link href="/ai-resume-builder"><button className="bg-primary text-white px-4 py-2 rounded">Optimize Sales Resume</button></Link>
+          <Link href="/ai-resume-builder">
+            <button className="bg-primary text-white px-4 py-2 rounded">
+              Optimize Sales Resume
+            </button>
+          </Link>
         </section>
 
-        <footer className="text-sm text-muted-foreground">Back to <Link href="/ai-resume-builder">AI Resume Builder</Link></footer>
+        <footer className="text-sm text-muted-foreground">
+          Back to <Link href="/ai-resume-builder">AI Resume Builder</Link>
+        </footer>
       </main>
     </div>
   );

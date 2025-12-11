@@ -1,7 +1,7 @@
-import { db } from "../db";
-import { users } from "../../shared/schema";
-import { EmailCampaignService } from "./email-campaigns.service";
-import { eq } from "drizzle-orm";
+import { db } from '../db';
+import { users } from '../../shared/schema';
+import { EmailCampaignService } from './email-campaigns.service';
+import { eq } from 'drizzle-orm';
 
 export class EmailScheduler {
   private emailService = new EmailCampaignService();
@@ -14,7 +14,7 @@ export class EmailScheduler {
       const createdAt = user.createdAt ? new Date(user.createdAt) : null;
       if (!createdAt) continue;
       const daysSinceSignup = Math.floor(
-        (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24),
+        (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
       );
 
       if (daysSinceSignup === 0) {

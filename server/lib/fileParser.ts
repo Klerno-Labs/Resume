@@ -1,7 +1,7 @@
-import mammoth from "mammoth";
-import { createRequire } from "module";
+import mammoth from 'mammoth';
+import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const pdfParse = require("pdf-parse");
+const pdfParse = require('pdf-parse');
 
 function cleanExtractedText(text: string): string {
   return text
@@ -19,26 +19,32 @@ function validateExtractedText(text: string, filename: string): void {
   }
 
   if (text.trim().length < MIN_TEXT_LENGTH) {
-    throw new Error(`File contains insufficient text content (minimum ${MIN_TEXT_LENGTH} characters required): ${filename}`);
+    throw new Error(
+      `File contains insufficient text content (minimum ${MIN_TEXT_LENGTH} characters required): ${filename}`
+    );
   }
 }
 
-export async function parseFile(buffer: Buffer, mimetype: string, filename: string = 'unknown'): Promise<string> {
+export async function parseFile(
+  buffer: Buffer,
+  mimetype: string,
+  filename: string = 'unknown'
+): Promise<string> {
   try {
     let rawText = '';
 
     // PDF parsing
-    if (mimetype === "application/pdf") {
+    if (mimetype === 'application/pdf') {
       const data = await pdfParse(buffer);
       rawText = data.text;
     }
     // DOCX parsing - handle multiple MIME types
     else if (
-      mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-      mimetype === "application/zip" ||
-      mimetype === "application/x-zip" ||
-      mimetype === "application/x-zip-compressed" ||
-      mimetype === "application/octet-stream"
+      mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      mimetype === 'application/zip' ||
+      mimetype === 'application/x-zip' ||
+      mimetype === 'application/x-zip-compressed' ||
+      mimetype === 'application/octet-stream'
     ) {
       try {
         const result = await mammoth.extractRawText({ buffer });
@@ -49,18 +55,21 @@ export async function parseFile(buffer: Buffer, mimetype: string, filename: stri
 
         rawText = result.value;
       } catch (mammothError) {
-        throw new Error(`Failed to parse DOCX file. The file may be corrupted or in an unsupported format.`);
+        throw new Error(
+          `Failed to parse DOCX file. The file may be corrupted or in an unsupported format.`
+        );
       }
     }
     // Legacy .doc files are not parsed by the server
-    else if (mimetype === "application/msword" || mimetype === "application/vnd.ms-word") {
-      throw new Error("Legacy .doc files are not supported. Please convert to .docx or PDF before uploading.");
+    else if (mimetype === 'application/msword' || mimetype === 'application/vnd.ms-word') {
+      throw new Error(
+        'Legacy .doc files are not supported. Please convert to .docx or PDF before uploading.'
+      );
     }
     // Plain text
-    else if (mimetype === "text/plain") {
-      rawText = buffer.toString("utf-8");
-    }
-    else {
+    else if (mimetype === 'text/plain') {
+      rawText = buffer.toString('utf-8');
+    } else {
       throw new Error(`Unsupported file type: ${mimetype}. Please upload PDF, DOCX, or TXT files.`);
     }
 

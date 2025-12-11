@@ -1,13 +1,13 @@
-import React from "react";
-import type { Resume } from "@/lib/api";
+import React from 'react';
+import type { Resume } from '@/lib/api';
 
 interface Props {
   resume: Resume;
 }
 
 export function BeforeAfter({ resume }: Props) {
-  const original = resume.originalText || "";
-  const improved = resume.improvedText || "";
+  const original = resume.originalText || '';
+  const improved = resume.improvedText || '';
 
   // Simple line-based comparison for visual before/after (not a proper diff)
   const originalLines = original.split(/\r?\n/).slice(0, 200);
@@ -18,8 +18,10 @@ export function BeforeAfter({ resume }: Props) {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h4 className="text-lg font-semibold">ATS Score</h4>
-          <div className="text-3xl font-bold text-primary">{resume.atsScore ?? "--"}</div>
-          <div className="text-sm text-muted-foreground">Keywords: {resume.keywordsScore ?? "--"} • Formatting: {resume.formattingScore ?? "--"}</div>
+          <div className="text-3xl font-bold text-primary">{resume.atsScore ?? '--'}</div>
+          <div className="text-sm text-muted-foreground">
+            Keywords: {resume.keywordsScore ?? '--'} • Formatting: {resume.formattingScore ?? '--'}
+          </div>
         </div>
         <div className="text-right text-sm text-muted-foreground">
           <div>File: {resume.fileName}</div>
@@ -31,14 +33,14 @@ export function BeforeAfter({ resume }: Props) {
         <div>
           <h5 className="font-semibold mb-2">Before</h5>
           <div className="prose max-h-64 overflow-auto whitespace-pre-wrap text-sm text-muted-foreground p-3 bg-background rounded">
-            {originalLines.join("\n") || "(No original text available)"}
+            {originalLines.join('\n') || '(No original text available)'}
           </div>
         </div>
 
         <div>
           <h5 className="font-semibold mb-2">After</h5>
           <div className="prose max-h-64 overflow-auto whitespace-pre-wrap text-sm text-foreground p-3 bg-background rounded">
-            {improvedLines.join("\n") || "(No improved text available yet)"}
+            {improvedLines.join('\n') || '(No improved text available yet)'}
           </div>
         </div>
       </div>

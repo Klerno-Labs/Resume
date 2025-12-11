@@ -15,37 +15,63 @@ interface ParsedResume {
 }
 
 function parseResumeText(text: string): ParsedResume {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  
-  const name = lines[0] || "Your Name";
-  let title = "";
+  const lines = text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  const name = lines[0] || 'Your Name';
+  let title = '';
   let startIdx = 1;
-  
+
   if (lines[1] && !lines[1].includes('@') && !lines[1].match(/^\d/) && !lines[1].includes('|')) {
     title = lines[1];
     startIdx = 2;
   }
-  
+
   // Extract contact lines
   const contact: string[] = [];
   for (let i = startIdx; i < Math.min(startIdx + 4, lines.length); i++) {
     const line = lines[i];
-    if (line && (line.includes('@') || line.match(/\d{3}/) || line.includes(',') || line.includes('linkedin') || line.includes('github'))) {
+    if (
+      line &&
+      (line.includes('@') ||
+        line.match(/\d{3}/) ||
+        line.includes(',') ||
+        line.includes('linkedin') ||
+        line.includes('github'))
+    ) {
       contact.push(line);
     }
   }
-  
+
   // Parse sections
   const sections: ParsedResume['sections'] = [];
-  const sectionHeaders = ['experience', 'education', 'skills', 'projects', 'certifications', 'summary', 'objective', 'achievements', 'awards', 'professional experience', 'work experience', 'technical skills'];
-  
+  const sectionHeaders = [
+    'experience',
+    'education',
+    'skills',
+    'projects',
+    'certifications',
+    'summary',
+    'objective',
+    'achievements',
+    'awards',
+    'professional experience',
+    'work experience',
+    'technical skills',
+  ];
+
   let currentSection: { title: string; content: string[] } | null = null;
-  
+
   for (let i = startIdx; i < lines.length; i++) {
     const line = lines[i];
-    const lineLower = line.toLowerCase().replace(/[:\-–—]/g, '').trim();
-    const isHeader = sectionHeaders.some(h => lineLower === h || lineLower.startsWith(h + ' '));
-    
+    const lineLower = line
+      .toLowerCase()
+      .replace(/[:\-–—]/g, '')
+      .trim();
+    const isHeader = sectionHeaders.some((h) => lineLower === h || lineLower.startsWith(h + ' '));
+
     if (isHeader) {
       if (currentSection) sections.push(currentSection);
       currentSection = { title: line.replace(/[:\-–—]/g, '').trim(), content: [] };
@@ -53,9 +79,9 @@ function parseResumeText(text: string): ParsedResume {
       currentSection.content.push(line);
     }
   }
-  
+
   if (currentSection) sections.push(currentSection);
-  
+
   return { name, title, contact, sections };
 }
 
@@ -69,8 +95,8 @@ export function exportResumeToPDF(resumeData: ResumeData): void {
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   const margin = 20;
-  const contentWidth = pageWidth - (2 * margin);
-  
+  const contentWidth = pageWidth - 2 * margin;
+
   const parsed = parseResumeText(resumeData.improvedText);
   let y = margin;
 
@@ -135,13 +161,13 @@ export function exportResumeToPDF(resumeData: ResumeData): void {
   // Sections
   for (const section of parsed.sections) {
     checkPageBreak(20);
-    
+
     // Section header
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(11);
     pdf.setTextColor(...darkColor);
     pdf.text(section.title.toUpperCase(), margin, y);
-    
+
     // Underline
     const textWidth = pdf.getTextWidth(section.title.toUpperCase());
     pdf.setDrawColor(...primaryColor);
@@ -156,16 +182,16 @@ export function exportResumeToPDF(resumeData: ResumeData): void {
 
     for (const line of section.content) {
       checkPageBreak(8);
-      
+
       const isBullet = line.startsWith('-') || line.startsWith('•') || line.startsWith('*');
       const bulletText = isBullet ? line.replace(/^[-•*]\s*/, '') : line;
-      
+
       if (isBullet) {
         // Bullet point with proper formatting
         pdf.setTextColor(...primaryColor);
         pdf.text('▸', margin + 2, y);
         pdf.setTextColor(...darkColor);
-        
+
         const bulletLines = pdf.splitTextToSize(bulletText, contentWidth - 8);
         for (let i = 0; i < bulletLines.length; i++) {
           if (i > 0) checkPageBreak(5);
@@ -175,12 +201,12 @@ export function exportResumeToPDF(resumeData: ResumeData): void {
       } else {
         // Check if it's a job title line (has dates or |)
         const isJobLine = line.includes('|') || line.match(/\d{4}/) || line.includes('–');
-        
+
         if (isJobLine) {
           y += 2; // Extra space before job entries
           pdf.setFont('helvetica', 'bold');
           pdf.setFontSize(10);
-          
+
           // Split by | or – to separate title, company, dates
           const parts = line.split(/\s*[|–]\s*/);
           if (parts.length >= 2) {
@@ -210,7 +236,7 @@ export function exportResumeToPDF(resumeData: ResumeData): void {
         }
       }
     }
-    
+
     y += 4; // Space after section
   }
 

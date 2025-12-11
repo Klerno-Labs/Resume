@@ -1,18 +1,12 @@
-import Stripe from "stripe";
-import { and, desc, eq } from "drizzle-orm";
-import { db } from "../db";
-import {
-  payments,
-  pricingPlans,
-  subscriptions,
-  usageRecords,
-  users,
-} from "../../shared/schema";
+import Stripe from 'stripe';
+import { and, desc, eq } from 'drizzle-orm';
+import { db } from '../db';
+import { payments, pricingPlans, subscriptions, usageRecords, users } from '../../shared/schema';
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeSecret
   ? new Stripe(stripeSecret, {
-      apiVersion: "2025-11-17.clover",
+      apiVersion: '2025-11-17.clover',
     })
   : null;
 
@@ -20,10 +14,10 @@ export class PaymentService {
   async createSubscriptionCheckout(
     userId: string,
     planId: string,
-    options?: { skipTrial?: boolean; billingInterval?: "month" | "year" },
+    options?: { skipTrial?: boolean; billingInterval?: 'month' | 'year' }
   ) {
     if (!stripe) {
-      throw new Error("Stripe is not configured");
+      throw new Error('Stripe is not configured');
     }
 
     const [user] = (await db.select().from(users).where(eq(users.id, userId)).limit(1)) as any[];
@@ -34,7 +28,7 @@ export class PaymentService {
       .limit(1)) as any[];
 
     if (!user || !plan) {
-      throw new Error("User or plan not found");
+      throw new Error('User or plan not found');
     }
 
     let customerId = user.stripeCustomerId;
@@ -48,12 +42,12 @@ export class PaymentService {
       await db.update(users).set({ stripeCustomerId: customerId }).where(eq(users.id, userId));
     }
 
-    const isFirstPurchase = (user).lifetimeValue === 0;
+    const isFirstPurchase = user.lifetimeValue === 0;
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      mode: "subscription",
-      payment_method_types: ["card"],
+      mode: 'subscription',
+      payment_method_types: ['card'],
       line_items: [
         {
           price: plan.stripePriceId,
@@ -63,19 +57,19 @@ export class PaymentService {
       success_url: `${process.env.APP_URL}/dashboard?payment=success`,
       cancel_url: `${process.env.APP_URL}/pricing?payment=cancelled`,
       subscription_data: {
-        metadata: { userId, planId, trialAwarded: "no" },
+        metadata: { userId, planId, trialAwarded: 'no' },
         trial_period_days: options?.skipTrial ? 0 : undefined,
       },
-      payment_method_collection: "always",
+      payment_method_collection: 'always',
       allow_promotion_codes: true,
-      billing_address_collection: "required",
+      billing_address_collection: 'required',
       discounts:
         isFirstPurchase && process.env.STRIPE_COUPON_WELCOME50
           ? [{ coupon: process.env.STRIPE_COUPON_WELCOME50 }]
           : undefined,
       custom_text: {
         submit: {
-          message: "30-day money-back guarantee. Cancel anytime.",
+          message: '30-day money-back guarantee. Cancel anytime.',
         },
       },
       metadata: { userId, planId },
@@ -87,14 +81,14 @@ export class PaymentService {
   /**
    * Create one-time credit purchase
    */
-  async createCreditCheckout(userId: string, packSize: "small" | "medium" | "large") {
+  async createCreditCheckout(userId: string, packSize: 'small' | 'medium' | 'large') {
     if (!stripe) {
-      throw new Error("Stripe is not configured");
+      throw new Error('Stripe is not configured');
     }
-    const { CREDIT_PACKAGES } = await import("../config/pricing");
+    const { CREDIT_PACKAGES } = await import('../config/pricing');
     const pack = CREDIT_PACKAGES[packSize];
     const [user] = (await db.select().from(users).where(eq(users.id, userId)).limit(1)) as any[];
-    if (!user) throw new Error("User not found");
+    if (!user) throw new Error('User not found');
 
     let customerId = user.stripeCustomerId;
     if (!customerId) {
@@ -109,8 +103,8 @@ export class PaymentService {
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      mode: "payment",
-      payment_method_types: ["card"],
+      mode: 'payment',
+      payment_method_types: ['card'],
       line_items: [
         {
           price: pack.stripePriceId,
@@ -123,7 +117,7 @@ export class PaymentService {
         userId,
         packSize,
         credits: pack.credits.toString(),
-        type: "credits",
+        type: 'credits',
       },
     });
 
@@ -138,8 +132,8 @@ export class PaymentService {
 
     if (!user?.currentSubscriptionId) {
       return {
-        plan: "free",
-        status: "active",
+        plan: 'free',
+        status: 'active',
         creditsRemaining: user?.creditsRemaining || 0,
       };
     }
@@ -152,7 +146,7 @@ export class PaymentService {
 
     return {
       plan: user.plan,
-      status: subscription?.status || "unknown",
+      status: subscription?.status || 'unknown',
       currentPeriodEnd: subscription?.currentPeriodEnd,
       cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd,
       creditsRemaining: user.creditsRemaining,
@@ -163,11 +157,11 @@ export class PaymentService {
    * Create billing portal session
    */
   async createPortalSession(userId: string) {
-    if (!stripe) throw new Error("Stripe is not configured");
+    if (!stripe) throw new Error('Stripe is not configured');
     const [user] = (await db.select().from(users).where(eq(users.id, userId)).limit(1)) as any[];
 
     if (!user?.stripeCustomerId) {
-      throw new Error("No payment method on file");
+      throw new Error('No payment method on file');
     }
 
     const session = await stripe.billingPortal.sessions.create({
@@ -186,21 +180,21 @@ export class PaymentService {
     const event = stripe.webhooks.constructEvent(
       payload,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET,
+      process.env.STRIPE_WEBHOOK_SECRET
     );
 
     switch (event.type) {
-      case "customer.subscription.created":
-      case "customer.subscription.updated":
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
         await this.handleSubscriptionUpdate(event.data.object);
         break;
-      case "customer.subscription.deleted":
+      case 'customer.subscription.deleted':
         await this.handleSubscriptionCanceled(event.data.object);
         break;
-      case "invoice.payment_succeeded":
+      case 'invoice.payment_succeeded':
         await this.handleInvoicePaid(event.data.object);
         break;
-      case "invoice.payment_failed":
+      case 'invoice.payment_failed':
         this.handlePaymentFailed(event.data.object);
         break;
       default:
@@ -214,11 +208,11 @@ export class PaymentService {
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!user) {
-      throw new Error("User not found");
+      throw new Error('User not found');
     }
 
     if (user.creditsRemaining < creditsUsed) {
-      throw new Error("Insufficient credits");
+      throw new Error('Insufficient credits');
     }
 
     await db
@@ -253,10 +247,13 @@ export class PaymentService {
       .limit(1000);
 
     const totalCreditsUsed = usage.reduce((sum, record) => sum + record.creditsUsed, 0);
-    const actionBreakdown = usage.reduce((acc, record) => {
-      acc[record.action] = (acc[record.action] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const actionBreakdown = usage.reduce(
+      (acc, record) => {
+        acc[record.action] = (acc[record.action] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     return {
       totalCreditsUsed,
@@ -268,12 +265,12 @@ export class PaymentService {
 
   async cancelSubscription(userId: string) {
     if (!stripe) {
-      throw new Error("Stripe is not configured");
+      throw new Error('Stripe is not configured');
     }
 
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user?.currentSubscriptionId) {
-      throw new Error("No active subscription");
+      throw new Error('No active subscription');
     }
 
     const [subscription] = await db
@@ -283,7 +280,7 @@ export class PaymentService {
       .limit(1);
 
     if (!subscription) {
-      throw new Error("Subscription not found");
+      throw new Error('Subscription not found');
     }
 
     await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
@@ -300,13 +297,13 @@ export class PaymentService {
 
   async reactivateSubscription(userId: string) {
     if (!stripe) {
-      throw new Error("Stripe is not configured");
+      throw new Error('Stripe is not configured');
     }
 
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!user?.currentSubscriptionId) {
-      throw new Error("No subscription to reactivate");
+      throw new Error('No subscription to reactivate');
     }
 
     const [subscription] = await db
@@ -316,7 +313,7 @@ export class PaymentService {
       .limit(1);
 
     if (!subscription || !subscription.cancelAtPeriodEnd) {
-      throw new Error("Subscription is not scheduled for cancellation");
+      throw new Error('Subscription is not scheduled for cancellation');
     }
 
     await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
@@ -359,9 +356,15 @@ export class PaymentService {
     };
 
     if (existingSub.length > 0) {
-      await db.update(subscriptions).set(subscriptionData).where(eq(subscriptions.id, existingSub[0].id));
+      await db
+        .update(subscriptions)
+        .set(subscriptionData)
+        .where(eq(subscriptions.id, existingSub[0].id));
     } else {
-      const [newSub] = (await db.insert(subscriptions).values(subscriptionData).returning()) as any[];
+      const [newSub] = (await db
+        .insert(subscriptions)
+        .values(subscriptionData)
+        .returning()) as any[];
       await db.update(users).set({ currentSubscriptionId: newSub.id }).where(eq(users.id, userId));
     }
 
@@ -372,14 +375,17 @@ export class PaymentService {
       .limit(1)) as any[];
 
     if (plan) {
-      await db.update(users).set({ creditsRemaining: plan.creditsPerMonth }).where(eq(users.id, userId));
+      await db
+        .update(users)
+        .set({ creditsRemaining: plan.creditsPerMonth })
+        .where(eq(users.id, userId));
     }
   }
 
   private async handleSubscriptionCanceled(subscription: Stripe.Subscription) {
     await db
       .update(subscriptions)
-      .set({ status: "canceled", updatedAt: new Date() })
+      .set({ status: 'canceled', updatedAt: new Date() })
       .where(eq(subscriptions.stripeSubscriptionId, subscription.id));
 
     const [sub] = (await db
@@ -392,7 +398,7 @@ export class PaymentService {
       await db
         .update(users)
         .set({
-          plan: "free",
+          plan: 'free',
           currentSubscriptionId: null,
           creditsRemaining: 0,
         })
@@ -403,7 +409,8 @@ export class PaymentService {
   private async handleInvoicePaid(invoice: Stripe.Invoice) {
     if (!(invoice as any).subscription) return;
 
-    const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+    const customerId =
+      typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
     if (!customerId) return;
 
     const [user] = (await db
@@ -419,7 +426,7 @@ export class PaymentService {
         plan: user.plan,
         amount: invoice.amount_paid ?? 0,
         stripePaymentId: ((invoice as any).payment_intent as string) || null,
-        status: "completed",
+        status: 'completed',
       });
 
       await db
@@ -430,6 +437,6 @@ export class PaymentService {
   }
 
   private handlePaymentFailed(invoice: Stripe.Invoice) {
-    console.log("Payment failed for invoice:", invoice.id);
+    console.log('Payment failed for invoice:', invoice.id);
   }
 }

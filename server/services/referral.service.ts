@@ -1,6 +1,6 @@
-import { db } from "../db";
-import { users, referrals } from "../../shared/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { db } from '../db';
+import { users, referrals } from '../../shared/schema';
+import { eq, and, sql } from 'drizzle-orm';
 
 export class ReferralService {
   async generateReferralCode(userId: string): Promise<string> {
@@ -17,7 +17,7 @@ export class ReferralService {
       .limit(1);
 
     if (!referrer) {
-      throw new Error("Invalid referral code");
+      throw new Error('Invalid referral code');
     }
 
     await db.insert(referrals).values({
@@ -54,7 +54,7 @@ export class ReferralService {
     const paidConversions = allReferrals.filter((r) => r.convertedToPaid).length;
     const totalCreditsEarned = allReferrals.reduce(
       (sum, r) => sum + r.rewardCredits + (r.bonusCredits || 0),
-      0,
+      0
     );
 
     return {

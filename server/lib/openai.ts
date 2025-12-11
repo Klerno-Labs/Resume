@@ -1,10 +1,10 @@
-import OpenAI from "openai";
-import crypto from "crypto";
+import OpenAI from 'openai';
+import crypto from 'crypto';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Use gpt-4o-mini for maximum speed
-const FAST_MODEL = "gpt-4o-mini";
+const FAST_MODEL = 'gpt-4o-mini';
 
 // Simple in-memory cache for resume results
 const resumeCache = new Map<string, { result: ResumeOptimizationResult; timestamp: number }>();
@@ -38,14 +38,17 @@ export async function optimizeResume(originalText: string): Promise<ResumeOptimi
     openai.chat.completions.create({
       model: FAST_MODEL,
       messages: [
-        { role: "system", content: "Optimize resumes. Output JSON only." },
-        { role: "user", content: `Rewrite this resume with strong action verbs and quantified achievements. Keep same structure.
+        { role: 'system', content: 'Optimize resumes. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Rewrite this resume with strong action verbs and quantified achievements. Keep same structure.
 
 ${originalText}
 
-{"improvedText": "optimized resume"}` }
+{"improvedText": "optimized resume"}`,
+        },
       ],
-      response_format: { type: "json_object" },
+      response_format: { type: 'json_object' },
       max_tokens: 2500,
       temperature: 0.5,
     }),
@@ -53,21 +56,24 @@ ${originalText}
     openai.chat.completions.create({
       model: FAST_MODEL,
       messages: [
-        { role: "system", content: "Score resumes. Output JSON only." },
-        { role: "user", content: `Score this resume for ATS compatibility.
+        { role: 'system', content: 'Score resumes. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Score this resume for ATS compatibility.
 
 ${originalText.substring(0, 1500)}
 
-{"atsScore": 0-100, "keywordsScore": 0-10, "formattingScore": 0-10, "issues": [{"type": "issue", "message": "fix", "severity": "high"}]}` }
+{"atsScore": 0-100, "keywordsScore": 0-10, "formattingScore": 0-10, "issues": [{"type": "issue", "message": "fix", "severity": "high"}]}`,
+        },
       ],
-      response_format: { type: "json_object" },
+      response_format: { type: 'json_object' },
       max_tokens: 500,
       temperature: 0.3,
-    })
+    }),
   ]);
 
-  const optimization = JSON.parse(optimizationResult.choices[0].message.content || "{}");
-  const scores = JSON.parse(scoreResult.choices[0].message.content || "{}");
+  const optimization = JSON.parse(optimizationResult.choices[0].message.content || '{}');
+  const scores = JSON.parse(scoreResult.choices[0].message.content || '{}');
 
   const result: ResumeOptimizationResult = {
     improvedText: optimization.improvedText || originalText,
@@ -79,7 +85,7 @@ ${originalText.substring(0, 1500)}
 
   // Cache the result
   resumeCache.set(cacheKey, { result, timestamp: Date.now() });
-  
+
   // Cleanup old cache entries
   if (resumeCache.size > 100) {
     const now = Date.now();
@@ -100,31 +106,37 @@ interface CoverLetterResult {
 export async function generateCoverLetter(
   resumeText: string,
   jobDescription: string,
-  tone: string = "professional"
+  tone: string = 'professional'
 ): Promise<CoverLetterResult> {
   const toneMap: Record<string, string> = {
-    professional: "professional",
-    enthusiastic: "enthusiastic",
-    academic: "academic",
-    creative: "creative",
+    professional: 'professional',
+    enthusiastic: 'enthusiastic',
+    academic: 'academic',
+    creative: 'creative',
   };
 
   const response = await openai.chat.completions.create({
     model: FAST_MODEL,
     messages: [
-      { role: "system", content: `Write ${toneMap[tone] || 'professional'} cover letters. JSON only.` },
-      { role: "user", content: `250-word cover letter.
+      {
+        role: 'system',
+        content: `Write ${toneMap[tone] || 'professional'} cover letters. JSON only.`,
+      },
+      {
+        role: 'user',
+        content: `250-word cover letter.
 
 Resume: ${resumeText.substring(0, 1000)}
 Job: ${jobDescription.substring(0, 500)}
 
-{"content": "letter"}` }
+{"content": "letter"}`,
+      },
     ],
-    response_format: { type: "json_object" },
+    response_format: { type: 'json_object' },
     max_tokens: 1000,
     temperature: 0.6,
   });
 
-  const result = JSON.parse(response.choices[0].message.content || "{}");
-  return { content: result.content || "" };
+  const result = JSON.parse(response.choices[0].message.content || '{}');
+  return { content: result.content || '' };
 }

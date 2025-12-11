@@ -1,4 +1,5 @@
 # 🚨 Production Hotfix Guide
+
 **Date**: December 10, 2025
 **Status**: CRITICAL FIX DEPLOYED
 
@@ -7,17 +8,21 @@
 ## 🔥 What Was Broken
 
 ### Symptoms:
+
 - ❌ **500 Error** on resume upload at https://rewriteme.app
 - ❌ **404 Error** on analytics endpoint
 - ❌ Users unable to upload resumes (core feature broken)
 - ❌ App completely unusable
 
 ### Root Cause:
+
 Production database was missing two columns that the code expected:
+
 - `content_hash` (for duplicate detection)
 - `original_file_name` (for duplicate detection)
 
 **Why it happened:**
+
 - Migration was run on local database ✅
 - Migration was NOT run on production database ❌
 - Code deployed expecting columns to exist
@@ -42,6 +47,7 @@ Production database was missing two columns that the code expected:
    - Backwards compatible with production database
 
 **Result:**
+
 - ✅ Upload works WITHOUT the migration
 - ✅ Duplicate detection works WITH the migration
 - ✅ No more 500 errors
@@ -58,6 +64,7 @@ Production database was missing two columns that the code expected:
 **Status**: Pushed to `main` branch → Auto-deploying to production
 
 **Expected Timeline**:
+
 - Vercel/Railway auto-deploy: ~2-5 minutes
 - You should see upload working immediately after deploy completes
 
@@ -66,6 +73,7 @@ Production database was missing two columns that the code expected:
 ### Phase 2: Database Migration ⏳ PENDING
 
 **What it does:**
+
 - Adds `content_hash` column
 - Adds `original_file_name` column
 - Creates index for fast duplicate lookups
@@ -79,6 +87,7 @@ node run-production-migration.js
 ```
 
 **Expected output:**
+
 ```
 🔗 Connecting to production database...
 ✅ Connected!
@@ -109,11 +118,13 @@ node run-production-migration.js
 ```
 
 **When to run:**
+
 - ⏰ **Now** - Upload is working, but users can upload duplicates
 - ⏰ **After testing** - Verify upload works, then run migration
 - ⏰ **Off-peak hours** - If you have many resumes, run during low traffic
 
 **Safety:**
+
 - ✅ Migration is idempotent (safe to run multiple times)
 - ✅ Script checks if already applied (won't break if run twice)
 - ✅ Uses transactions (rolls back on error)
@@ -146,13 +157,13 @@ node run-production-migration.js
 
 ## 📊 Current Status Summary
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| **Upload Endpoint** | ✅ FIXED | Works with or without migration |
-| **Analytics Endpoint** | ✅ WORKING | Already registered, was false alarm |
-| **Duplicate Detection** | ⏳ PARTIAL | Works after migration runs |
-| **Production Deploy** | ⏳ IN PROGRESS | Auto-deploying from commit 7298b5d |
-| **Database Migration** | ❌ NOT RUN | Ready to run when you want |
+| Component               | Status         | Notes                               |
+| ----------------------- | -------------- | ----------------------------------- |
+| **Upload Endpoint**     | ✅ FIXED       | Works with or without migration     |
+| **Analytics Endpoint**  | ✅ WORKING     | Already registered, was false alarm |
+| **Duplicate Detection** | ⏳ PARTIAL     | Works after migration runs          |
+| **Production Deploy**   | ⏳ IN PROGRESS | Auto-deploying from commit 7298b5d  |
+| **Database Migration**  | ❌ NOT RUN     | Ready to run when you want          |
 
 ---
 
@@ -225,12 +236,14 @@ COMMIT;
 ## 📝 What Happens Next
 
 ### Immediate (Phase 1 - Auto-deploying now):
+
 1. ✅ Vercel/Railway deploys commit 7298b5d
 2. ✅ Upload starts working again
 3. ✅ Users can upload resumes
 4. ⚠️ Duplicate detection disabled (users can upload same resume twice)
 
 ### Soon (Phase 2 - When you run migration):
+
 1. ✅ Run `node run-production-migration.js`
 2. ✅ Columns added to production database
 3. ✅ Duplicate detection automatically activates
@@ -243,6 +256,7 @@ COMMIT;
 **Check these:**
 
 1. **Deploy completed?**
+
    ```bash
    # Check latest deploy on Vercel
    vercel ls
@@ -275,11 +289,13 @@ If anything goes wrong:
 ## 🎯 Success Criteria
 
 ### Phase 1 (Immediate):
+
 - ✅ No more 500 errors on upload
 - ✅ Users can upload resumes
 - ✅ App functional
 
 ### Phase 2 (After Migration):
+
 - ✅ Duplicate detection working
 - ✅ Users not charged twice
 - ✅ Server logs show [Duplicate] messages

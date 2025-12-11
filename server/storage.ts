@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, sql } from 'drizzle-orm';
 import {
   users,
   resumes,
@@ -12,8 +12,8 @@ import {
   type InsertCoverLetter,
   type Payment,
   type InsertPayment,
-} from "@shared/schema";
-import { db, pool } from "./db";
+} from '@shared/schema';
+import { db, pool } from './db';
 export { db };
 
 export interface IStorage {
@@ -24,7 +24,7 @@ export interface IStorage {
   getUserByResetToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserCredits(userId: string, credits: number): Promise<void>;
-  updateUserPlan(userId: string, plan: User["plan"], credits?: number): Promise<void>;
+  updateUserPlan(userId: string, plan: User['plan'], credits?: number): Promise<void>;
   updateUserVerification(userId: string, token: string): Promise<void>;
   verifyUserEmail(userId: string): Promise<void>;
   setPasswordResetToken(userId: string, token: string, expiry: Date): Promise<void>;
@@ -46,10 +46,14 @@ export interface IStorage {
   getPayment(id: string): Promise<Payment | undefined>;
   getPaymentsByUser(userId: string): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
-  updatePaymentStatus(id: string, status: Payment["status"], stripeId?: string): Promise<void>;
-  
+  updatePaymentStatus(id: string, status: Payment['status'], stripeId?: string): Promise<void>;
+
   // Atomic transaction operations
-  processPaymentAndAddCredits(userId: string, paymentData: InsertPayment, creditsToAdd: number): Promise<{ payment: Payment; user: User }>;
+  processPaymentAndAddCredits(
+    userId: string,
+    paymentData: InsertPayment,
+    creditsToAdd: number
+  ): Promise<{ payment: Payment; user: User }>;
 }
 
 export class PostgresStorage implements IStorage {
@@ -76,8 +80,8 @@ export class PostgresStorage implements IStorage {
     await db.update(users).set({ creditsRemaining: credits }).where(eq(users.id, userId));
   }
 
-  async updateUserPlan(userId: string, plan: User["plan"], credits?: number): Promise<void> {
-    const updateData: { plan: User["plan"]; creditsRemaining?: number } = { plan };
+  async updateUserPlan(userId: string, plan: User['plan'], credits?: number): Promise<void> {
+    const updateData: { plan: User['plan']; creditsRemaining?: number } = { plan };
     if (credits !== undefined) {
       updateData.creditsRemaining = credits;
     }
@@ -101,25 +105,34 @@ export class PostgresStorage implements IStorage {
   }
 
   async verifyUserEmail(userId: string): Promise<void> {
-    await db.update(users).set({
-      emailVerified: new Date(),
-      verificationToken: null
-    }).where(eq(users.id, userId));
+    await db
+      .update(users)
+      .set({
+        emailVerified: new Date(),
+        verificationToken: null,
+      })
+      .where(eq(users.id, userId));
   }
 
   async setPasswordResetToken(userId: string, token: string, expiry: Date): Promise<void> {
-    await db.update(users).set({
-      resetToken: token,
-      resetTokenExpiry: expiry
-    }).where(eq(users.id, userId));
+    await db
+      .update(users)
+      .set({
+        resetToken: token,
+        resetTokenExpiry: expiry,
+      })
+      .where(eq(users.id, userId));
   }
 
   async updatePassword(userId: string, passwordHash: string): Promise<void> {
-    await db.update(users).set({
-      passwordHash,
-      resetToken: null,
-      resetTokenExpiry: null
-    }).where(eq(users.id, userId));
+    await db
+      .update(users)
+      .set({
+        passwordHash,
+        resetToken: null,
+        resetTokenExpiry: null,
+      })
+      .where(eq(users.id, userId));
   }
 
   // Resume operations
@@ -183,7 +196,11 @@ export class PostgresStorage implements IStorage {
     return payment;
   }
 
-  async updatePaymentStatus(id: string, status: Payment["status"], stripeId?: string): Promise<void> {
+  async updatePaymentStatus(
+    id: string,
+    status: Payment['status'],
+    stripeId?: string
+  ): Promise<void> {
     const updateData: any = { status };
     if (stripeId) {
       updateData.stripePaymentId = stripeId;
@@ -200,7 +217,7 @@ export class PostgresStorage implements IStorage {
   ): Promise<{ payment: Payment; user: User }> {
     // Get a client from the pool for transaction
     const client = await pool.connect();
-    
+
     try {
       // Start transaction
       await client.query('BEGIN');
@@ -210,7 +227,13 @@ export class PostgresStorage implements IStorage {
         `INSERT INTO payments (user_id, plan, amount, status, stripe_payment_id) 
          VALUES ($1, $2, $3, $4, $5) 
          RETURNING *`,
-        [paymentData.userId, paymentData.plan, paymentData.amount, paymentData.status || 'completed', paymentData.stripePaymentId]
+        [
+          paymentData.userId,
+          paymentData.plan,
+          paymentData.amount,
+          paymentData.status || 'completed',
+          paymentData.stripePaymentId,
+        ]
       );
       const payment = this.mapPaymentRow(paymentResult.rows[0]);
 
@@ -223,11 +246,11 @@ export class PostgresStorage implements IStorage {
          RETURNING *`,
         [creditsToAdd, paymentData.plan, userId]
       );
-      
+
       if (userResult.rows.length === 0) {
         throw new Error('User not found');
       }
-      
+
       const user = this.mapUserRow(userResult.rows[0]);
 
       // Commit transaction
@@ -247,7 +270,7 @@ export class PostgresStorage implements IStorage {
   // Atomic credit deduction for resume optimization
   async deductCreditAtomic(userId: string): Promise<User | null> {
     const client = await pool.connect();
-    
+
     try {
       await client.query('BEGIN');
 
@@ -289,7 +312,7 @@ export class PostgresStorage implements IStorage {
       resetToken: row.reset_token,
       resetTokenExpiry: row.reset_token_expiry,
       createdAt: row.created_at,
-    // Optional customer/subscription metadata
+      // Optional customer/subscription metadata
       stripeCustomerId: row.stripe_customer_id,
       currentSubscriptionId: row.current_subscription_id,
       lifetimeValue: row.lifetime_value,

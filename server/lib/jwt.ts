@@ -1,6 +1,6 @@
-import jwt from "jsonwebtoken";
-import { env } from "./env";
-import type { Request, Response, NextFunction } from "express";
+import jwt from 'jsonwebtoken';
+import { env } from './env';
+import type { Request, Response, NextFunction } from 'express';
 
 export interface JWTPayload {
   userId: string;
@@ -9,7 +9,7 @@ export interface JWTPayload {
 
 export function generateToken(payload: JWTPayload): string {
   return jwt.sign(payload, env.JWT_SECRET, {
-    expiresIn: "7d", // Token expires in 7 days
+    expiresIn: '7d', // Token expires in 7 days
   });
 }
 
@@ -17,15 +17,15 @@ export function verifyToken(token: string): JWTPayload {
   try {
     return jwt.verify(token, env.JWT_SECRET) as JWTPayload;
   } catch (error) {
-    throw new Error("Invalid or expired token");
+    throw new Error('Invalid or expired token');
   }
 }
 
 // Express middleware to protect routes
 function extractToken(req: Request): string | undefined {
   const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    return authHeader.slice("Bearer ".length);
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.slice('Bearer '.length);
   }
   return req.cookies?.token;
 }
@@ -35,7 +35,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     const token = extractToken(req);
 
     if (!token) {
-      return res.status(401).json({ message: "Authentication required" });
+      return res.status(401).json({ message: 'Authentication required' });
     }
 
     const payload = verifyToken(token);
@@ -45,7 +45,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Invalid or expired token" });
+    return res.status(401).json({ message: 'Invalid or expired token' });
   }
 }
 

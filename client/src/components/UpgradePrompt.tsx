@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
-import { useLocation } from "wouter";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { useLocation } from 'wouter';
 
 interface UpgradePromptProps {
   planId: string;
@@ -14,9 +14,9 @@ interface UpgradePromptProps {
 
 export function UpgradePrompt({
   planId,
-  headline = "Upgrade for more credits",
-  description = "Unlock more resumes, cover letters, and ATS insights with a paid plan.",
-  ctaLabel = "Upgrade now",
+  headline = 'Upgrade for more credits',
+  description = 'Unlock more resumes, cover letters, and ATS insights with a paid plan.',
+  ctaLabel = 'Upgrade now',
 }: UpgradePromptProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -25,7 +25,7 @@ export function UpgradePrompt({
 
   const handleUpgrade = async () => {
     if (!user) {
-      navigate("/auth");
+      navigate('/auth');
       return;
     }
     setLoading(true);
@@ -35,15 +35,15 @@ export function UpgradePrompt({
         window.location.href = url;
       } else {
         toast({
-          title: "Checkout created",
-          description: "We could not open Stripe automatically. Please try again.",
+          title: 'Checkout created',
+          description: 'We could not open Stripe automatically. Please try again.',
         });
       }
     } catch (error: any) {
       toast({
-        title: "Upgrade failed",
-        description: error.message || "Please try again.",
-        variant: "destructive",
+        title: 'Upgrade failed',
+        description: error.message || 'Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -57,7 +57,7 @@ export function UpgradePrompt({
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <Button onClick={handleUpgrade} disabled={loading}>
-        {loading ? "Redirecting..." : ctaLabel}
+        {loading ? 'Redirecting...' : ctaLabel}
       </Button>
     </div>
   );

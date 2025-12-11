@@ -1,12 +1,12 @@
-import nodemailer from "nodemailer";
-import { eq } from "drizzle-orm";
-import { db } from "../db";
-import { emailLogs, users } from "../../shared/schema";
+import nodemailer from 'nodemailer';
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
+import { emailLogs, users } from '../../shared/schema';
 
 export class EmailCampaignService {
   private transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || "587", 10),
+    port: parseInt(process.env.EMAIL_PORT || '587', 10),
     secure: false,
     auth: {
       user: process.env.EMAIL_USER,
@@ -20,10 +20,10 @@ export class EmailCampaignService {
 
     const email = {
       to: user.email,
-      from: process.env.EMAIL_FROM || "noreply@resumerepairer.com",
-      subject: "🎉 Welcome to Resume Repairer!",
+      from: process.env.EMAIL_FROM || 'noreply@resumerepairer.com',
+      subject: '🎉 Welcome to Resume Repairer!',
       html: `
-        <h1>Hi ${user.name || "there"}!</h1>
+        <h1>Hi ${user.name || 'there'}!</h1>
         <p>Welcome to Resume Repairer! You're one step closer to landing your dream job.</p>
         <h2>Here's what you can do:</h2>
         <ul>
@@ -43,7 +43,7 @@ export class EmailCampaignService {
     await this.transporter.sendMail(email);
     await db.insert(emailLogs).values({
       userId: user.id,
-      type: "transactional",
+      type: 'transactional',
       subject: email.subject,
     });
   }
@@ -54,11 +54,11 @@ export class EmailCampaignService {
 
     const email = {
       to: user.email,
-      from: process.env.EMAIL_FROM || "noreply@resumerepairer.com",
+      from: process.env.EMAIL_FROM || 'noreply@resumerepairer.com',
       subject: "Haven't uploaded your resume yet? Here's why you should ⏰",
       html: `
         <h1>Your free credit is waiting!</h1>
-        <p>Hi ${user.name || "there"},</p>
+        <p>Hi ${user.name || 'there'},</p>
         <p>You signed up 3 days ago but haven't tried Resume Repairer yet. Here's what you're missing:</p>
         <ul>
           <li>🎯 <strong>AI rewrites weak bullet points</strong> into achievement-focused statements</li>
@@ -75,22 +75,22 @@ export class EmailCampaignService {
     await this.transporter.sendMail(email);
     await db.insert(emailLogs).values({
       userId: user.id,
-      type: "marketing",
+      type: 'marketing',
       subject: email.subject,
     });
   }
 
   async sendUpgradePrompt(userId: string) {
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-    if (!user || user.plan !== "free" || user.totalCreditsUsed === 0) return;
+    if (!user || user.plan !== 'free' || user.totalCreditsUsed === 0) return;
 
     const email = {
       to: user.email,
-      from: process.env.EMAIL_FROM || "noreply@resumerepairer.com",
-      subject: "🚀 Ready to level up your job search?",
+      from: process.env.EMAIL_FROM || 'noreply@resumerepairer.com',
+      subject: '🚀 Ready to level up your job search?',
       html: `
         <h1>You've used Resume Repairer ${user.totalCreditsUsed} time(s)!</h1>
-        <p>Hi ${user.name || "there"},</p>
+        <p>Hi ${user.name || 'there'},</p>
         <p>Great job optimizing your resume! Users who upgrade get 3x more interviews on average.</p>
         <h2>Unlock unlimited optimizations for just $19/month:</h2>
         <ul>
@@ -112,7 +112,7 @@ export class EmailCampaignService {
     await this.transporter.sendMail(email);
     await db.insert(emailLogs).values({
       userId: user.id,
-      type: "marketing",
+      type: 'marketing',
       subject: email.subject,
     });
   }

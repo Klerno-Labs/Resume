@@ -1,18 +1,13 @@
-import { Request, Response, NextFunction } from "express";
-import { AppError } from "../lib/errors";
-import { captureError } from "../lib/sentry";
-import { ZodError } from "zod";
+import { Request, Response, NextFunction } from 'express';
+import { AppError } from '../lib/errors';
+import { captureError } from '../lib/sentry';
+import { ZodError } from 'zod';
 
-export function errorHandler(
-  err: Error,
-  req: Request,
-  res: Response,
-  _next: NextFunction,
-) {
+export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction) {
   // Zod validation errors
   if (err instanceof ZodError) {
     return res.status(400).json({
-      message: "Validation failed",
+      message: 'Validation failed',
       errors: err.errors,
     });
   }
@@ -25,7 +20,7 @@ export function errorHandler(
         path: req.path,
       });
     } else {
-      console.error("Non-operational error:", err);
+      console.error('Non-operational error:', err);
       captureError(err, {
         statusCode: err.statusCode,
         path: req.path,
@@ -40,10 +35,10 @@ export function errorHandler(
   }
 
   // Unexpected errors
-  console.error("Unexpected error:", err);
+  console.error('Unexpected error:', err);
   captureError(err, { path: req.path });
 
   return res.status(500).json({
-    message: "An unexpected error occurred",
+    message: 'An unexpected error occurred',
   });
 }

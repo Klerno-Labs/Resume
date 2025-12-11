@@ -1,6 +1,6 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { motion } from "framer-motion";
-import { ResumePreview } from "./ResumePreview";
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { motion } from 'framer-motion';
+import { ResumePreview } from './ResumePreview';
 
 interface ComparisonViewProps {
   originalText: string;
@@ -13,8 +13,12 @@ export function ComparisonView({ originalText, improvedText }: ComparisonViewPro
       {/* Original Pane */}
       <div className="flex flex-col h-[650px] bg-card border rounded-xl shadow-sm overflow-hidden">
         <div className="p-4 bg-muted/30 border-b flex items-center justify-between">
-          <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Original Resume</h3>
-          <span className="text-xs text-red-500 font-medium bg-red-50 px-2 py-1 rounded-full">Before</span>
+          <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
+            Original Resume
+          </h3>
+          <span className="text-xs text-red-500 font-medium bg-red-50 px-2 py-1 rounded-full">
+            Before
+          </span>
         </div>
         <ScrollArea className="flex-1 bg-slate-50 dark:bg-slate-900">
           <div className="p-6" data-testid="text-original">
@@ -34,13 +38,17 @@ export function ComparisonView({ originalText, improvedText }: ComparisonViewPro
           </div>
         </div>
         <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/5 border-b border-primary/20 flex items-center justify-between">
-          <h3 className="font-semibold text-sm uppercase tracking-wider text-primary">Improved Version</h3>
-          <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">After</span>
+          <h3 className="font-semibold text-sm uppercase tracking-wider text-primary">
+            Improved Version
+          </h3>
+          <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">
+            After
+          </span>
         </div>
         <ScrollArea className="flex-1 bg-gradient-to-b from-primary/5 to-transparent">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }} 
-            animate={{ opacity: 1, y: 0 }} 
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="p-6"
             data-testid="text-improved"

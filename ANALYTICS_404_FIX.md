@@ -1,11 +1,13 @@
 # Analytics 404 Error - Diagnosis & Fix
 
 ## Problem
+
 `POST /api/analytics/event` returns 404 Not Found on production (https://rewriteme.app)
 
 ## Root Cause Analysis
 
 ### What We Know:
+
 1. ✅ Analytics routes ARE in the code (`server/routes/analytics.routes.ts`)
 2. ✅ Analytics routes ARE registered in `server/routes/index.ts` line 18
 3. ✅ Analytics routes ARE in the build (`dist/index.cjs` contains the code)
@@ -15,16 +17,19 @@
 ### Possible Causes:
 
 #### Cause #1: Production Hasn't Deployed Latest Code (MOST LIKELY)
+
 **Symptom**: Push happened but auto-deploy hasn't completed
 **Solution**: Wait 2-5 more minutes for deploy to complete
 
 **How to verify**:
+
 ```bash
 # Check when last deploy happened on Vercel/Railway
 # If it's older than your last push, redeploy manually
 ```
 
 #### Cause #2: Analytics Table Doesn't Exist
+
 **Symptom**: Route registers but crashes immediately on first request
 **Solution**: Run the migration to create tables
 
@@ -33,10 +38,12 @@ node run-production-migration.js
 ```
 
 This creates:
+
 - `analytics_events` table
 - `funnel_steps` table
 
 #### Cause #3: Build Config Excludes Analytics
+
 **Symptom**: Route not in production build
 **Solution**: Check build script
 
@@ -51,17 +58,21 @@ grep -a "/api/analytics" dist/index.cjs
 ## Quick Fixes (Try In Order)
 
 ### Fix #1: Force Redeploy ⚡ (Fastest)
+
 If using Vercel:
+
 ```bash
 vercel --prod
 ```
 
 If using Railway:
+
 ```bash
 railway up
 ```
 
 Or just:
+
 ```bash
 git commit --allow-empty -m "chore: Trigger redeploy for analytics fix"
 git push
@@ -70,6 +81,7 @@ git push
 ---
 
 ### Fix #2: Run Migration 🗄️
+
 If Fix #1 doesn't work, the table might be missing:
 
 ```bash
@@ -77,6 +89,7 @@ node run-production-migration.js
 ```
 
 Expected output:
+
 ```
 🔗 Connecting to production database...
 ✅ Connected!
@@ -87,6 +100,7 @@ Expected output:
 ---
 
 ### Fix #3: Manual Database Check 🔍
+
 If both fail, verify the table exists:
 
 ```bash
@@ -123,6 +137,7 @@ CREATE INDEX IF NOT EXISTS analytics_created_at_idx ON analytics_events(created_
 After applying a fix, verify:
 
 ### Test 1: Check Endpoint Exists
+
 ```bash
 curl -X POST https://rewriteme.app/api/analytics/event \
   -H "Content-Type: application/json" \
@@ -133,6 +148,7 @@ curl -X POST https://rewriteme.app/api/analytics/event \
 ```
 
 ### Test 2: Check in Browser
+
 1. Open https://rewriteme.app
 2. Open DevTools (F12) → Console
 3. Look for analytics error
@@ -140,6 +156,7 @@ curl -X POST https://rewriteme.app/api/analytics/event \
 5. If still 404: Check Network tab for response headers
 
 ### Test 3: Check Server Logs
+
 ```bash
 # Vercel
 vercel logs production
@@ -157,12 +174,14 @@ railway logs
 ## Why This Happens
 
 ### The Route Registration Flow:
+
 1. `server/index.ts` imports `registerRoutes`
 2. `registerRoutes` is called from `server/routes/index.ts`
 3. Line 18: `app.use("/api/analytics", analyticsRoutes)`
 4. `analyticsRoutes` imported from `./analytics.routes`
 
 ### Where It Can Break:
+
 - ❌ Import fails (missing file) → Build would fail
 - ❌ Router not exported → TypeScript would error
 - ❌ Route registration commented out → We checked, it's not
@@ -182,6 +201,7 @@ railway logs
 ## Recommended Action
 
 **Right Now**:
+
 1. Wait 5 minutes for auto-deploy to complete
 2. Test: `curl -X POST https://rewriteme.app/api/analytics/event -H "Content-Type: application/json" -d '{"event":"test"}'`
 3. If still 404: Run `node run-production-migration.js`

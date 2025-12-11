@@ -124,18 +124,14 @@ describe('Auth API Integration Tests', () => {
     });
 
     it('should return error for missing email', async () => {
-      const res = await request(app)
-        .post('/api/auth/register')
-        .send({ password: strongPassword });
+      const res = await request(app).post('/api/auth/register').send({ password: strongPassword });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBeDefined();
     });
 
     it('should return error for missing password', async () => {
-      const res = await request(app)
-        .post('/api/auth/register')
-        .send({ email: 'test@example.com' });
+      const res = await request(app).post('/api/auth/register').send({ email: 'test@example.com' });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBeDefined();
@@ -215,9 +211,7 @@ describe('Auth API Integration Tests', () => {
 
       const cookie = registerRes.headers['set-cookie'][0];
 
-      const res = await request(app)
-        .get('/api/auth/me')
-        .set('Cookie', cookie);
+      const res = await request(app).get('/api/auth/me').set('Cookie', cookie);
 
       expect(res.status).toBe(200);
       expect(res.body.user.email).toBe('test@example.com');

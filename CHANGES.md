@@ -13,15 +13,18 @@ Completed the remaining 30% of production features, security improvements, and e
 ### 1. Authentication & Session Management
 
 **What Changed:**
+
 - Implemented JWT-based authentication with HTTP-only cookies
 - Added session persistence across page refreshes
 - Automatic session restoration on app load
 
 **New Files:**
+
 - `server/lib/jwt.ts` - JWT token generation and validation
 - `server/lib/env.ts` - Environment variable validation
 
 **Modified Files:**
+
 - `server/index.ts` - Added cookie-parser and security middleware
 - `server/routes.ts` - JWT authentication on all protected routes
 - `client/src/lib/auth.ts` - Session restoration with Zustand persist
@@ -34,14 +37,17 @@ Completed the remaining 30% of production features, security improvements, and e
 ### 2. Email System
 
 **What Changed:**
+
 - Email verification for new users
 - Password reset via email
 - Welcome emails after verification
 
 **New Files:**
+
 - `server/lib/email.ts` - Email service with Nodemailer
 
 **New API Endpoints:**
+
 - `POST /api/auth/verify-email` - Verify email with token
 - `POST /api/auth/forgot-password` - Request password reset
 - `POST /api/auth/reset-password` - Reset password with token
@@ -49,6 +55,7 @@ Completed the remaining 30% of production features, security improvements, and e
 - `GET /api/auth/me` - Get current user (for session restoration)
 
 **Database Schema Updates:**
+
 - Added `emailVerified`, `verificationToken`, `resetToken`, `resetTokenExpiry` to users table
 
 **Impact:** Professional email workflows for user management!
@@ -58,17 +65,21 @@ Completed the remaining 30% of production features, security improvements, and e
 ### 3. Stripe Payment Integration
 
 **What Changed:**
+
 - Real Stripe integration (replaces mock)
 - Stripe webhook handler for payment confirmation
 - Falls back to mock mode if Stripe not configured
 
 **Modified Files:**
+
 - `server/routes.ts` - Real Stripe PaymentIntent creation and webhook handler
 
 **New Endpoint:**
+
 - `POST /api/webhooks/stripe` - Handles Stripe webhook events
 
 **Configuration:**
+
 - Requires `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET` environment variables
 - App still works in development without Stripe (uses mock)
 
@@ -79,17 +90,21 @@ Completed the remaining 30% of production features, security improvements, and e
 ### 4. PDF Export
 
 **What Changed:**
+
 - Real PDF generation from optimized resumes
 - Downloads as formatted PDF with timestamp
 
 **New Files:**
+
 - `client/src/lib/pdfExport.ts` - PDF generation utilities
 
 **New Dependencies:**
+
 - `jspdf` - PDF creation library
 - `html2canvas` - HTML to image conversion (for advanced formatting)
 
 **Modified Files:**
+
 - `client/src/pages/Editor.tsx` - Connected "Export PDF" button to actual functionality
 
 **Impact:** Users can download their optimized resumes!
@@ -99,6 +114,7 @@ Completed the remaining 30% of production features, security improvements, and e
 ### 5. Security Improvements
 
 **What Changed:**
+
 - Rate limiting on auth, upload, and API endpoints
 - File upload validation (size, type, content length)
 - CORS configuration
@@ -106,10 +122,12 @@ Completed the remaining 30% of production features, security improvements, and e
 - Password strength requirements
 
 **Modified Files:**
+
 - `server/index.ts` - Added helmet, cors, cookie-parser
 - `server/routes.ts` - Rate limiters on all endpoints, file validation
 
 **Security Features:**
+
 - Auth endpoints: 5 attempts per 15 minutes
 - Upload endpoint: 10 uploads per hour
 - General API: 100 requests per 15 minutes
@@ -123,11 +141,13 @@ Completed the remaining 30% of production features, security improvements, and e
 ### 6. Dynamic ATS Scoring
 
 **What Changed:**
+
 - Removed hardcoded 8/10 and 6/10 scores
 - AI now returns keyword and formatting sub-scores
 - Scores dynamically calculated and displayed
 
 **Modified Files:**
+
 - `server/lib/openai.ts` - Returns `keywordsScore` and `formattingScore`
 - `shared/schema.ts` - Added fields to resumes table
 - `client/src/components/AtsScore.tsx` - Uses dynamic scores with fallback calculation
@@ -140,13 +160,16 @@ Completed the remaining 30% of production features, security improvements, and e
 ### 7. Error Handling
 
 **What Changed:**
+
 - React Error Boundary catches and displays errors gracefully
 - Better error messages throughout the app
 
 **New Files:**
+
 - `client/src/components/ErrorBoundary.tsx` - Catches React errors
 
 **Modified Files:**
+
 - `client/src/main.tsx` - Wrapped app in ErrorBoundary
 
 **Impact:** App doesn't crash, shows friendly error page instead!
@@ -156,20 +179,24 @@ Completed the remaining 30% of production features, security improvements, and e
 ### 8. Environment Configuration
 
 **What Changed:**
+
 - Environment variable validation on startup
 - Template file for easy setup
 - Clear error messages for missing variables
 
 **New Files:**
+
 - `.env.example` - Template with all required and optional variables
 - `server/lib/env.ts` - Zod-based validation
 
 **Required Environment Variables:**
+
 - `DATABASE_URL` - PostgreSQL connection string
 - `OPENAI_API_KEY` - OpenAI API key
 - `JWT_SECRET` - Minimum 32 characters
 
 **Optional Variables:**
+
 - Stripe keys (for payments)
 - Email configuration (for notifications)
 - CORS and app URL settings
@@ -181,10 +208,12 @@ Completed the remaining 30% of production features, security improvements, and e
 ### 9. Documentation
 
 **New Files:**
+
 - `README.md` - Comprehensive setup and deployment guide
 - `CHANGES.md` - This file!
 
 **Sections in README:**
+
 - Features overview
 - Tech stack
 - Installation instructions
@@ -200,6 +229,7 @@ Completed the remaining 30% of production features, security improvements, and e
 ## 📊 Database Schema Changes
 
 **New Fields in `users` table:**
+
 ```sql
 emailVerified       TIMESTAMP
 verificationToken   TEXT
@@ -208,12 +238,14 @@ resetTokenExpiry    TIMESTAMP
 ```
 
 **New Fields in `resumes` table:**
+
 ```sql
 keywordsScore      INTEGER
 formattingScore    INTEGER
 ```
 
 **To apply these changes:**
+
 ```bash
 npm run db:push
 ```
@@ -223,6 +255,7 @@ npm run db:push
 ## 🔧 Required Setup Steps
 
 1. **Copy environment template:**
+
    ```bash
    cp .env.example .env
    ```
@@ -233,11 +266,13 @@ npm run db:push
    - Generate a strong `JWT_SECRET` (min 32 characters)
 
 3. **Push database schema:**
+
    ```bash
    npm run db:push
    ```
 
 4. **Install new dependencies:**
+
    ```bash
    npm install
    ```
@@ -252,13 +287,17 @@ npm run db:push
 ## 🚀 Optional Configuration
 
 ### For Payment Processing:
+
 Set up Stripe account and add:
+
 - `STRIPE_SECRET_KEY`
 - `STRIPE_PUBLISHABLE_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 
 ### For Email Notifications:
+
 Configure SMTP server:
+
 - `EMAIL_HOST`
 - `EMAIL_PORT`
 - `EMAIL_USER`
@@ -272,6 +311,7 @@ Configure SMTP server:
 ## 🎨 Frontend Changes
 
 **Modified Components:**
+
 - `FileUpload.tsx` - Removed userId param (uses cookie auth)
 - `CoverLetterDialog.tsx` - Removed userId param
 - `PricingModal.tsx` - Removed userId param
@@ -279,6 +319,7 @@ Configure SMTP server:
 - `Editor.tsx` - PDF export, dynamic ATS scores
 
 **Auth Flow:**
+
 - Login/Register sets HTTP-only cookie
 - Session restored on app load via `/api/auth/me`
 - Logout clears cookie

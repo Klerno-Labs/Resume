@@ -24,7 +24,7 @@ describe('Auth Unit Tests', () => {
     it('should hash password correctly', async () => {
       const password = 'testPassword123';
       const hash = await bcrypt.hash(password, 10);
-      
+
       expect(hash).not.toBe(password);
       expect(hash.length).toBeGreaterThan(50);
     });
@@ -32,7 +32,7 @@ describe('Auth Unit Tests', () => {
     it('should verify correct password', async () => {
       const password = 'testPassword123';
       const hash = await bcrypt.hash(password, 10);
-      
+
       const isValid = await bcrypt.compare(password, hash);
       expect(isValid).toBe(true);
     });
@@ -40,7 +40,7 @@ describe('Auth Unit Tests', () => {
     it('should reject incorrect password', async () => {
       const password = 'testPassword123';
       const hash = await bcrypt.hash(password, 10);
-      
+
       const isValid = await bcrypt.compare('wrongPassword', hash);
       expect(isValid).toBe(false);
     });
@@ -52,7 +52,7 @@ describe('Auth Unit Tests', () => {
     it('should generate valid JWT token', () => {
       const payload = { userId: 'user-123', email: 'test@example.com' };
       const token = jwt.sign(payload, secret, { expiresIn: '7d' });
-      
+
       expect(token).toBeDefined();
       expect(token.split('.')).toHaveLength(3);
     });
@@ -60,7 +60,7 @@ describe('Auth Unit Tests', () => {
     it('should verify and decode JWT token', () => {
       const payload = { userId: 'user-123', email: 'test@example.com' };
       const token = jwt.sign(payload, secret, { expiresIn: '7d' });
-      
+
       const decoded = jwt.verify(token, secret) as typeof payload;
       expect(decoded.userId).toBe(payload.userId);
       expect(decoded.email).toBe(payload.email);
@@ -68,21 +68,21 @@ describe('Auth Unit Tests', () => {
 
     it('should reject invalid JWT token', () => {
       const token = 'invalid.token.here';
-      
+
       expect(() => jwt.verify(token, secret)).toThrow();
     });
 
     it('should reject token with wrong secret', () => {
       const payload = { userId: 'user-123', email: 'test@example.com' };
       const token = jwt.sign(payload, secret, { expiresIn: '7d' });
-      
+
       expect(() => jwt.verify(token, 'wrong-secret')).toThrow();
     });
 
     it('should reject expired token', () => {
       const payload = { userId: 'user-123', email: 'test@example.com' };
       const token = jwt.sign(payload, secret, { expiresIn: '-1s' });
-      
+
       expect(() => jwt.verify(token, secret)).toThrow();
     });
   });

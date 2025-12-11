@@ -3,14 +3,9 @@ import { passwordSchema } from '../../shared/validators';
 
 describe('Password Validation', () => {
   it('should accept strong passwords', () => {
-    const validPasswords = [
-      'SecurePass123!',
-      'MyP@ssw0rd2024',
-      'C0mplex!Pass',
-      'Tr0ng_P@ssw0rd',
-    ];
+    const validPasswords = ['SecurePass123!', 'MyP@ssw0rd2024', 'C0mplex!Pass', 'Tr0ng_P@ssw0rd'];
 
-    validPasswords.forEach(password => {
+    validPasswords.forEach((password) => {
       expect(() => passwordSchema.parse(password)).not.toThrow();
     });
   });

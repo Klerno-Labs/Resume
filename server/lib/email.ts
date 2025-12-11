@@ -1,5 +1,5 @@
-import nodemailer from "nodemailer";
-import { env } from "./env";
+import nodemailer from 'nodemailer';
+import { env } from './env';
 
 let transporter: nodemailer.Transporter | null = null;
 
@@ -7,7 +7,7 @@ function getTransporter() {
   if (!transporter && env.EMAIL_HOST && env.EMAIL_USER && env.EMAIL_PASSWORD) {
     transporter = nodemailer.createTransport({
       host: env.EMAIL_HOST,
-      port: parseInt(env.EMAIL_PORT || "587"),
+      port: parseInt(env.EMAIL_PORT || '587'),
       secure: false, // true for 465, false for other ports
       auth: {
         user: env.EMAIL_USER,
@@ -21,7 +21,7 @@ function getTransporter() {
 export async function sendVerificationEmail(email: string, token: string) {
   const transport = getTransporter();
   if (!transport) {
-    console.warn("Email not configured - verification email not sent");
+    console.warn('Email not configured - verification email not sent');
     return;
   }
 
@@ -30,7 +30,7 @@ export async function sendVerificationEmail(email: string, token: string) {
   await transport.sendMail({
     from: env.EMAIL_FROM || env.EMAIL_USER,
     to: email,
-    subject: "Verify your Resume Repairer account",
+    subject: 'Verify your Resume Repairer account',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Welcome to Resume Repairer!</h2>
@@ -54,7 +54,7 @@ export async function sendVerificationEmail(email: string, token: string) {
 export async function sendPasswordResetEmail(email: string, token: string) {
   const transport = getTransporter();
   if (!transport) {
-    console.warn("Email not configured - password reset email not sent");
+    console.warn('Email not configured - password reset email not sent');
     return;
   }
 
@@ -63,7 +63,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   await transport.sendMail({
     from: env.EMAIL_FROM || env.EMAIL_USER,
     to: email,
-    subject: "Reset your Resume Repairer password",
+    subject: 'Reset your Resume Repairer password',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Password Reset Request</h2>
@@ -87,17 +87,17 @@ export async function sendPasswordResetEmail(email: string, token: string) {
 export async function sendWelcomeEmail(email: string, name?: string) {
   const transport = getTransporter();
   if (!transport) {
-    console.warn("Email not configured - welcome email not sent");
+    console.warn('Email not configured - welcome email not sent');
     return;
   }
 
   await transport.sendMail({
     from: env.EMAIL_FROM || env.EMAIL_USER,
     to: email,
-    subject: "Welcome to Resume Repairer!",
+    subject: 'Welcome to Resume Repairer!',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Welcome${name ? `, ${name}` : ""}!</h2>
+        <h2>Welcome${name ? `, ${name}` : ''}!</h2>
         <p>Your Resume Repairer account has been verified successfully.</p>
         <p>You now have access to:</p>
         <ul>
