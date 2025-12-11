@@ -161,7 +161,7 @@ function isAdmin(email: string): boolean {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { url, method } = req;
+  const { url, method, body } = req;
   const path = url?.split('?')[0] || '';
 
   // CORS - use request origin or default
@@ -201,7 +201,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Auth: Login
     if (path === '/api/auth/login' && method === 'POST') {
-      const { email, password } = req.body;
+      const { email, password } = body;
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password required' });
       }
@@ -240,7 +240,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Auth: Register
     if (path === '/api/auth/register' && method === 'POST') {
-      const { email, password, name } = req.body;
+      const { email, password, name } = body;
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password required' });
       }
@@ -514,7 +514,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      const { plan } = req.body;
+      const { plan } = body;
       if (!plan || !PRICES[plan as keyof typeof PRICES]) {
         return res.status(400).json({ error: 'Invalid plan' });
       }
@@ -552,7 +552,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Verify payment success
     if (path === '/api/payments/verify' && method === 'POST') {
-      const { sessionId } = req.body;
+      const { sessionId } = body;
       if (!sessionId) {
         return res.status(400).json({ error: 'Session ID required' });
       }
@@ -626,7 +626,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Analytics: Track event
     if (path === '/api/analytics/event' && method === 'POST') {
-      const { event, properties, page, referrer, sessionId } = req.body;
+      const { event, properties, page, referrer, sessionId } = body;
 
       if (!event || !sessionId) {
         return res.status(400).json({ error: 'Event name and sessionId required' });
@@ -657,7 +657,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Analytics: Track funnel step
     if (path.match(/^\/api\/analytics\/funnel\/[^/]+$/) && method === 'POST') {
       const step = path.split('/').pop();
-      const { sessionId } = req.body;
+      const { sessionId } = body;
 
       if (!step || !sessionId) {
         return res.status(400).json({ error: 'Step and sessionId required' });
