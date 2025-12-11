@@ -449,8 +449,17 @@ export function registerLegacyRoutes(httpServer: Server, app: Express): Server {
           });
         }
 
-        // STEP 3: Log upload
-        console.log(`[Upload] User ${userId} uploaded "${req.file.originalname}"`);
+        // STEP 3: Hash upload content
+        const contentHash = crypto
+          .createHash('sha256')
+          .update(originalText)
+          .digest('hex');
+        console.log(
+          `[Upload] User ${userId} uploaded "${req.file.originalname}" (hash: ${contentHash.substring(
+            0,
+            12,
+          )}...)`,
+        );
 
         // STEP 5: New resume - deduct credit atomically
         const userAfterDeduction = await storage.deductCreditAtomic(userId);
@@ -468,6 +477,8 @@ export function registerLegacyRoutes(httpServer: Server, app: Express): Server {
           fileName: req.file.originalname,
           originalText,
           status: 'processing',
+          contentHash,
+          originalFileName: req.file.originalname,
         });
 
         console.log(`[Resume] Created resume ${resume.id} for user ${userId}`);

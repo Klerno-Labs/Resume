@@ -13,7 +13,7 @@ import { Readable } from 'stream';
 // Initialize services
 const sql = neon(process.env.DATABASE_URL!);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-12-18.acacia' });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-11-17.clover' });
 
 // Price configuration
 const PRICES = {
@@ -433,9 +433,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(403).json({ error: 'No credits remaining' });
       }
 
-      try {
-        // Parse multipart form data
-        const { files } = await parseMultipartForm(req);
+        try {
+          // Parse multipart form data
+          console.log('Parsing multipart form data...', req.headers['content-type']);
+          const { files } = await parseMultipartForm(req);
+          console.log('Files parsed:', files.length);
 
         if (!files || files.length === 0) {
           return res.status(400).json({ error: 'No file uploaded' });

@@ -1,4 +1,5 @@
 import type { Express } from 'express';
+import crypto from 'crypto';
 import { parseFile } from '../lib/fileParser';
 import { ForbiddenError, NotFoundError, ValidationError } from '../lib/errors';
 import { storage, db } from '../storage';
@@ -58,14 +59,17 @@ export class ResumeService {
       throw new ForbiddenError('Insufficient credits');
     }
 
-    const originalText = (await parseFile(file.buffer, file.mimetype)) || 'Uploaded resume content';
+      const originalText = (await parseFile(file.buffer, file.mimetype)) || 'Uploaded resume content';
+      const contentHash = crypto.createHash('sha256').update(originalText).digest('hex');
 
-    const resume = await storage.createResume({
-      userId,
-      fileName: file.originalname,
-      originalText,
-      status: 'processing',
-    });
+      const resume = await storage.createResume({
+        userId,
+        fileName: file.originalname,
+        originalText,
+        status: 'processing',
+        contentHash,
+        originalFileName: file.originalname,
+      });
 
     await storage.updateUserCredits(userId, user.creditsRemaining - 1);
     await db.insert(usageRecords).values({
