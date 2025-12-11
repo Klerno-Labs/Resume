@@ -443,24 +443,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           contentHash = null;
         }
 
-        // Create resume record
-        const insertData: any = {
-          user_id: user.id,
-          file_name: filename,
-          original_text: originalText,
-          status: 'processing'
-        };
-
-        // Add hash fields only if duplicate detection worked
+        // Create resume record (with or without content hash fields)
+        let result;
         if (contentHash) {
-          insertData.content_hash = contentHash;
-          insertData.original_file_name = filename;
+          result = await sql`
+            INSERT INTO resumes (user_id, file_name, original_text, status, content_hash, original_file_name)
+            VALUES (${user.id}, ${filename}, ${originalText}, 'processing', ${contentHash}, ${filename})
+            RETURNING *
+          `;
+        } else {
+          result = await sql`
+            INSERT INTO resumes (user_id, file_name, original_text, status)
+            VALUES (${user.id}, ${filename}, ${originalText}, 'processing')
+            RETURNING *
+          `;
         }
-
-        const result = await sql`
-          INSERT INTO resumes ${sql(insertData)}
-          RETURNING *
-        `;
         const resume = result[0];
 
         // Deduct credit
