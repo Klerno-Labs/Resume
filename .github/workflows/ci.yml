@@ -79,34 +79,34 @@ jobs:
       - name: Run database migrations
         run: npm run db:migrate
         env:
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
-          JWT_SECRET: test-jwt-secret-min-32-characters-long-required
-          CORS_ORIGIN: http://localhost:5000
-          OPENAI_API_KEY: sk-test-placeholder-for-ci
+          DATABASE_URL: "postgresql://test_user:test_password@localhost:5432/test_db"
+          JWT_SECRET: "test-jwt-secret-min-32-characters-long-required"
+          CORS_ORIGIN: "http://localhost:5000"
+          OPENAI_API_KEY: "sk-test-placeholder-for-ci"
       
       - name: Run unit tests
         run: npm run test:unit
         env:
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
-          REDIS_URL: redis://localhost:6379
-          JWT_SECRET: test-jwt-secret-min-32-characters-long-required
+          DATABASE_URL: "postgresql://test_user:test_password@localhost:5432/test_db"
+          REDIS_URL: "redis://localhost:6379"
+          JWT_SECRET: "test-jwt-secret-min-32-characters-long-required"
           NODE_ENV: test
       
       - name: Run integration tests
         run: npm run test:integration
         env:
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
-          REDIS_URL: redis://localhost:6379
-          JWT_SECRET: test-jwt-secret-min-32-characters-long-required
+          DATABASE_URL: "postgresql://test_user:test_password@localhost:5432/test_db"
+          REDIS_URL: "redis://localhost:6379"
+          JWT_SECRET: "test-jwt-secret-min-32-characters-long-required"
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           NODE_ENV: test
       
       - name: Generate coverage report
         run: npm run test:coverage
         env:
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
-          REDIS_URL: redis://localhost:6379
-          JWT_SECRET: test-jwt-secret-min-32-characters-long-required
+          DATABASE_URL: "postgresql://test_user:test_password@localhost:5432/test_db"
+          REDIS_URL: "redis://localhost:6379"
+          JWT_SECRET: "test-jwt-secret-min-32-characters-long-required"
           NODE_ENV: test
       
       - name: Upload coverage to Codecov
