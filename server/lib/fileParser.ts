@@ -1,7 +1,6 @@
 import mammoth from 'mammoth';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
 
 function cleanExtractedText(text: string): string {
   return text
@@ -35,6 +34,8 @@ export async function parseFile(
 
     // PDF parsing
     if (mimetype === 'application/pdf') {
+      // Lazy load pdf-parse to avoid DOMMatrix errors in test environment
+      const pdfParse = require('pdf-parse');
       const data = await pdfParse(buffer);
       rawText = data.text;
     }
