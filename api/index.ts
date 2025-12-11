@@ -15,6 +15,13 @@ const sql = neon(process.env.DATABASE_URL!);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-11-17.clover' });
 
+// Disable Vercel's default body parsing for multipart endpoints
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 // Price configuration
 const PRICES = {
   basic: { amount: 700, credits: 1, name: 'Basic Plan' },
@@ -434,8 +441,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
         try {
-          // Parse multipart form data
-          console.log('Parsing multipart form data...', req.headers['content-type']);
+          // Verify content type before parsing
+          const contentType = req.headers['content-type'] || '';
+          if (!contentType.includes('multipart/form-data')) {
+            return res.status(400).json({
+              error: 'Invalid content type. Expected multipart/form-data',
+              received: contentType
+            });
+          }
+          console.log('Parsing multipart form data...', contentType);
           const { files } = await parseMultipartForm(req);
           console.log('Files parsed:', files.length);
 
