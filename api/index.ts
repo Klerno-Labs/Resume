@@ -440,18 +440,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(403).json({ error: 'No credits remaining' });
       }
 
-        try {
-          // Verify content type before parsing
-          const contentType = req.headers['content-type'] || '';
-          if (!contentType.includes('multipart/form-data')) {
-            return res.status(400).json({
-              error: 'Invalid content type. Expected multipart/form-data',
-              received: contentType
-            });
-          }
-          console.log('Parsing multipart form data...', contentType);
-          const { files } = await parseMultipartForm(req);
-          console.log('Files parsed:', files.length);
+      try {
+        // Verify content type before parsing
+        const contentType = req.headers['content-type'] || '';
+        if (!contentType.includes('multipart/form-data')) {
+          return res.status(400).json({
+            error: 'Invalid content type. Expected multipart/form-data',
+            received: contentType,
+          });
+        }
+        console.log('Parsing multipart form data...', contentType);
+        const { files } = await parseMultipartForm(req);
+        console.log('Files parsed:', files.length);
 
         if (!files || files.length === 0) {
           return res.status(400).json({ error: 'No file uploaded' });

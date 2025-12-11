@@ -450,15 +450,12 @@ export function registerLegacyRoutes(httpServer: Server, app: Express): Server {
         }
 
         // STEP 3: Hash upload content
-        const contentHash = crypto
-          .createHash('sha256')
-          .update(originalText)
-          .digest('hex');
+        const contentHash = crypto.createHash('sha256').update(originalText).digest('hex');
         console.log(
           `[Upload] User ${userId} uploaded "${req.file.originalname}" (hash: ${contentHash.substring(
             0,
-            12,
-          )}...)`,
+            12
+          )}...)`
         );
 
         // STEP 5: New resume - deduct credit atomically

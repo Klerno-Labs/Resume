@@ -59,17 +59,17 @@ export class ResumeService {
       throw new ForbiddenError('Insufficient credits');
     }
 
-      const originalText = (await parseFile(file.buffer, file.mimetype)) || 'Uploaded resume content';
-      const contentHash = crypto.createHash('sha256').update(originalText).digest('hex');
+    const originalText = (await parseFile(file.buffer, file.mimetype)) || 'Uploaded resume content';
+    const contentHash = crypto.createHash('sha256').update(originalText).digest('hex');
 
-      const resume = await storage.createResume({
-        userId,
-        fileName: file.originalname,
-        originalText,
-        status: 'processing',
-        contentHash,
-        originalFileName: file.originalname,
-      });
+    const resume = await storage.createResume({
+      userId,
+      fileName: file.originalname,
+      originalText,
+      status: 'processing',
+      contentHash,
+      originalFileName: file.originalname,
+    });
 
     await storage.updateUserCredits(userId, user.creditsRemaining - 1);
     await db.insert(usageRecords).values({
