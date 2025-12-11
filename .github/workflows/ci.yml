@@ -80,6 +80,9 @@ jobs:
         run: npm run db:migrate
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          JWT_SECRET: test-jwt-secret-min-32-characters-long-required
+          CORS_ORIGIN: http://localhost:5000
+          OPENAI_API_KEY: sk-test-placeholder-for-ci
       
       - name: Run unit tests
         run: npm run test:unit
