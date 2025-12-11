@@ -18,7 +18,30 @@ export async function setupTestDb() {
     throw new Error('DATABASE_TEST_URL or DATABASE_URL is required for tests');
   }
 
-  const pool = new Pool({ connectionString });
+  const pool = new Pool({
+    connectionString,
+    // CI environment may need time for PostgreSQL to be ready
+    connectionTimeoutMillis: 10000,
+    idleTimeoutMillis: 30000,
+  });
+
+  // Test connection with retry logic
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      await pool.query('SELECT 1');
+      break;
+    } catch (error) {
+      retries--;
+      if (retries === 0) {
+        await pool.end();
+        throw new Error(`Failed to connect to test database: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      // Wait 2 seconds before retrying
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+
   const db = drizzle(pool);
 
   const migrationsFolder = path.resolve(process.cwd(), 'drizzle');
@@ -27,15 +50,22 @@ export async function setupTestDb() {
       .readdirSync(migrationsFolder)
       .filter((file) => file.endsWith('.js') || file.endsWith('.ts') || file.endsWith('.sql'));
     if (migrationFiles.length > 0) {
-      await migrate(db, { migrationsFolder });
+      try {
+        await migrate(db, { migrationsFolder });
+      } catch (error) {
+        await pool.end();
+        throw new Error(`Failed to run migrations: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
   }
 
   return { db, pool };
 }
 
-export async function teardownTestDb(pool: pkg.Pool) {
-  await pool.end();
+export async function teardownTestDb(pool: pkg.Pool | undefined) {
+  if (pool) {
+    await pool.end();
+  }
 }
 
 export async function clearDb(db: any) {
