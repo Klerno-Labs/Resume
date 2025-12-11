@@ -87,6 +87,11 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
         env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGDATABASE: testdb
+          PGUSER: testuser
+          PGPASSWORD: testpass123
           DATABASE_URL: "postgresql://testuser:testpass123@localhost:5432/testdb"
           REDIS_URL: "redis://localhost:6379"
           JWT_SECRET: "test-jwt-secret-min-32-characters-long-required"

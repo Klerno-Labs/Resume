@@ -9,6 +9,17 @@ import { users, resumes, payments, sessions, coverLetters } from '../../shared/s
 const { Pool } = pkg;
 
 function getConnectionString() {
+  // Check if we have component-based env vars (for CI)
+  const { PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD } = process.env;
+
+  if (PGHOST && PGDATABASE && PGUSER) {
+    const port = PGPORT || '5432';
+    const password = PGPASSWORD || '';
+    const connectionString = `postgresql://${PGUSER}:${password}@${PGHOST}:${port}/${PGDATABASE}`;
+    console.log(`[Test DB] Built connection string from PG* env vars: postgresql://${PGUSER}:****@${PGHOST}:${port}/${PGDATABASE}`);
+    return connectionString;
+  }
+
   return process.env.DATABASE_TEST_URL || process.env.DATABASE_URL;
 }
 
