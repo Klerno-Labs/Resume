@@ -11,7 +11,8 @@ async function resolvePdfParse(): Promise<PdfParseFunction> {
   }
 
   const module = await import('pdf-parse');
-  const resolved = (module as PdfParseModule).default ?? module;
+  // pdf-parse is a CommonJS module without a default export
+  const resolved = (module as any).default || module;
   cachedPdfParse = resolved as PdfParseFunction;
   return cachedPdfParse;
 }
