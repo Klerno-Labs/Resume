@@ -424,20 +424,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('Webhook signature verification failed:', err.message);
         return res.status(400).json({ error: 'Webhook signature verification failed' });
       }
-      
+
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
         const plan = session.metadata?.plan;
         const credits = parseInt(session.metadata?.credits || '0');
-        
+
         if (userId && plan && session.payment_status === 'paid') {
           await sql`
-            UPDATE users 
+            UPDATE users
             SET plan = ${plan}, credits_remaining = credits_remaining + ${credits}
             WHERE id = ${userId}
           `;
-          
+
           await sql`
             INSERT INTO payments (user_id, stripe_session_id, plan, amount, status)
             VALUES (${userId}, ${session.id}, ${plan}, ${session.amount_total}, 'completed')
@@ -445,8 +445,64 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           `;
         }
       }
-      
+
       return res.json({ received: true });
+    }
+
+    // Analytics: Track event
+    if (path === '/api/analytics/event' && method === 'POST') {
+      const { event, properties, page, referrer, sessionId } = body;
+
+      if (!event || !sessionId) {
+        return res.status(400).json({ error: 'Event name and sessionId required' });
+      }
+
+      // Get user if authenticated (optional for analytics)
+      const user = await getUserFromRequest(req);
+      const userId = user?.id || null;
+
+      const userAgent = req.headers['user-agent'] || null;
+      const ipAddress = req.headers['x-forwarded-for'] as string || req.headers['x-real-ip'] as string || null;
+
+      // Store analytics event (gracefully handle if table doesn't exist yet)
+      try {
+        await sql`
+          INSERT INTO analytics_events (user_id, session_id, event, properties, page, referrer, user_agent, ip_address)
+          VALUES (${userId}, ${sessionId}, ${event}, ${JSON.stringify(properties || {})}, ${page || null}, ${referrer || null}, ${userAgent}, ${ipAddress})
+        `;
+      } catch (err) {
+        // Silently ignore if analytics table doesn't exist - don't break the app
+        console.warn('Analytics event failed (table may not exist):', err);
+      }
+
+      return res.json({ success: true });
+    }
+
+    // Analytics: Track funnel step
+    if (path.match(/^\/api\/analytics\/funnel\/[^/]+$/) && method === 'POST') {
+      const step = path.split('/').pop();
+      const { sessionId } = body;
+
+      if (!step || !sessionId) {
+        return res.status(400).json({ error: 'Step and sessionId required' });
+      }
+
+      // Get user if authenticated (optional for analytics)
+      const user = await getUserFromRequest(req);
+      const userId = user?.id || null;
+
+      // Store funnel step (gracefully handle if table doesn't exist yet)
+      try {
+        await sql`
+          INSERT INTO funnel_steps (session_id, step, user_id)
+          VALUES (${sessionId}, ${step}, ${userId})
+        `;
+      } catch (err) {
+        // Silently ignore if funnel table doesn't exist - don't break the app
+        console.warn('Funnel tracking failed (table may not exist):', err);
+      }
+
+      return res.json({ success: true });
     }
 
     return res.status(404).json({ error: 'Not found' });
