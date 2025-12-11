@@ -23,9 +23,7 @@ const PRICES = {
 } as const;
 
 // Helper to parse multipart form data
-async function parseMultipartForm(
-  req: VercelRequest
-): Promise<{
+async function parseMultipartForm(req: VercelRequest): Promise<{
   fields: Record<string, string>;
   files: Array<{ name: string; filename: string; mimetype: string; data: Buffer }>;
 }> {

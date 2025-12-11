@@ -170,9 +170,7 @@ class ApiClient {
   }
 
   // Resumes
-  async uploadResume(
-    file: File
-  ): Promise<{
+  async uploadResume(file: File): Promise<{
     resumeId: string;
     status: string;
     isDuplicate?: boolean;
