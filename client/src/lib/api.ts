@@ -167,7 +167,7 @@ class ApiClient {
   }
 
   // Resumes
-  async uploadResume(file: File): Promise<{ resumeId: string; status: string }> {
+  async uploadResume(file: File): Promise<{ resumeId: string; status: string; isDuplicate?: boolean; message?: string; originalUploadDate?: string }> {
     const formData = new FormData();
     formData.append("file", file);
 

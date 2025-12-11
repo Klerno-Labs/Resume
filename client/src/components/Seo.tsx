@@ -20,7 +20,7 @@ export const Seo: React.FC<MetaProps> = ({ title, description, canonical, ogImag
       md.setAttribute('content', description);
     }
     if (canonical) {
-      let link = document.querySelector('link[rel="canonical"]');
+      let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
       if (!link) {
         link = document.createElement('link');
         link.setAttribute('rel', 'canonical');
