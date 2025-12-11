@@ -6,6 +6,9 @@ import jwt from 'jsonwebtoken';
 import { serialize, parse } from 'cookie';
 import Stripe from 'stripe';
 import getRawBody from 'raw-body';
+import mammoth from 'mammoth';
+import crypto from 'crypto';
+import { Readable } from 'stream';
 
 // Initialize services
 const sql = neon(process.env.DATABASE_URL!);
@@ -18,6 +21,98 @@ const PRICES = {
   pro: { amount: 1900, credits: 3, name: 'Pro Plan' },
   premium: { amount: 2900, credits: 999, name: 'Premium Plan' },
 } as const;
+
+// Helper to parse multipart form data
+async function parseMultipartForm(req: VercelRequest): Promise<{ fields: Record<string, string>, files: Array<{ name: string, filename: string, mimetype: string, data: Buffer }> }> {
+  const contentType = req.headers['content-type'] || '';
+  const boundary = contentType.split('boundary=')[1];
+
+  if (!boundary) {
+    throw new Error('No boundary found in Content-Type header');
+  }
+
+  const rawBody = await getRawBody(req);
+  const parts = rawBody.toString('binary').split(`--${boundary}`);
+
+  const fields: Record<string, string> = {};
+  const files: Array<{ name: string, filename: string, mimetype: string, data: Buffer }> = [];
+
+  for (const part of parts) {
+    if (part.trim() === '' || part.trim() === '--') continue;
+
+    const [headerSection, ...bodyParts] = part.split('\r\n\r\n');
+    if (!headerSection) continue;
+
+    const body = bodyParts.join('\r\n\r\n').replace(/\r\n$/, '');
+    const headers = headerSection.split('\r\n');
+
+    let name = '';
+    let filename = '';
+    let contentType = 'text/plain';
+
+    for (const header of headers) {
+      const nameMatch = header.match(/name="([^"]+)"/);
+      if (nameMatch) name = nameMatch[1];
+
+      const filenameMatch = header.match(/filename="([^"]+)"/);
+      if (filenameMatch) filename = filenameMatch[1];
+
+      if (header.toLowerCase().startsWith('content-type:')) {
+        contentType = header.split(':')[1].trim();
+      }
+    }
+
+    if (filename) {
+      // It's a file
+      files.push({
+        name,
+        filename,
+        mimetype: contentType,
+        data: Buffer.from(body, 'binary')
+      });
+    } else if (name) {
+      // It's a field
+      fields[name] = body.trim();
+    }
+  }
+
+  return { fields, files };
+}
+
+// Helper to parse file content (PDF/DOCX/TXT)
+async function parseFileContent(buffer: Buffer, mimetype: string, filename: string): Promise<string> {
+  let text = '';
+
+  try {
+    if (mimetype === 'application/pdf') {
+      // Use a lightweight PDF parser or return error if pdf-parse not available
+      // For now, we'll require users to convert PDF to text or use DOCX
+      throw new Error('PDF parsing not supported in serverless. Please upload DOCX or TXT format.');
+    } else if (
+      mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      mimetype === 'application/zip' ||
+      mimetype === 'application/octet-stream'
+    ) {
+      const result = await mammoth.extractRawText({ buffer });
+      text = result.value;
+    } else if (mimetype === 'text/plain') {
+      text = buffer.toString('utf-8');
+    } else {
+      throw new Error(`Unsupported file type: ${mimetype}`);
+    }
+
+    // Clean and validate
+    text = text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').replace(/[ \t]+/g, ' ').trim();
+
+    if (!text || text.length < 50) {
+      throw new Error('File contains insufficient text content (minimum 50 characters required)');
+    }
+
+    return text;
+  } catch (error: any) {
+    throw new Error(error.message || 'Failed to parse file');
+  }
+}
 
 // Helper to generate JWT
 function generateToken(payload: { userId: string; email: string }): string {
@@ -297,39 +392,90 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Upload resume (simplified - no file upload in serverless, just text)
+    // Upload resume - handle multipart file upload
     if (path === '/api/resumes/upload' && method === 'POST') {
       const user = await getUserFromRequest(req);
       if (!user) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
-      
+
       if (user.credits_remaining <= 0 && user.plan !== 'admin') {
         return res.status(403).json({ error: 'No credits remaining' });
       }
-      
-      const { text, fileName } = body;
-      if (!text) {
-        return res.status(400).json({ error: 'Resume text required' });
+
+      try {
+        // Parse multipart form data
+        const { files } = await parseMultipartForm(req);
+
+        if (!files || files.length === 0) {
+          return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const file = files[0];
+        const { filename, mimetype, data } = file;
+
+        // Parse file content
+        const originalText = await parseFileContent(data, mimetype, filename);
+
+        // Check for duplicate (optional - graceful degradation)
+        let contentHash: string | null = null;
+        try {
+          contentHash = crypto.createHash('sha256').update(originalText).digest('hex');
+
+          const existingResumes = await sql`
+            SELECT id, created_at FROM resumes
+            WHERE user_id = ${user.id} AND content_hash = ${contentHash}
+            LIMIT 1
+          `;
+
+          if (existingResumes.length > 0) {
+            const existing = existingResumes[0];
+            return res.status(200).json({
+              resumeId: existing.id,
+              status: 'completed',
+              isDuplicate: true,
+              message: 'This resume has already been analyzed.',
+              originalUploadDate: existing.created_at
+            });
+          }
+        } catch (dupError) {
+          console.warn('Duplicate detection failed (table may not exist):', dupError);
+          contentHash = null;
+        }
+
+        // Create resume record
+        const insertData: any = {
+          user_id: user.id,
+          file_name: filename,
+          original_text: originalText,
+          status: 'processing'
+        };
+
+        // Add hash fields only if duplicate detection worked
+        if (contentHash) {
+          insertData.content_hash = contentHash;
+          insertData.original_file_name = filename;
+        }
+
+        const result = await sql`
+          INSERT INTO resumes ${sql(insertData)}
+          RETURNING *
+        `;
+        const resume = result[0];
+
+        // Deduct credit
+        if (user.plan !== 'admin') {
+          await sql`UPDATE users SET credits_remaining = credits_remaining - 1 WHERE id = ${user.id}`;
+        }
+
+        // Process with OpenAI (async)
+        processResume(resume.id, originalText).catch(console.error);
+
+        return res.json({ resumeId: resume.id, status: 'processing' });
+      } catch (parseError: any) {
+        console.error('File upload error:', parseError);
+        return res.status(400).json({ error: parseError.message || 'Failed to process file' });
       }
-      
-      // Create resume
-      const result = await sql`
-        INSERT INTO resumes (user_id, file_name, original_text, status)
-        VALUES (${user.id}, ${fileName || 'resume.txt'}, ${text}, 'processing')
-        RETURNING *
-      `;
-      const resume = result[0];
-      
-      // Deduct credit
-      if (user.plan !== 'admin') {
-        await sql`UPDATE users SET credits_remaining = credits_remaining - 1 WHERE id = ${user.id}`;
-      }
-      
-      // Process with OpenAI (async)
-      processResume(resume.id, text).catch(console.error);
-      
-      return res.json({ resumeId: resume.id });
     }
 
     // Create Stripe checkout session
