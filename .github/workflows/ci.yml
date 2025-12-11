@@ -43,9 +43,9 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_DB: test_db
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: testdb
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass123
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -79,7 +79,7 @@ jobs:
       - name: Run database migrations
         run: npm run db:migrate
         env:
-          DATABASE_URL: "postgresql://test_user:test_password@localhost:5432/test_db"
+          DATABASE_URL: "postgresql://testuser:testpass123@localhost:5432/testdb"
           JWT_SECRET: "test-jwt-secret-min-32-characters-long-required"
           CORS_ORIGIN: "http://localhost:5000"
           OPENAI_API_KEY: "sk-test-placeholder-for-ci"
@@ -87,7 +87,7 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
         env:
-          DATABASE_URL: "postgresql://test_user:test_password@localhost:5432/test_db"
+          DATABASE_URL: "postgresql://testuser:testpass123@localhost:5432/testdb"
           REDIS_URL: "redis://localhost:6379"
           JWT_SECRET: "test-jwt-secret-min-32-characters-long-required"
           NODE_ENV: test
@@ -95,7 +95,7 @@ jobs:
       - name: Run integration tests
         run: npm run test:integration
         env:
-          DATABASE_URL: "postgresql://test_user:test_password@localhost:5432/test_db"
+          DATABASE_URL: "postgresql://testuser:testpass123@localhost:5432/testdb"
           REDIS_URL: "redis://localhost:6379"
           JWT_SECRET: "test-jwt-secret-min-32-characters-long-required"
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -104,7 +104,7 @@ jobs:
       - name: Generate coverage report
         run: npm run test:coverage
         env:
-          DATABASE_URL: "postgresql://test_user:test_password@localhost:5432/test_db"
+          DATABASE_URL: "postgresql://testuser:testpass123@localhost:5432/testdb"
           REDIS_URL: "redis://localhost:6379"
           JWT_SECRET: "test-jwt-secret-min-32-characters-long-required"
           NODE_ENV: test
