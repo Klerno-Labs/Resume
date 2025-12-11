@@ -1,6 +1,20 @@
 import mammoth from 'mammoth';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+
+type PdfParseModule = typeof import('pdf-parse');
+type PdfParseFunction = (buffer: Buffer) => Promise<{ text: string }>;
+
+let cachedPdfParse: PdfParseFunction | null = null;
+
+async function resolvePdfParse(): Promise<PdfParseFunction> {
+  if (cachedPdfParse) {
+    return cachedPdfParse;
+  }
+
+  const module = await import('pdf-parse');
+  const resolved = (module as PdfParseModule).default ?? module;
+  cachedPdfParse = resolved as PdfParseFunction;
+  return cachedPdfParse;
+}
 
 function cleanExtractedText(text: string): string {
   return text
@@ -34,8 +48,7 @@ export async function parseFile(
 
     // PDF parsing
     if (mimetype === 'application/pdf') {
-      // Lazy load pdf-parse to avoid DOMMatrix errors in test environment
-      const pdfParse = require('pdf-parse');
+      const pdfParse = await resolvePdfParse();
       const data = await pdfParse(buffer);
       rawText = data.text;
     }
