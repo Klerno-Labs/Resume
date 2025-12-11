@@ -18,9 +18,15 @@ export async function setupTestDb() {
     throw new Error('DATABASE_TEST_URL or DATABASE_URL is required for tests');
   }
 
-  // Log connection string (without password) for debugging
-  const sanitizedUrl = connectionString.replace(/:([^:@]+)@/, ':****@');
-  console.log(`[Test DB] Connecting to: ${sanitizedUrl}`);
+  // Log connection string details for debugging
+  console.log(`[Test DB] DATABASE_URL length: ${connectionString.length}`);
+  console.log(`[Test DB] DATABASE_URL starts with: ${connectionString.substring(0, 15)}...`);
+  console.log(`[Test DB] DATABASE_URL full (first 50 chars): ${connectionString.substring(0, 50)}`);
+
+  // Check if URL has proper format
+  if (!connectionString.startsWith('postgresql://') && !connectionString.startsWith('postgres://')) {
+    throw new Error(`Invalid DATABASE_URL format. Must start with postgresql:// or postgres://. Got: ${connectionString.substring(0, 30)}...`);
+  }
 
   const pool = new Pool({
     connectionString,
