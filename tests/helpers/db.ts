@@ -18,6 +18,10 @@ export async function setupTestDb() {
     throw new Error('DATABASE_TEST_URL or DATABASE_URL is required for tests');
   }
 
+  // Log connection string (without password) for debugging
+  const sanitizedUrl = connectionString.replace(/:([^:@]+)@/, ':****@');
+  console.log(`[Test DB] Connecting to: ${sanitizedUrl}`);
+
   const pool = new Pool({
     connectionString,
     // CI environment may need time for PostgreSQL to be ready
@@ -26,17 +30,22 @@ export async function setupTestDb() {
   });
 
   // Test connection with retry logic
-  let retries = 3;
+  let retries = 5;
+  let lastError: Error | null = null;
   while (retries > 0) {
     try {
+      console.log(`[Test DB] Connection attempt ${6 - retries}/5...`);
       await pool.query('SELECT 1');
+      console.log(`[Test DB] Successfully connected!`);
       break;
     } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
       retries--;
       if (retries === 0) {
         await pool.end();
-        throw new Error(`Failed to connect to test database: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(`Failed to connect to test database after 5 attempts: ${lastError.message}`);
       }
+      console.log(`[Test DB] Connection failed, ${retries} retries remaining: ${lastError.message}`);
       // Wait 2 seconds before retrying
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
