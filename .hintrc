@@ -1,0 +1,17 @@
+{
+  "extends": [
+    "development"
+  ],
+  "hints": {
+    "highest-available-document-mode": "off",
+    "http-cache": [
+      "warning",
+      {
+        "ignore": [
+          "https://fonts.googleapis.com/*",
+          "https://fonts.gstatic.com/*"
+        ]
+      }
+    ]
+  }
+}
