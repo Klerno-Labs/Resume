@@ -69,7 +69,7 @@ let stripe: Stripe | null = null;
 const isTestEnv = process.env.NODE_ENV === 'test';
 if (env.STRIPE_SECRET_KEY && !isTestEnv) {
   stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-11-17.clover',
+    apiVersion: '2024-12-18.acacia',
   });
 }
 
