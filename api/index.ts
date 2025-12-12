@@ -124,8 +124,13 @@ async function parseFileContent(buffer: Buffer, mimetype: string, filename: stri
 
 // Helper to parse JSON from raw body
 async function parseJSONBody(req: VercelRequest): Promise<any> {
-  const rawBody = await getRawBody(req, { encoding: 'utf-8' });
-  return JSON.parse(rawBody);
+  try {
+    const rawBody = await getRawBody(req, { encoding: 'utf-8' });
+    return JSON.parse(rawBody);
+  } catch (error: any) {
+    console.error('[parseJSONBody] Error:', error.message);
+    throw new Error(`Failed to parse JSON body: ${error.message}`);
+  }
 }
 
 // Helper to generate JWT
@@ -214,21 +219,22 @@ async function processResume(resumeId: string, originalText: string) {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { url, method } = req;
-  const path = url?.split('?')[0] || '';
-
-  // CORS - use request origin or default
-  const origin = req.headers.origin || 'https://rewriteme.app';
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-
-  if (method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
   try {
+    const { url, method } = req;
+    const path = url?.split('?')[0] || '';
+
+    console.log(`[${method}] ${path}`);
+
+    // CORS - use request origin or default
+    const origin = req.headers.origin || 'https://rewriteme.app';
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+    if (method === 'OPTIONS') {
+      return res.status(200).end();
+    }
     // Health check
     if (path === '/api' || path === '/api/health') {
       return res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -479,17 +485,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Upload resume - handle multipart file upload
     if (path === '/api/resumes/upload' && method === 'POST') {
-      const user = await getUserFromRequest(req);
-      if (!user) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
-      if (user.credits_remaining <= 0 && user.plan !== 'admin') {
-        return res.status(403).json({ error: 'No credits remaining' });
-      }
-
       try {
+        console.log('[Upload] Starting upload handler...');
+        const user = await getUserFromRequest(req);
+        if (!user) {
+          console.log('[Upload] User not authenticated');
+          return res.status(401).json({ error: 'Not authenticated' });
+        }
+
+        console.log(`[Upload] User authenticated: ${user.id}, plan: ${user.plan}, credits: ${user.credits_remaining}`);
+
+        if (user.credits_remaining <= 0 && user.plan !== 'admin') {
+          console.log('[Upload] No credits remaining');
+          return res.status(403).json({ error: 'No credits remaining' });
+        }
+
         const contentType = req.headers['content-type'] || '';
+        console.log('[Upload] Content-Type:', contentType);
         if (!contentType.includes('multipart/form-data')) {
           return res.status(400).json({
             error: 'Invalid content type. Expected multipart/form-data',
@@ -497,7 +509,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
         }
 
-        console.log('[Upload] Parsing multipart form data...', contentType);
+        console.log('[Upload] Parsing multipart form data...');
         const { files } = await parseMultipartForm(req);
         console.log('[Upload] Files parsed:', files.length);
 
@@ -567,9 +579,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.json({ resumeId: resume.id, status: 'processing' });
       } catch (parseError: any) {
         console.error('[Upload] Error:', parseError);
+        console.error('[Upload] Stack:', parseError.stack);
         return res.status(400).json({
           error: parseError.message || 'Failed to process file',
-          details: parseError.stack
+          message: parseError.message,
+          stack: process.env.NODE_ENV === 'development' ? parseError.stack : undefined
         });
       }
     }
@@ -755,7 +769,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(404).json({ error: 'Not found' });
   } catch (error: any) {
     console.error('API Error:', error);
-    return res.status(500).json({ error: 'Internal server error', details: error.message });
+    console.error('Stack:', error.stack);
+    return res.status(500).json({
+      error: 'Internal server error',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 }
 
