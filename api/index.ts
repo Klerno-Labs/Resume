@@ -5,18 +5,19 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { serialize, parse } from 'cookie';
 import Stripe from 'stripe';
+import getRawBody from 'raw-body';
+import mammoth from 'mammoth';
+import crypto from 'crypto';
 
 // Initialize services
 const sql = neon(process.env.DATABASE_URL!);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-12-18.acacia' });
 
-// Configure Vercel body parsing - enable for JSON routes, disable for multipart
+// CRITICAL: Disable Vercel body parsing globally to handle multipart uploads
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
+    bodyParser: false,
   },
 };
 
@@ -26,6 +27,106 @@ const PRICES = {
   pro: { amount: 1900, credits: 3, name: 'Pro Plan' },
   premium: { amount: 2900, credits: 999, name: 'Premium Plan' },
 } as const;
+
+// Helper to parse multipart form data
+async function parseMultipartForm(req: VercelRequest): Promise<{
+  fields: Record<string, string>;
+  files: Array<{ name: string; filename: string; mimetype: string; data: Buffer }>;
+}> {
+  const contentType = req.headers['content-type'] || '';
+  const boundary = contentType.split('boundary=')[1];
+
+  if (!boundary) {
+    throw new Error('No boundary found in Content-Type header');
+  }
+
+  const rawBody = await getRawBody(req);
+  const parts = rawBody.toString('binary').split(`--${boundary}`);
+
+  const fields: Record<string, string> = {};
+  const files: Array<{ name: string; filename: string; mimetype: string; data: Buffer }> = [];
+
+  for (const part of parts) {
+    if (part.trim() === '' || part.trim() === '--') continue;
+
+    const [headerSection, ...bodyParts] = part.split('\r\n\r\n');
+    if (!headerSection) continue;
+
+    const body = bodyParts.join('\r\n\r\n').replace(/\r\n$/, '');
+    const headers = headerSection.split('\r\n');
+
+    let name = '';
+    let filename = '';
+    let contentTypeHeader = 'text/plain';
+
+    for (const header of headers) {
+      const nameMatch = header.match(/name="([^"]+)"/);
+      if (nameMatch) name = nameMatch[1];
+
+      const filenameMatch = header.match(/filename="([^"]+)"/);
+      if (filenameMatch) filename = filenameMatch[1];
+
+      if (header.toLowerCase().startsWith('content-type:')) {
+        contentTypeHeader = header.split(':')[1].trim();
+      }
+    }
+
+    if (filename) {
+      files.push({
+        name,
+        filename,
+        mimetype: contentTypeHeader,
+        data: Buffer.from(body, 'binary'),
+      });
+    } else if (name) {
+      fields[name] = body.trim();
+    }
+  }
+
+  return { fields, files };
+}
+
+// Helper to parse file content
+async function parseFileContent(buffer: Buffer, mimetype: string, filename: string): Promise<string> {
+  let text = '';
+
+  try {
+    if (mimetype === 'application/pdf') {
+      throw new Error('PDF parsing not supported in serverless. Please upload DOCX or TXT format.');
+    } else if (
+      mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      mimetype === 'application/zip' ||
+      mimetype === 'application/octet-stream'
+    ) {
+      const result = await mammoth.extractRawText({ buffer });
+      text = result.value;
+    } else if (mimetype === 'text/plain') {
+      text = buffer.toString('utf-8');
+    } else {
+      throw new Error(`Unsupported file type: ${mimetype}`);
+    }
+
+    text = text
+      .replace(/\r\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]+/g, ' ')
+      .trim();
+
+    if (!text || text.length < 50) {
+      throw new Error('File contains insufficient text content (minimum 50 characters required)');
+    }
+
+    return text;
+  } catch (error: any) {
+    throw new Error(error.message || 'Failed to parse file');
+  }
+}
+
+// Helper to parse JSON from raw body
+async function parseJSONBody(req: VercelRequest): Promise<any> {
+  const rawBody = await getRawBody(req, { encoding: 'utf-8' });
+  return JSON.parse(rawBody);
+}
 
 // Helper to generate JWT
 function generateToken(payload: { userId: string; email: string }): string {
@@ -60,6 +161,56 @@ function isAdmin(email: string): boolean {
     .split(',')
     .map((e) => e.trim().toLowerCase());
   return adminEmails.includes(email.toLowerCase());
+}
+
+// Background resume processing
+async function processResume(resumeId: string, originalText: string) {
+  try {
+    const [optimizationResult, scoreResult] = await Promise.all([
+      openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'Optimize resumes. Output JSON only.' },
+          {
+            role: 'user',
+            content: `Rewrite this resume with strong action verbs and quantified achievements.\n\n${originalText}\n\n{"improvedText": "optimized resume"}`,
+          },
+        ],
+        response_format: { type: 'json_object' },
+        max_tokens: 2500,
+      }),
+      openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'Score resumes. Output JSON only.' },
+          {
+            role: 'user',
+            content: `Score this resume.\n\n${originalText.substring(0, 1500)}\n\n{"atsScore": 0-100, "keywordsScore": 0-10, "formattingScore": 0-10, "issues": [{"type": "issue", "message": "fix", "severity": "high"}]}`,
+          },
+        ],
+        response_format: { type: 'json_object' },
+        max_tokens: 500,
+      }),
+    ]);
+
+    const optimization = JSON.parse(optimizationResult.choices[0].message.content || '{}');
+    const scores = JSON.parse(scoreResult.choices[0].message.content || '{}');
+
+    await sql`
+      UPDATE resumes SET
+        improved_text = ${optimization.improvedText || originalText},
+        ats_score = ${scores.atsScore || 70},
+        keywords_score = ${scores.keywordsScore || 7},
+        formatting_score = ${scores.formattingScore || 7},
+        issues = ${JSON.stringify(scores.issues || [])},
+        status = 'completed',
+        updated_at = NOW()
+      WHERE id = ${resumeId}
+    `;
+  } catch (error) {
+    console.error('Process error:', error);
+    await sql`UPDATE resumes SET status = 'failed' WHERE id = ${resumeId}`;
+  }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -103,7 +254,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Auth: Login
     if (path === '/api/auth/login' && method === 'POST') {
-      const { email, password } = req.body;
+      const body = await parseJSONBody(req);
+      const { email, password } = body;
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password required' });
       }
@@ -142,7 +294,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Auth: Register
     if (path === '/api/auth/register' && method === 'POST') {
-      const { email, password, name } = req.body;
+      const body = await parseJSONBody(req);
+      const { email, password, name } = body;
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password required' });
       }
@@ -324,12 +477,101 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Upload resume - redirect to dedicated endpoint
+    // Upload resume - handle multipart file upload
     if (path === '/api/resumes/upload' && method === 'POST') {
-      return res.status(301).json({
-        error: 'This endpoint has moved',
-        message: 'Please ensure your client is using the correct endpoint'
-      });
+      const user = await getUserFromRequest(req);
+      if (!user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      if (user.credits_remaining <= 0 && user.plan !== 'admin') {
+        return res.status(403).json({ error: 'No credits remaining' });
+      }
+
+      try {
+        const contentType = req.headers['content-type'] || '';
+        if (!contentType.includes('multipart/form-data')) {
+          return res.status(400).json({
+            error: 'Invalid content type. Expected multipart/form-data',
+            received: contentType,
+          });
+        }
+
+        console.log('[Upload] Parsing multipart form data...', contentType);
+        const { files } = await parseMultipartForm(req);
+        console.log('[Upload] Files parsed:', files.length);
+
+        if (!files || files.length === 0) {
+          return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const file = files[0];
+        const { filename, mimetype, data } = file;
+
+        console.log('[Upload] Processing file:', filename, mimetype, `${data.length} bytes`);
+
+        const originalText = await parseFileContent(data, mimetype, filename);
+
+        let contentHash: string | null = null;
+        try {
+          contentHash = crypto.createHash('sha256').update(originalText).digest('hex');
+          const existingResumes = await sql`
+            SELECT id, created_at FROM resumes
+            WHERE user_id = ${user.id} AND content_hash = ${contentHash}
+            LIMIT 1
+          `;
+
+          if (existingResumes.length > 0) {
+            const existing = existingResumes[0];
+            console.log('[Upload] Duplicate detected:', existing.id);
+            return res.status(200).json({
+              resumeId: existing.id,
+              status: 'completed',
+              isDuplicate: true,
+              message: 'This resume has already been analyzed.',
+              originalUploadDate: existing.created_at,
+            });
+          }
+        } catch (dupError) {
+          console.warn('[Upload] Duplicate detection failed:', dupError);
+          contentHash = null;
+        }
+
+        let result;
+        if (contentHash) {
+          result = await sql`
+            INSERT INTO resumes (user_id, file_name, original_text, status, content_hash, original_file_name)
+            VALUES (${user.id}, ${filename}, ${originalText}, 'processing', ${contentHash}, ${filename})
+            RETURNING *
+          `;
+        } else {
+          result = await sql`
+            INSERT INTO resumes (user_id, file_name, original_text, status)
+            VALUES (${user.id}, ${filename}, ${originalText}, 'processing')
+            RETURNING *
+          `;
+        }
+
+        const resume = result[0];
+        console.log('[Upload] Resume created:', resume.id);
+
+        if (user.plan !== 'admin') {
+          await sql`UPDATE users SET credits_remaining = credits_remaining - 1 WHERE id = ${user.id}`;
+          console.log('[Upload] Credit deducted for user:', user.id);
+        }
+
+        processResume(resume.id, originalText).catch((err) => {
+          console.error('[Upload] Background processing error:', err);
+        });
+
+        return res.json({ resumeId: resume.id, status: 'processing' });
+      } catch (parseError: any) {
+        console.error('[Upload] Error:', parseError);
+        return res.status(400).json({
+          error: parseError.message || 'Failed to process file',
+          details: parseError.stack
+        });
+      }
     }
 
     // Create Stripe checkout session
@@ -339,7 +581,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      const { plan } = req.body;
+      const body = await parseJSONBody(req);
+      const { plan } = body;
       if (!plan || !PRICES[plan as keyof typeof PRICES]) {
         return res.status(400).json({ error: 'Invalid plan' });
       }
@@ -377,7 +620,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Verify payment success
     if (path === '/api/payments/verify' && method === 'POST') {
-      const { sessionId } = req.body;
+      const body = await parseJSONBody(req);
+      const { sessionId } = body;
       if (!sessionId) {
         return res.status(400).json({ error: 'Session ID required' });
       }
@@ -451,7 +695,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Analytics: Track event
     if (path === '/api/analytics/event' && method === 'POST') {
-      const { event, properties, page, referrer, sessionId } = req.body;
+      const body = await parseJSONBody(req);
+      const { event, properties, page, referrer, sessionId } = body;
 
       if (!event || !sessionId) {
         return res.status(400).json({ error: 'Event name and sessionId required' });
@@ -482,7 +727,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Analytics: Track funnel step
     if (path.match(/^\/api\/analytics\/funnel\/[^/]+$/) && method === 'POST') {
       const step = path.split('/').pop();
-      const { sessionId } = req.body;
+      const body = await parseJSONBody(req);
+      const { sessionId } = body;
 
       if (!step || !sessionId) {
         return res.status(400).json({ error: 'Step and sessionId required' });
