@@ -278,7 +278,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const result = await sql`
         INSERT INTO users (email, password_hash, name, plan, credits_remaining, email_verified)
-        VALUES (${email}, ${passwordHash}, ${name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 1}, NULL)
+        VALUES (${email}, ${passwordHash}, ${name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 0}, NULL)
         RETURNING *
       `;
       const user = result[0];
@@ -380,7 +380,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!user) {
         const result = await sql`
           INSERT INTO users (email, password_hash, name, plan, credits_remaining, email_verified)
-          VALUES (${googleUser.email}, ${`google_oauth_${googleUser.id}`}, ${googleUser.name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 1}, NOW())
+          VALUES (${googleUser.email}, ${`google_oauth_${googleUser.id}`}, ${googleUser.name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 0}, NOW())
           RETURNING *
         `;
         user = result[0];
