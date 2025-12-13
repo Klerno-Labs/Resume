@@ -278,7 +278,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const result = await sql`
         INSERT INTO users (email, password_hash, name, plan, credits_remaining, email_verified)
-        VALUES (${email}, ${passwordHash}, ${name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 0}, NULL)
+        VALUES (${email}, ${passwordHash}, ${name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 1}, NULL)
         RETURNING *
       `;
       const user = result[0];
@@ -380,7 +380,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!user) {
         const result = await sql`
           INSERT INTO users (email, password_hash, name, plan, credits_remaining, email_verified)
-          VALUES (${googleUser.email}, ${`google_oauth_${googleUser.id}`}, ${googleUser.name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 0}, NOW())
+          VALUES (${googleUser.email}, ${`google_oauth_${googleUser.id}`}, ${googleUser.name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 1}, NOW())
           RETURNING *
         `;
         user = result[0];
@@ -534,7 +534,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           console.log('[Upload] Credit deducted for user:', user.id);
         }
 
-        processResume(resume.id, originalText).catch((err) => {
+        processResume(resume.id, originalText, user.id, user.plan).catch((err) => {
           console.error('[Upload] Background processing error:', err);
         });
 
@@ -741,7 +741,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 // Background resume processing
-async function processResume(resumeId: string, originalText: string) {
+async function processResume(resumeId: string, originalText: string, userId: string, userPlan: string) {
   try {
     const [optimizationResult, scoreResult] = await Promise.all([
       openai.chat.completions.create({
@@ -785,7 +785,13 @@ async function processResume(resumeId: string, originalText: string) {
       WHERE id = ${resumeId}
     `;
   } catch (error) {
-    console.error('Process error:', error);
+    console.error('[Process] Error optimizing resume:', error);
     await sql`UPDATE resumes SET status = 'failed' WHERE id = ${resumeId}`;
+
+    // Refund credit on failure (unless admin)
+    if (userPlan !== 'admin') {
+      await sql`UPDATE users SET credits_remaining = credits_remaining + 1 WHERE id = ${userId}`;
+      console.log(`[Credit] Refunded 1 credit to user ${userId} due to optimization failure`);
+    }
   }
 }
