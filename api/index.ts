@@ -455,83 +455,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Upload resume - handle multipart file upload
     if (path === '/api/resumes/upload' && method === 'POST') {
       try {
-        console.log('[Upload] ========== NEW UPLOAD REQUEST ==========');
-        console.log('[Upload] Headers:', JSON.stringify(req.headers, null, 2));
-
+        console.log('[Upload] Starting upload handler...');
         const user = await getUserFromRequest(req);
         if (!user) {
-          console.error('[Upload] ❌ User not authenticated - no valid session cookie');
-          return res.status(401).json({
-            error: 'Not authenticated',
-            details: 'Please log in to upload resumes'
-          });
+          console.log('[Upload] User not authenticated');
+          return res.status(401).json({ error: 'Not authenticated' });
         }
 
-        console.log(`[Upload] ✅ User authenticated: ${user.email} (ID: ${user.id})`);
-        console.log(`[Upload] User details: plan=${user.plan}, credits=${user.credits_remaining}`);
+        console.log(`[Upload] User authenticated: ${user.id}, plan: ${user.plan}, credits: ${user.credits_remaining}`);
 
-        // FIX 2: Admin bypass - admins always have unlimited uploads
-        if (user.plan === 'admin') {
-          console.log('[Upload] 👑 ADMIN USER - bypassing all credit checks');
-        } else if (user.credits_remaining <= 0) {
-          console.error(`[Upload] ❌ No credits remaining for user ${user.id}`);
-          return res.status(403).json({
-            error: 'No credits remaining',
-            details: 'Please purchase credits to continue',
-            creditsRemaining: 0
-          });
+        if (user.credits_remaining <= 0 && user.plan !== 'admin') {
+          console.log('[Upload] No credits remaining');
+          return res.status(403).json({ error: 'No credits remaining' });
         }
 
         const contentType = req.headers['content-type'] || '';
         console.log('[Upload] Content-Type:', contentType);
-
-        // FIX 3: More permissive content-type check
-        if (!contentType || !contentType.toLowerCase().includes('multipart')) {
-          console.error('[Upload] ❌ Invalid Content-Type:', contentType);
+        if (!contentType.includes('multipart/form-data')) {
           return res.status(400).json({
             error: 'Invalid content type. Expected multipart/form-data',
             received: contentType,
-            hint: 'Make sure your file upload uses FormData'
           });
         }
 
-        console.log('[Upload] ⏳ Parsing multipart form data...');
+        console.log('[Upload] Parsing multipart form data...');
         const { files } = await parseMultipartForm(req);
-        console.log(`[Upload] ✅ Multipart parsing complete: ${files.length} file(s) received`);
+        console.log('[Upload] Files parsed:', files.length);
 
         if (!files || files.length === 0) {
-          console.error('[Upload] ❌ No files in multipart data');
-          return res.status(400).json({
-            error: 'No file uploaded',
-            details: 'The multipart request contained no file data'
-          });
+          return res.status(400).json({ error: 'No file uploaded' });
         }
 
         const file = files[0];
         const { filename, mimetype, data } = file;
 
-        console.log(`[Upload] 📄 File details:`);
-        console.log(`  - Name: ${filename}`);
-        console.log(`  - Type: ${mimetype}`);
-        console.log(`  - Size: ${data.length} bytes (${(data.length / 1024).toFixed(2)} KB)`);
+        console.log('[Upload] Processing file:', filename, mimetype, `${data.length} bytes`);
 
-        // FIX 1: Better error logging during parsing
-        console.log('[Upload] ⏳ Parsing file content...');
-        let originalText;
-        try {
-          originalText = await parseFileContent(data, mimetype, filename);
-          console.log(`[Upload] ✅ File parsed successfully: ${originalText.length} characters extracted`);
-        } catch (parseError: any) {
-          console.error('[Upload] ❌ File parsing failed:', parseError.message);
-          throw new Error(`Failed to parse ${mimetype} file: ${parseError.message}`);
-        }
+        const originalText = await parseFileContent(data, mimetype, filename);
 
         let contentHash: string | null = null;
-        console.log('[Upload] ⏳ Checking for duplicate uploads...');
         try {
           contentHash = crypto.createHash('sha256').update(originalText).digest('hex');
-          console.log(`[Upload] Content hash generated: ${contentHash.substring(0, 16)}...`);
-
           const existingResumes = await sql`
             SELECT id, created_at FROM resumes
             WHERE user_id = ${user.id} AND content_hash = ${contentHash}
@@ -540,8 +504,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           if (existingResumes.length > 0) {
             const existing = existingResumes[0];
-            console.log(`[Upload] ♻️  DUPLICATE DETECTED - returning existing resume: ${existing.id}`);
-            console.log('[Upload] No credit charged for duplicate');
+            console.log('[Upload] Duplicate detected:', existing.id);
             return res.status(200).json({
               resumeId: existing.id,
               status: 'completed',
@@ -550,73 +513,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               originalUploadDate: existing.created_at,
             });
           }
-          console.log('[Upload] ✅ No duplicate found - this is a new resume');
-        } catch (dupError: any) {
-          console.warn('[Upload] ⚠️  Duplicate detection failed (non-critical):', dupError.message);
+        } catch (dupError) {
+          console.warn('[Upload] Duplicate detection failed:', dupError);
           contentHash = null;
         }
 
-        console.log('[Upload] ⏳ Inserting resume into database...');
         let result;
-        try {
-          if (contentHash) {
-            result = await sql`
-              INSERT INTO resumes (user_id, file_name, original_text, status, content_hash, original_file_name)
-              VALUES (${user.id}, ${filename}, ${originalText}, 'processing', ${contentHash}, ${filename})
-              RETURNING *
-            `;
-          } else {
-            result = await sql`
-              INSERT INTO resumes (user_id, file_name, original_text, status)
-              VALUES (${user.id}, ${filename}, ${originalText}, 'processing')
-              RETURNING *
-            `;
-          }
-        } catch (dbError: any) {
-          console.error('[Upload] ❌ Database INSERT failed:', dbError.message);
-          throw new Error(`Database error: ${dbError.message}`);
+        if (contentHash) {
+          result = await sql`
+            INSERT INTO resumes (user_id, file_name, original_text, status, content_hash, original_file_name)
+            VALUES (${user.id}, ${filename}, ${originalText}, 'processing', ${contentHash}, ${filename})
+            RETURNING *
+          `;
+        } else {
+          result = await sql`
+            INSERT INTO resumes (user_id, file_name, original_text, status)
+            VALUES (${user.id}, ${filename}, ${originalText}, 'processing')
+            RETURNING *
+          `;
         }
 
         const resume = result[0];
-        console.log(`[Upload] ✅ Resume created in database: ${resume.id}`);
+        console.log('[Upload] Resume created:', resume.id);
 
-        // Deduct credit (skip for admin users)
         if (user.plan !== 'admin') {
-          console.log('[Upload] ⏳ Deducting 1 credit...');
           await sql`UPDATE users SET credits_remaining = credits_remaining - 1 WHERE id = ${user.id}`;
-          console.log(`[Upload] ✅ Credit deducted - user now has ${user.credits_remaining - 1} credits`);
-        } else {
-          console.log('[Upload] 👑 Admin user - no credit deduction');
+          console.log('[Upload] Credit deducted for user:', user.id);
         }
 
-        // Start background AI processing
-        console.log('[Upload] 🤖 Starting background AI processing...');
         processResume(resume.id, originalText, user.id, user.plan).catch((err) => {
-          console.error('[Upload] ❌ Background processing error:', err);
+          console.error('[Upload] Background processing error:', err);
         });
 
-        console.log('[Upload] ========== UPLOAD SUCCESSFUL ==========');
-        return res.json({
-          resumeId: resume.id,
-          status: 'processing',
-          message: 'Resume uploaded successfully. AI analysis in progress...'
-        });
+        return res.json({ resumeId: resume.id, status: 'processing' });
       } catch (parseError: any) {
-        console.error('[Upload] ========== UPLOAD FAILED ==========');
-        console.error('[Upload] ❌ Fatal error:', parseError.message);
-        console.error('[Upload] Error type:', parseError.constructor.name);
-        console.error('[Upload] Stack trace:', parseError.stack);
-
-        // FIX 1: Return detailed, user-friendly error messages
+        console.error('[Upload] Error:', parseError);
+        console.error('[Upload] Stack:', parseError.stack);
         return res.status(400).json({
           error: parseError.message || 'Failed to process file',
           message: parseError.message,
-          details: 'Upload failed. Please try again or contact support if the problem persists.',
-          hint: parseError.message.includes('parse')
-            ? 'Try uploading a .TXT file instead of PDF/DOCX'
-            : parseError.message.includes('size')
-            ? 'File is too large. Maximum size is 10MB'
-            : 'Make sure the file is a valid resume document',
           stack: process.env.NODE_ENV === 'development' ? parseError.stack : undefined
         });
       }
