@@ -104,8 +104,9 @@ async function parseFileContent(buffer: Buffer, mimetype: string, filename: stri
     }
 
     return text;
-  } catch (error: any) {
-    throw new Error(error.message || 'Failed to parse file');
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to parse file';
+    throw new Error(message);
   }
 }
 
@@ -132,9 +133,10 @@ async function parseJSONBody(req: VercelRequest): Promise<any> {
       try {
         const body = Buffer.concat(chunks).toString('utf-8');
         resolve(JSON.parse(body));
-      } catch (error: any) {
-        console.error('[parseJSONBody] Error:', error.message);
-        reject(new Error(`Failed to parse JSON body: ${error.message}`));
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[parseJSONBody] Error:', message);
+        reject(new Error(`Failed to parse JSON body: ${message}`));
       }
     });
 
@@ -158,8 +160,21 @@ function verifyToken(token: string): { userId: string; email: string } | null {
   }
 }
 
+// User interface
+interface User {
+  id: string;
+  email: string;
+  name: string | null;
+  password_hash: string;
+  plan: string;
+  credits_remaining: number;
+  email_verified: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
 // Helper to get user from request
-async function getUserFromRequest(req: VercelRequest): Promise<any | null> {
+async function getUserFromRequest(req: VercelRequest): Promise<User | null> {
   const cookies = parse(req.headers.cookie || '');
   const token = cookies.token;
   if (!token) return null;
@@ -168,7 +183,7 @@ async function getUserFromRequest(req: VercelRequest): Promise<any | null> {
   if (!decoded) return null;
 
   const users = await sql`SELECT * FROM users WHERE id = ${decoded.userId}`;
-  return users[0] || null;
+  return (users[0] as User) || null;
 }
 
 // Check if user is admin
@@ -378,9 +393,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const admin = isAdmin(googleUser.email);
 
       if (!user) {
+        // Generate secure random password hash for OAuth users (they won't use it, but field is required)
+        const secureOAuthHash = crypto.randomBytes(32).toString('hex');
+
         const result = await sql`
           INSERT INTO users (email, password_hash, name, plan, credits_remaining, email_verified)
-          VALUES (${googleUser.email}, ${`google_oauth_${googleUser.id}`}, ${googleUser.name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 1}, NOW())
+          VALUES (${googleUser.email}, ${secureOAuthHash}, ${googleUser.name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 1}, true)
           RETURNING *
         `;
         user = result[0];
@@ -464,11 +482,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         console.log(`[Upload] User authenticated: ${user.id}, plan: ${user.plan}, credits: ${user.credits_remaining}`);
 
-        if (user.credits_remaining <= 0 && user.plan !== 'admin') {
-          console.log('[Upload] No credits remaining');
-          return res.status(403).json({ error: 'No credits remaining' });
-        }
-
         const contentType = req.headers['content-type'] || '';
         console.log('[Upload] Content-Type:', contentType);
         if (!contentType.includes('multipart/form-data')) {
@@ -518,6 +531,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           contentHash = null;
         }
 
+        // ATOMIC CREDIT DEDUCTION - deduct credit BEFORE creating resume to prevent race conditions
+        // This ensures that even if two uploads happen simultaneously, only one succeeds
+        if (user.plan !== 'admin') {
+          const updatedUsers = await sql`
+            UPDATE users
+            SET credits_remaining = credits_remaining - 1
+            WHERE id = ${user.id} AND credits_remaining > 0
+            RETURNING credits_remaining
+          `;
+
+          if (updatedUsers.length === 0) {
+            console.log('[Upload] Credit deduction failed - no credits remaining');
+            return res.status(403).json({
+              error: 'No credits remaining',
+              message: 'Please purchase more credits to continue'
+            });
+          }
+
+          console.log('[Upload] Credit deducted atomically, remaining:', updatedUsers[0].credits_remaining);
+        }
+
         let result;
         if (contentHash) {
           result = await sql`
@@ -536,23 +570,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const resume = result[0];
         console.log('[Upload] Resume created:', resume.id);
 
-        if (user.plan !== 'admin') {
-          await sql`UPDATE users SET credits_remaining = credits_remaining - 1 WHERE id = ${user.id}`;
-          console.log('[Upload] Credit deducted for user:', user.id);
-        }
-
         processResume(resume.id, originalText, user.id, user.plan).catch((err) => {
           console.error('[Upload] Background processing error:', err);
         });
 
         return res.json({ resumeId: resume.id, status: 'processing' });
-      } catch (parseError: any) {
-        console.error('[Upload] Error:', parseError);
-        console.error('[Upload] Stack:', parseError.stack);
+      } catch (parseError: unknown) {
+        const errorMessage = parseError instanceof Error ? parseError.message : 'Failed to process file';
+        const errorStack = parseError instanceof Error ? parseError.stack : undefined;
+        console.error('[Upload] Error:', errorMessage);
+        if (errorStack) console.error('[Upload] Stack:', errorStack);
         return res.status(400).json({
-          error: parseError.message || 'Failed to process file',
-          message: parseError.message,
-          stack: process.env.NODE_ENV === 'development' ? parseError.stack : undefined
+          error: errorMessage,
+          message: errorMessage,
+          stack: process.env.NODE_ENV === 'development' ? errorStack : undefined
         });
       }
     }
@@ -647,8 +678,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // For webhooks, we must use the raw request body exactly as received
         const rawBody = await getRawBody(req);
         event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET!);
-      } catch (err: any) {
-        console.error('Webhook signature verification failed:', err.message);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        console.error('Webhook signature verification failed:', message);
         return res.status(400).json({ error: 'Webhook signature verification failed' });
       }
 
@@ -736,13 +768,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     return res.status(404).json({ error: 'Not found' });
-  } catch (error: any) {
-    console.error('API Error:', error);
-    console.error('Stack:', error.stack);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('API Error:', errorMessage);
+    if (errorStack) console.error('Stack:', errorStack);
     return res.status(500).json({
       error: 'Internal server error',
-      message: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      message: errorMessage,
+      stack: process.env.NODE_ENV === 'development' ? errorStack : undefined
     });
   }
 }
