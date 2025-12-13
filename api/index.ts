@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { serialize, parse } from 'cookie';
 import Stripe from 'stripe';
-import getRawBody from 'raw-body';
+import busboy from 'busboy';
 import mammoth from 'mammoth';
 import crypto from 'crypto';
 
@@ -28,62 +28,49 @@ const PRICES = {
   premium: { amount: 2900, credits: 999, name: 'Premium Plan' },
 } as const;
 
-// Helper to parse multipart form data
+// Helper to parse multipart form data using busboy
 async function parseMultipartForm(req: VercelRequest): Promise<{
   fields: Record<string, string>;
   files: Array<{ name: string; filename: string; mimetype: string; data: Buffer }>;
 }> {
-  const contentType = req.headers['content-type'] || '';
-  const boundary = contentType.split('boundary=')[1];
+  return new Promise((resolve, reject) => {
+    const fields: Record<string, string> = {};
+    const files: Array<{ name: string; filename: string; mimetype: string; data: Buffer }> = [];
 
-  if (!boundary) {
-    throw new Error('No boundary found in Content-Type header');
-  }
+    const bb = busboy({ headers: req.headers as any });
 
-  const rawBody = await getRawBody(req);
-  const parts = rawBody.toString('binary').split(`--${boundary}`);
+    bb.on('file', (name, file, info) => {
+      const { filename, encoding, mimeType } = info;
+      const chunks: Buffer[] = [];
 
-  const fields: Record<string, string> = {};
-  const files: Array<{ name: string; filename: string; mimetype: string; data: Buffer }> = [];
-
-  for (const part of parts) {
-    if (part.trim() === '' || part.trim() === '--') continue;
-
-    const [headerSection, ...bodyParts] = part.split('\r\n\r\n');
-    if (!headerSection) continue;
-
-    const body = bodyParts.join('\r\n\r\n').replace(/\r\n$/, '');
-    const headers = headerSection.split('\r\n');
-
-    let name = '';
-    let filename = '';
-    let contentTypeHeader = 'text/plain';
-
-    for (const header of headers) {
-      const nameMatch = header.match(/name="([^"]+)"/);
-      if (nameMatch) name = nameMatch[1];
-
-      const filenameMatch = header.match(/filename="([^"]+)"/);
-      if (filenameMatch) filename = filenameMatch[1];
-
-      if (header.toLowerCase().startsWith('content-type:')) {
-        contentTypeHeader = header.split(':')[1].trim();
-      }
-    }
-
-    if (filename) {
-      files.push({
-        name,
-        filename,
-        mimetype: contentTypeHeader,
-        data: Buffer.from(body, 'binary'),
+      file.on('data', (data) => {
+        chunks.push(data);
       });
-    } else if (name) {
-      fields[name] = body.trim();
-    }
-  }
 
-  return { fields, files };
+      file.on('end', () => {
+        files.push({
+          name,
+          filename,
+          mimetype: mimeType,
+          data: Buffer.concat(chunks),
+        });
+      });
+    });
+
+    bb.on('field', (name, value) => {
+      fields[name] = value;
+    });
+
+    bb.on('finish', () => {
+      resolve({ fields, files });
+    });
+
+    bb.on('error', (error) => {
+      reject(error);
+    });
+
+    req.pipe(bb);
+  });
 }
 
 // Helper to parse file content
@@ -122,15 +109,29 @@ async function parseFileContent(buffer: Buffer, mimetype: string, filename: stri
   }
 }
 
-// Helper to parse JSON from raw body
+// Helper to parse JSON from request body
 async function parseJSONBody(req: VercelRequest): Promise<any> {
-  try {
-    const rawBody = await getRawBody(req, { encoding: 'utf-8' });
-    return JSON.parse(rawBody);
-  } catch (error: any) {
-    console.error('[parseJSONBody] Error:', error.message);
-    throw new Error(`Failed to parse JSON body: ${error.message}`);
-  }
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+
+    req.on('data', (chunk) => {
+      chunks.push(chunk);
+    });
+
+    req.on('end', () => {
+      try {
+        const body = Buffer.concat(chunks).toString('utf-8');
+        resolve(JSON.parse(body));
+      } catch (error: any) {
+        console.error('[parseJSONBody] Error:', error.message);
+        reject(new Error(`Failed to parse JSON body: ${error.message}`));
+      }
+    });
+
+    req.on('error', (error) => {
+      reject(error);
+    });
+  });
 }
 
 // Helper to generate JWT
