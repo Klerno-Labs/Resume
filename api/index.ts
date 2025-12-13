@@ -12,7 +12,7 @@ import crypto from 'crypto';
 // Initialize services
 const sql = neon(process.env.DATABASE_URL!);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-12-18.acacia' });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // CRITICAL: Disable Vercel body parsing globally to handle multipart uploads
 export const config = {
