@@ -1,13 +1,17 @@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { motion } from 'framer-motion';
+import { Lock } from 'lucide-react';
 import { ResumePreview } from './ResumePreview';
+import { Button } from './ui/button';
 
 interface ComparisonViewProps {
   originalText: string;
   improvedText: string;
+  requiresUpgrade?: boolean;
+  onUpgradeClick?: () => void;
 }
 
-export function ComparisonView({ originalText, improvedText }: ComparisonViewProps) {
+export function ComparisonView({ originalText, improvedText, requiresUpgrade, onUpgradeClick }: ComparisonViewProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
       {/* Original Pane */}
@@ -53,7 +57,19 @@ export function ComparisonView({ originalText, improvedText }: ComparisonViewPro
             className="p-6"
             data-testid="text-improved"
           >
-            <div className="bg-white dark:bg-slate-950 rounded-lg shadow-lg border-2 border-primary/10 p-6 min-h-[500px] ring-4 ring-primary/5">
+            <div className="bg-white dark:bg-slate-950 rounded-lg shadow-lg border-2 border-primary/10 p-6 min-h-[500px] ring-4 ring-primary/5 relative">
+              {requiresUpgrade ? (
+                <div className="absolute inset-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg">
+                  <Lock className="w-16 h-16 text-primary mb-4" />
+                  <h3 className="text-2xl font-bold mb-2">Unlock Your Optimized Resume</h3>
+                  <p className="text-muted-foreground text-center max-w-md mb-6">
+                    Your free assessment is complete! Upgrade to access your professionally optimized resume text.
+                  </p>
+                  <Button onClick={onUpgradeClick} size="lg" className="bg-gradient-to-r from-primary to-primary/80">
+                    Upgrade Now
+                  </Button>
+                </div>
+              ) : null}
               <ResumePreview text={improvedText} />
             </div>
           </motion.div>

@@ -221,7 +221,12 @@ export default function Editor() {
             <div className="flex-1 p-8 overflow-hidden">
               <Tabs value={activeTab} className="h-full">
                 <TabsContent value="resume" className="h-full mt-0">
-                  <ComparisonView originalText={originalText} improvedText={improvedText} />
+                  <ComparisonView
+                    originalText={originalText}
+                    improvedText={improvedText}
+                    requiresUpgrade={resume.requiresUpgrade}
+                    onUpgradeClick={() => triggerUpgrade('improved_text')}
+                  />
                 </TabsContent>
                 <TabsContent
                   value="preview"

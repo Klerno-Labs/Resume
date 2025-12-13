@@ -278,7 +278,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const result = await sql`
         INSERT INTO users (email, password_hash, name, plan, credits_remaining, email_verified)
-        VALUES (${email}, ${passwordHash}, ${name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 0}, NULL)
+        VALUES (${email}, ${passwordHash}, ${name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 1}, NULL)
         RETURNING *
       `;
       const user = result[0];
@@ -380,7 +380,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!user) {
         const result = await sql`
           INSERT INTO users (email, password_hash, name, plan, credits_remaining, email_verified)
-          VALUES (${googleUser.email}, ${`google_oauth_${googleUser.id}`}, ${googleUser.name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 0}, NOW())
+          VALUES (${googleUser.email}, ${`google_oauth_${googleUser.id}`}, ${googleUser.name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 1}, NOW())
           RETURNING *
         `;
         user = result[0];
@@ -429,12 +429,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json({ error: 'Resume not found' });
       }
 
+      // Get user to check if they can access improved text
+      const user = await getUserFromRequest(req);
+      // Free users can only see assessment (scores/issues), not the improved text
+      // Paid users (basic/pro/premium/admin) can see everything
+      const canAccessImprovedText = user && user.plan !== 'free';
+
       return res.json({
         id: resume.id,
         userId: resume.user_id,
         fileName: resume.file_name,
         originalText: resume.original_text,
-        improvedText: resume.improved_text,
+        improvedText: canAccessImprovedText ? resume.improved_text : null,
         atsScore: resume.ats_score,
         keywordsScore: resume.keywords_score,
         formattingScore: resume.formatting_score,
@@ -442,6 +448,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         status: resume.status,
         createdAt: resume.created_at,
         updatedAt: resume.updated_at,
+        requiresUpgrade: !canAccessImprovedText && resume.status === 'completed',
       });
     }
 

@@ -22,6 +22,7 @@ export interface Resume {
   status: string;
   createdAt: string;
   updatedAt: string;
+  requiresUpgrade?: boolean;
 }
 
 export interface CoverLetter {
