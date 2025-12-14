@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import { Analytics } from '@vercel/analytics/react';
 import App from './App';
 
 // Self-hosted fonts - no external dependencies, full cache control
@@ -23,5 +24,6 @@ initSentry();
 createRoot(document.getElementById('root')!).render(
   <ErrorBoundary>
     <App />
+    <Analytics />
   </ErrorBoundary>
 );
