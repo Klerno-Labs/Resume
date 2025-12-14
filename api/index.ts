@@ -5,7 +5,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { serialize, parse } from 'cookie';
 import Stripe from 'stripe';
-import busboy from 'busboy';
+import formidable from 'formidable';
+import fs from 'fs/promises';
 import mammoth from 'mammoth';
 import crypto from 'crypto';
 
@@ -30,48 +31,58 @@ const PRICES = {
   premium: { amount: 2900, credits: 999, name: 'Premium Plan' },
 } as const;
 
-// Helper to parse multipart form data using busboy
+// Helper to parse multipart form data using formidable (serverless-friendly)
 async function parseMultipartForm(req: VercelRequest): Promise<{
   fields: Record<string, string>;
   files: Array<{ name: string; filename: string; mimetype: string; data: Buffer }>;
 }> {
   return new Promise((resolve, reject) => {
-    const fields: Record<string, string> = {};
-    const files: Array<{ name: string; filename: string; mimetype: string; data: Buffer }> = [];
+    const form = new formidable.IncomingForm({ multiples: false, keepExtensions: true });
 
-    const bb = busboy({ headers: req.headers as any });
+    form.parse(req as any, async (err, fieldsRaw, filesRaw) => {
+      if (err) return reject(err);
 
-    bb.on('file', (name, file, info) => {
-      const { filename, encoding, mimeType } = info;
-      const chunks: Buffer[] = [];
+      try {
+        const fields: Record<string, string> = {};
+        const files: Array<{ name: string; filename: string; mimetype: string; data: Buffer }> = [];
 
-      file.on('data', (data) => {
-        chunks.push(data);
-      });
+        // Normalize fields (take first value if array)
+        for (const key of Object.keys(fieldsRaw || {})) {
+          const val = (fieldsRaw as any)[key];
+          fields[key] = Array.isArray(val) ? String(val[0]) : String(val);
+        }
 
-      file.on('end', () => {
-        files.push({
-          name,
-          filename,
-          mimetype: mimeType,
-          data: Buffer.concat(chunks),
-        });
-      });
+        // Normalize files
+        for (const key of Object.keys(filesRaw || {})) {
+          const fileEntry = (filesRaw as any)[key];
+          if (!fileEntry) continue;
+
+          // formidable may return either a single file or array
+          const fileList = Array.isArray(fileEntry) ? fileEntry : [fileEntry];
+
+          for (const f of fileList) {
+            const filepath = f.filepath || f.path || f.file;
+            const filename = f.originalFilename || f.name || f.filename || f.newFilename || f.path?.split('/').pop();
+            const mimetype = f.mimetype || f.type || 'application/octet-stream';
+
+            if (filepath) {
+              const data = await fs.readFile(String(filepath));
+              files.push({ name: key, filename: String(filename), mimetype: String(mimetype), data });
+              // attempt to remove the temp file
+              try {
+                await fs.unlink(String(filepath));
+              } catch {
+                // ignore
+              }
+            }
+          }
+        }
+
+        resolve({ fields, files });
+      } catch (e) {
+        reject(e);
+      }
     });
-
-    bb.on('field', (name, value) => {
-      fields[name] = value;
-    });
-
-    bb.on('finish', () => {
-      resolve({ fields, files });
-    });
-
-    bb.on('error', (error) => {
-      reject(error);
-    });
-
-    req.pipe(bb);
   });
 }
 
