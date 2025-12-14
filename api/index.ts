@@ -194,7 +194,7 @@ function isAdmin(email: string): boolean {
   return adminEmails.includes(email.toLowerCase());
 }
 
-// Background resume processing
+// Main API handler - handles all /api/* requests
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { url, method } = req;
