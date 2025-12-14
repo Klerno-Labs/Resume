@@ -206,6 +206,17 @@ export function FileUpload({ onUpload }: FileUploadProps) {
                 <p className="text-muted-foreground mt-2 max-w-xs">
                   Support for PDF, DOCX, DOC, and TXT files. We'll analyze it instantly.
                 </p>
+                <p className="text-muted-foreground mt-2 text-xs">
+                  Need to convert a legacy Word file?&nbsp;
+                  <a
+                    className="text-primary underline"
+                    href="https://support.google.com/docs/answer/6000292"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    How to convert .doc → .docx
+                  </a>
+                </p>
                 <div className="mt-8">
                   <span className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-primary bg-primary/10 rounded-full hover:bg-primary/20 transition-colors">
                     Or browse files
