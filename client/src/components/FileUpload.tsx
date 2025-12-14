@@ -61,6 +61,18 @@ export function FileUpload({ onUpload }: FileUploadProps) {
 
   const processFile = useCallback(
     async (uploadedFile: File) => {
+      // Client-side guard for legacy .doc files (older Word format)
+      const lowerName = (uploadedFile.name || '').toLowerCase();
+      const isLegacyDoc = lowerName.endsWith('.doc') || uploadedFile.type === 'application/msword';
+      if (isLegacyDoc) {
+        toast({
+          title: 'Unsupported file type',
+          description: 'Legacy .doc files are not supported. Please convert to .docx or PDF and try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       if (!user) {
         setLocation('/auth');
         return;
