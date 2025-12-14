@@ -1,21 +1,39 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { neon } from '@neondatabase/serverless';
 import OpenAI from 'openai';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { serialize, parse } from 'cookie';
 import Stripe from 'stripe';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { getS3Client, getObjectBuffer, PutObjectCommand, GetObjectCommand } from '../server/lib/s3';
+import { sql } from '../server/lib/db';
+import { processResume } from '../server/lib/processResume';
+import { enqueueJob } from '../server/lib/queue';
+import { parseFile } from '../server/lib/fileParser';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 import mammoth from 'mammoth';
 import crypto from 'crypto';
 
+// Validate critical environment variables
+function validateEnv() {
+  const required = ['DATABASE_URL', 'JWT_SECRET', 'OPENAI_API_KEY', 'STRIPE_SECRET_KEY'];
+  const missing = required.filter(key => !process.env[key]);
+
+  if (missing.length > 0) {
+    console.error('[ENV] Missing required environment variables:', missing.join(', '));
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+
+  console.log('[ENV] All required environment variables validated');
+}
+
+// Validate on module load
+validateEnv();
+
 // Initialize services
-const sql = neon(process.env.DATABASE_URL!);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-11-17.clover',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // CRITICAL: Disable Vercel body parsing globally to handle multipart uploads
 export const config = {
@@ -86,76 +104,66 @@ async function parseMultipartForm(req: VercelRequest): Promise<{
   });
 }
 
-// Helper to parse file content
-async function parseFileContent(buffer: Buffer, mimetype: string, filename: string): Promise<string> {
-  let text = '';
-
-  try {
-    if (mimetype === 'application/pdf') {
-      throw new Error('PDF parsing not supported in serverless. Please upload DOCX or TXT format.');
-    } else if (
-      mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-      mimetype === 'application/zip' ||
-      mimetype === 'application/octet-stream'
-    ) {
-      const result = await mammoth.extractRawText({ buffer });
-      text = result.value;
-    } else if (mimetype === 'text/plain') {
-      text = buffer.toString('utf-8');
-    } else {
-      throw new Error(`Unsupported file type: ${mimetype}`);
-    }
-
-    text = text
-      .replace(/\r\n/g, '\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .replace(/[ \t]+/g, ' ')
-      .trim();
-
-    if (!text || text.length < 50) {
-      throw new Error('File contains insufficient text content (minimum 50 characters required)');
-    }
-
-    return text;
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to parse file';
-    throw new Error(message);
-  }
-}
+// Use shared file parser `parseFile` from server/lib/fileParser
 
 // Helper to get raw body as Buffer (for webhooks, etc.)
 async function getRawBody(req: VercelRequest): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const chunks: Buffer[] = [];
-    req.on('data', (chunk) => chunks.push(chunk));
+    // If stream has already been read and body exists on req, try to use it
+    try {
+      // @ts-ignore - some runtimes attach parsed body
+      if (req.body && typeof req.body === 'string') {
+        return resolve(Buffer.from(req.body, 'utf8'));
+      }
+    } catch (e) {
+      // ignore and continue to stream reading
+    }
+
+    req.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk))));
     req.on('end', () => resolve(Buffer.concat(chunks)));
-    req.on('error', reject);
+    // On error, resolve an empty buffer rather than reject to avoid crashing
+    req.on('error', () => resolve(Buffer.alloc(0)));
   });
 }
 
 // Helper to parse JSON from request body
 async function parseJSONBody(req: VercelRequest): Promise<any> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const chunks: Buffer[] = [];
 
-    req.on('data', (chunk) => {
-      chunks.push(chunk);
-    });
+    // If a parsed body was attached by the runtime, return it directly
+    try {
+      // @ts-ignore
+      if (req.body && typeof req.body === 'object') return resolve(req.body);
+      // @ts-ignore
+      if (req.body && typeof req.body === 'string') return resolve(JSON.parse(req.body));
+    } catch (e) {
+      console.warn('[parseJSONBody] Pre-parsed body parse failed, falling back to stream');
+    }
+
+    req.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk))));
 
     req.on('end', () => {
       try {
         const bodyStr = Buffer.concat(chunks).toString('utf-8').trim();
         if (!bodyStr) return resolve(null);
-        resolve(JSON.parse(bodyStr));
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        console.error('[parseJSONBody] Error:', message);
-        reject(new Error(`Failed to parse JSON body: ${message}`));
+        try {
+          return resolve(JSON.parse(bodyStr));
+        } catch (err) {
+          console.error('[parseJSONBody] JSON.parse failed:', err instanceof Error ? err.message : String(err));
+          // Return null instead of rejecting so callers can handle missing/invalid JSON gracefully
+          return resolve(null);
+        }
+      } catch (error) {
+        console.error('[parseJSONBody] Unknown error reading body:', error);
+        return resolve(null);
       }
     });
 
     req.on('error', (error) => {
-      reject(error);
+      console.error('[parseJSONBody] Stream error:', error);
+      return resolve(null);
     });
   });
 }
@@ -534,7 +542,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         console.log('[Upload] Processing file:', filename, mimetype, `${data.length} bytes`);
 
-        const originalText = await parseFileContent(data, mimetype, filename);
+        const originalText = await parseFile(data, mimetype, filename);
 
         let contentHash: string | null = null;
         try {
@@ -615,6 +623,65 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           message: errorMessage,
           stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
         });
+      }
+    }
+
+    // Presign upload (direct-to-S3) - returns PUT url and object key
+    if (path === '/api/uploads/presign' && method === 'POST') {
+      const user = await getUserFromRequest(req);
+      if (!user) return res.status(401).json({ error: 'Not authenticated' });
+
+      const body = await parseJSONBody(req);
+      if (!body) return res.status(400).json({ error: 'Empty request body' });
+
+      const { filename, contentType } = body;
+      if (!filename || !contentType) return res.status(400).json({ error: 'filename and contentType required' });
+
+      const bucket = process.env.S3_BUCKET;
+      if (!bucket) return res.status(500).json({ error: 'S3_BUCKET not configured' });
+
+      const key = `uploads/${user.id}/${Date.now()}-${filename}`;
+      const s3 = getS3Client();
+
+      const cmd = new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType });
+      try {
+        const url = await getSignedUrl(s3, cmd, { expiresIn: 300 });
+        return res.json({ url, key });
+      } catch (err: unknown) {
+        console.error('Presign error:', err);
+        return res.status(500).json({ error: 'Failed to create presigned URL' });
+      }
+    }
+
+    // Complete upload: enqueue job for background worker to fetch from S3 and process
+    if (path === '/api/uploads/complete' && method === 'POST') {
+      try {
+        const user = await getUserFromRequest(req);
+        if (!user) return res.status(401).json({ error: 'Not authenticated' });
+
+        const body = await parseJSONBody(req);
+        if (!body) return res.status(400).json({ error: 'Empty request body' });
+        const { key, filename } = body;
+        if (!key || !filename) return res.status(400).json({ error: 'key and filename required' });
+
+        const bucket = process.env.S3_BUCKET;
+        if (!bucket) return res.status(500).json({ error: 'S3_BUCKET not configured' });
+
+        // Create resume placeholder in DB with queued status
+        const result = await sql`
+          INSERT INTO resumes (user_id, file_name, original_text, status, original_file_name)
+          VALUES (${user.id}, ${filename}, ${''}, 'queued', ${filename})
+          RETURNING *
+        `;
+        const resume = result[0];
+
+        // Enqueue background job for worker to fetch object and process
+        await enqueueJob({ resumeId: resume.id, bucket, key, filename, userId: user.id });
+
+        return res.json({ resumeId: resume.id, status: 'queued' });
+      } catch (err: unknown) {
+        console.error('[UploadComplete] Error:', err);
+        return res.status(500).json({ error: 'Failed to complete upload' });
       }
     }
 

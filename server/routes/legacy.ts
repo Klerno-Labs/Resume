@@ -68,9 +68,7 @@ const upload = multer({
 let stripe: Stripe | null = null;
 const isTestEnv = process.env.NODE_ENV === 'test';
 if (env.STRIPE_SECRET_KEY && !isTestEnv) {
-  stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-    apiVersion: '2024-12-18.acacia',
-  });
+  stripe = new Stripe(env.STRIPE_SECRET_KEY);
 }
 
 export function registerLegacyRoutes(httpServer: Server, app: Express): Server {

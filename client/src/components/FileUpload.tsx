@@ -13,6 +13,9 @@ interface FileUploadProps {
 export function FileUpload({ onUpload }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [controller, setController] = useState<AbortController | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -90,9 +93,26 @@ export function FileUpload({ onUpload }: FileUploadProps) {
       }
 
       setFile(uploadedFile);
+      setProgress(0);
+      setErrorMessage(null);
+
+      const ac = new AbortController();
+      setController(ac);
+
+      // show uploading toast
+      const toastHandle = toast({ title: 'Uploading...', description: '0%', duration: 100000 });
 
       try {
-        const result = await api.uploadResume(uploadedFile);
+        const result = await api.uploadResume(
+          uploadedFile,
+          (percent) => {
+            setProgress(percent);
+            try {
+              toastHandle.update({ id: toastHandle.id, description: `${percent}%` });
+            } catch {}
+          },
+          ac.signal
+        );
 
         // Handle duplicate detection response
         if (result.isDuplicate) {
@@ -116,14 +136,20 @@ export function FileUpload({ onUpload }: FileUploadProps) {
         // Wait a bit for UI then redirect
         setTimeout(() => {
           setLocation(`/editor?resumeId=${result.resumeId}`);
-        }, 1500);
+        }, 800);
       } catch (error) {
-        toast({
-          title: 'Upload failed',
-          description: error instanceof Error ? error.message : 'Failed to upload file',
-          variant: 'destructive',
-        });
+        const msg = error instanceof Error ? error.message : 'Failed to upload file';
+        setErrorMessage(msg);
+        toastHandle.update({ id: toastHandle.id, title: 'Upload failed', description: msg });
+        toast({ title: 'Upload failed', description: msg, variant: 'destructive' });
         setFile(null);
+        setProgress(null);
+      }
+      finally {
+        try {
+          toastHandle.dismiss();
+        } catch {}
+        setController(null);
       }
     },
     [user, setLocation, validateFile, toast, onUpload]
@@ -253,6 +279,44 @@ export function FileUpload({ onUpload }: FileUploadProps) {
                 </div>
                 <h3 className="text-xl font-semibold text-green-700">Analyzing {file.name}</h3>
                 <p className="text-green-600 mt-2">Checking ATS compatibility...</p>
+                {progress !== null && (
+                  <div className="w-56 mt-4">
+                    <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-green-500 h-2"
+                        style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+                      />
+                    </div>
+                    <div className="text-xs text-muted-foreground text-center mt-2">{progress}%</div>
+                    <div className="flex items-center justify-center gap-2 mt-3">
+                      {controller && (
+                        <button
+                          className="px-3 py-1 text-xs rounded bg-red-50 text-red-700"
+                          onClick={() => {
+                            controller.abort();
+                            setFile(null);
+                            setProgress(null);
+                            toast({ title: 'Upload cancelled', description: 'The upload was cancelled.' });
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                      {errorMessage && (
+                        <button
+                          className="px-3 py-1 text-xs rounded bg-primary/10 text-primary"
+                          onClick={() => {
+                            // retry
+                            setErrorMessage(null);
+                            if (file) void processFile(file);
+                          }}
+                        >
+                          Retry
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

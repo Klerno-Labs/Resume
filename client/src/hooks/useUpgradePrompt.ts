@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
-
-type Trigger = 'limit_reached' | 'premium_feature' | 'watermark_notice';
+import type { Trigger } from '@/components/UpgradeModal';
 
 export function useUpgradePrompt() {
   const { user } = useAuth();

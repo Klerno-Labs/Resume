@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
-type Trigger = 'limit_reached' | 'premium_feature' | 'watermark_notice';
+export type Trigger = 'limit_reached' | 'premium_feature' | 'watermark_notice';
 
 interface UpgradeModalProps {
   isOpen: boolean;

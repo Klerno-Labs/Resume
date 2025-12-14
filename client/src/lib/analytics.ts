@@ -1,3 +1,13 @@
+let sessionId: string;
+
+function getSessionId(): string {
+  if (!sessionId) {
+    sessionId = localStorage.getItem('analytics_session_id') || crypto.randomUUID();
+    localStorage.setItem('analytics_session_id', sessionId);
+  }
+  return sessionId;
+}
+
 export class Analytics {
   static pageView(path: string) {
     if (typeof window !== 'undefined' && window.gtag) {
@@ -11,11 +21,18 @@ export class Analytics {
       window.gtag('event', event, properties);
     }
 
+    const sessionId = getSessionId();
     void fetch('/api/analytics/event', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ event, properties }),
+      body: JSON.stringify({
+        event,
+        properties,
+        sessionId,
+        page: window.location.pathname,
+        referrer: document.referrer
+      }),
     }).catch(() => {});
   }
 

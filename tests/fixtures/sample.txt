@@ -1,0 +1,5 @@
+This is a sample resume text for testing purposes.
+It contains enough content to pass the minimal length check in the parser.
+
+Experience
+- Built features

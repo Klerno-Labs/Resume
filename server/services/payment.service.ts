@@ -5,9 +5,7 @@ import { payments, pricingPlans, subscriptions, usageRecords, users } from '../.
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeSecret
-  ? new Stripe(stripeSecret, {
-      apiVersion: '2024-12-18.acacia',
-    })
+  ? new Stripe(stripeSecret)
   : null;
 
 export class PaymentService {

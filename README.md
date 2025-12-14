@@ -178,6 +178,25 @@ Resume-Repairer/
 - `GET /api/payments/:id` - Get payment status
 - `POST /api/webhooks/stripe` - Stripe webhook handler
 
+## Worker (background processing)
+
+This project uses a small worker process to fetch uploaded files from S3 (or S3-compatible storage) and run the AI optimization job. This prevents serverless functions from timing out when downloading or processing files.
+
+Start the worker locally:
+
+```bash
+npm run worker
+```
+
+Environment variables required for the worker:
+
+- `DATABASE_URL` - Postgres connection string
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET`, `AWS_REGION` - S3 access
+- `OPENAI_API_KEY` - OpenAI API key
+- `REDIS_URL` - Redis connection for job queue (defaults to `redis://127.0.0.1:6379`)
+
+CI note: The GitHub Actions workflow can run a MinIO service for end-to-end presign+upload tests and start a worker to process queued jobs during the test run.
+
 ## Features in Detail
 
 ### Resume Optimization

@@ -171,13 +171,99 @@ class ApiClient {
   }
 
   // Resumes
-  async uploadResume(file: File): Promise<{
+  async uploadResume(
+    file: File,
+    onProgress?: (percent: number) => void,
+    signal?: AbortSignal
+  ): Promise<{
     resumeId: string;
     status: string;
     isDuplicate?: boolean;
     message?: string;
     originalUploadDate?: string;
   }> {
+    // Try presign flow first (direct-to-S3). If anything fails, fall back to multipart upload.
+    try {
+      const presignRes = await this.fetchWithCredentials(`${this.baseUrl}/uploads/presign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream' }),
+        signal,
+      });
+
+      if (presignRes.ok) {
+        const { url, key } = await presignRes.json();
+
+        // Upload file to presigned URL using XHR so we can report progress
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('PUT', url, true);
+          xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+
+          let aborted = false;
+
+          const onAbort = () => {
+            aborted = true;
+            try {
+              xhr.abort();
+            } catch {}
+            reject(new Error('Upload aborted'));
+          };
+
+          if (signal) {
+            if (signal.aborted) return onAbort();
+            signal.addEventListener('abort', onAbort);
+          }
+
+          xhr.upload.onprogress = function (e) {
+            if (e.lengthComputable && onProgress) {
+              const percent = Math.round((e.loaded / e.total) * 100);
+              try {
+                onProgress(percent);
+              } catch {}
+            }
+          };
+
+          xhr.onload = function () {
+            if (signal) signal.removeEventListener('abort', onAbort);
+            if (aborted) return;
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              reject(new Error(`Upload to storage failed with status ${xhr.status}`));
+            }
+          };
+
+          xhr.onerror = function () {
+            if (signal) signal.removeEventListener('abort', onAbort);
+            if (aborted) return;
+            reject(new Error('Network error during upload to storage'));
+          };
+
+          xhr.send(file);
+        });
+
+        // Tell server the upload is complete so it can fetch/process
+        const completeRes = await this.fetchWithCredentials(`${this.baseUrl}/uploads/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key, filename: file.name }),
+          signal,
+        });
+
+        if (!completeRes.ok) {
+          const error = await completeRes.json();
+          throw new Error(this.toErrorMessage(error, 'Upload completion failed'));
+        }
+
+        return completeRes.json();
+      }
+    } catch (err) {
+      // Fall through to multipart upload fallback
+      console.warn('[api.uploadResume] Presign flow failed, falling back to multipart upload:', err);
+    }
+
+    // Fallback: multipart POST to /resumes/upload
     const formData = new FormData();
     formData.append('file', file);
 
