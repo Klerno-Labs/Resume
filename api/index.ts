@@ -492,8 +492,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         console.log('[Upload] Parsing multipart form data...');
-        const { files } = await parseMultipartForm(req);
-        console.log('[Upload] Files parsed:', files.length);
+        let files;
+        try {
+          const parsed = await parseMultipartForm(req);
+          files = parsed.files;
+          console.log('[Upload] Files parsed:', files.length);
+        } catch (parseError) {
+          console.error('[Upload] Parse error:', parseError);
+          return res.status(400).json({
+            error: 'Failed to parse upload',
+            details: parseError instanceof Error ? parseError.message : String(parseError),
+          });
+        }
 
         if (!files || files.length === 0) {
           return res.status(400).json({ error: 'No file uploaded' });
@@ -575,15 +585,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
 
         return res.json({ resumeId: resume.id, status: 'processing' });
-      } catch (parseError: unknown) {
-        const errorMessage = parseError instanceof Error ? parseError.message : 'Failed to process file';
-        const errorStack = parseError instanceof Error ? parseError.stack : undefined;
-        console.error('[Upload] Error:', errorMessage);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to process file';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        console.error('[Upload] Unexpected error:', errorMessage);
         if (errorStack) console.error('[Upload] Stack:', errorStack);
-        return res.status(400).json({
-          error: errorMessage,
+        return res.status(500).json({
+          error: 'Upload failed',
           message: errorMessage,
-          stack: process.env.NODE_ENV === 'development' ? errorStack : undefined
+          stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
         });
       }
     }
