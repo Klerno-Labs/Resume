@@ -12,7 +12,9 @@ import crypto from 'crypto';
 // Initialize services
 const sql = neon(process.env.DATABASE_URL!);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-11-17.clover',
+});
 
 // CRITICAL: Disable Vercel body parsing globally to handle multipart uploads
 export const config = {
@@ -131,8 +133,9 @@ async function parseJSONBody(req: VercelRequest): Promise<any> {
 
     req.on('end', () => {
       try {
-        const body = Buffer.concat(chunks).toString('utf-8');
-        resolve(JSON.parse(body));
+        const bodyStr = Buffer.concat(chunks).toString('utf-8').trim();
+        if (!bodyStr) return resolve(null);
+        resolve(JSON.parse(bodyStr));
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Unknown error';
         console.error('[parseJSONBody] Error:', message);
@@ -238,6 +241,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Auth: Login
     if (path === '/api/auth/login' && method === 'POST') {
       const body = await parseJSONBody(req);
+      if (!body) {
+        return res.status(400).json({ error: 'Empty request body' });
+      }
       const { email, password } = body;
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password required' });
@@ -278,6 +284,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Auth: Register
     if (path === '/api/auth/register' && method === 'POST') {
       const body = await parseJSONBody(req);
+      if (!body) {
+        return res.status(400).json({ error: 'Empty request body' });
+      }
       const { email, password, name } = body;
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password required' });
@@ -606,6 +615,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const body = await parseJSONBody(req);
+      if (!body) return res.status(400).json({ error: 'Empty request body' });
       const { plan } = body;
       if (!plan || !PRICES[plan as keyof typeof PRICES]) {
         return res.status(400).json({ error: 'Invalid plan' });
@@ -645,6 +655,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Verify payment success
     if (path === '/api/payments/verify' && method === 'POST') {
       const body = await parseJSONBody(req);
+      if (!body) return res.status(400).json({ error: 'Empty request body' });
       const { sessionId } = body;
       if (!sessionId) {
         return res.status(400).json({ error: 'Session ID required' });
@@ -721,6 +732,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Analytics: Track event
     if (path === '/api/analytics/event' && method === 'POST') {
       const body = await parseJSONBody(req);
+      if (!body) return res.status(400).json({ error: 'Empty request body' });
       const { event, properties, page, referrer, sessionId } = body;
 
       if (!event || !sessionId) {
@@ -753,6 +765,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (path.match(/^\/api\/analytics\/funnel\/[^/]+$/) && method === 'POST') {
       const step = path.split('/').pop();
       const body = await parseJSONBody(req);
+      if (!body) return res.status(400).json({ error: 'Empty request body' });
       const { sessionId } = body;
 
       if (!step || !sessionId) {
