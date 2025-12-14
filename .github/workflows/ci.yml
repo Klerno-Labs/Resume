@@ -20,11 +20,9 @@ jobs:
       - name: Run unit tests with coverage
         run: npm run test -- --coverage
       - name: Start MinIO and Redis (for integration)
-        uses: einaregilsson/mini-deploy@v0.3
-        with:
-          command: |
-            docker run -d --name minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin quay.io/minio/minio server /data
-            docker run -d --name redis -p 6379:6379 redis:6
+        run: |
+          docker run -d --name minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin quay.io/minio/minio server /data
+          docker run -d --name redis -p 6379:6379 redis:6
       - name: Wait for services
         run: |
           n=0; until nc -z localhost 9000 || [ $n -ge 15 ]; do n=$((n+1)); sleep 1; done
