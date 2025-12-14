@@ -1,7 +1,10 @@
 import mammoth from 'mammoth';
 
-type PdfParseModule = typeof import('pdf-parse');
 type PdfParseFunction = (buffer: Buffer) => Promise<{ text: string }>;
+
+const IS_SERVERLESS_VERCEL = process.env.VERCEL === '1' && process.env.NODE_ENV === 'production';
+const PDF_PARSER_DISABLED = process.env.DISABLE_PDF_PARSE === '1';
+const PDF_PARSE_SUPPORTED = !IS_SERVERLESS_VERCEL && !PDF_PARSER_DISABLED;
 
 let cachedPdfParse: PdfParseFunction | null = null;
 
@@ -10,11 +13,16 @@ async function resolvePdfParse(): Promise<PdfParseFunction> {
     return cachedPdfParse;
   }
 
-  const module = await import('pdf-parse');
-  // pdf-parse is a CommonJS module without a default export
-  const resolved = (module as any).default || module;
-  cachedPdfParse = resolved as PdfParseFunction;
-  return cachedPdfParse;
+  try {
+    const module = await import('pdf-parse');
+    // pdf-parse is a CommonJS module without a default export
+    const resolved = (module as any).default || module;
+    cachedPdfParse = resolved as PdfParseFunction;
+    return cachedPdfParse;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`pdf-parse could not be loaded: ${message}`);
+  }
 }
 
 function cleanExtractedText(text: string): string {
@@ -49,6 +57,11 @@ export async function parseFile(
 
     // PDF parsing
     if (mimetype === 'application/pdf') {
+      if (!PDF_PARSE_SUPPORTED) {
+        throw new Error(
+          'PDF parsing is disabled in the current runtime (Vercel serverless or overridden). Please upload a DOCX or TXT file instead.'
+        );
+      }
       const pdfParse = await resolvePdfParse();
       const data = await pdfParse(buffer);
       rawText = data.text;

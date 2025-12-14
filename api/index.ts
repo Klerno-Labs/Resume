@@ -10,9 +10,9 @@ import { sql } from '../server/lib/db';
 import { processResume } from '../server/lib/processResume';
 import { enqueueJob } from '../server/lib/queue';
 import { parseFile } from '../server/lib/fileParser';
+import { initSentry, captureError } from '../server/lib/sentry';
 import formidable from 'formidable';
 import fs from 'fs/promises';
-import mammoth from 'mammoth';
 import crypto from 'crypto';
 
 // Validate critical environment variables
@@ -30,6 +30,7 @@ function validateEnv() {
 
 // Validate on module load
 validateEnv();
+initSentry();
 
 // Initialize services
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -41,6 +42,29 @@ export const config = {
     bodyParser: false,
   },
 };
+
+const REQUIRED_SCHEMA_COLUMNS = ['content_hash', 'original_file_name'];
+
+async function verifySchema(): Promise<void> {
+  const colsLiteral = REQUIRED_SCHEMA_COLUMNS.map((col) => `'${col}'`).join(', ');
+  const rows = await sql`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_name = 'resumes'
+      AND column_name IN (${colsLiteral})
+  `;
+  const existing = (rows ?? []).map((row: any) => row.column_name);
+
+  const missing = REQUIRED_SCHEMA_COLUMNS.filter((col) => !existing.includes(col));
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required schema columns on resumes table: ${missing.join(', ')}. Run npm run db:push.`,
+    );
+  }
+  console.log('[Schema] Required columns present');
+}
+
+const startupChecks = verifySchema();
 
 // Price configuration
 const PRICES = {
@@ -218,10 +242,10 @@ function isAdmin(email: string): boolean {
 
 // Main API handler - handles all /api/* requests
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const method = req.method || 'GET';
+  const path = req.url?.split('?')[0] || '';
   try {
-    const { url, method } = req;
-    const path = url?.split('?')[0] || '';
-
+    await startupChecks;
     console.log(`[${method}] ${path}`);
 
     // CORS - use request origin or default
@@ -870,8 +894,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(404).json({ error: 'Not found' });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error ? error.stack : undefined;
+    const err = error instanceof Error ? error : new Error(String(error));
+    captureError(err, { method, path });
+    const errorMessage = err.message || 'Unknown error';
+    const errorStack = err.stack;
     console.error('API Error:', errorMessage);
     if (errorStack) console.error('Stack:', errorStack);
     return res.status(500).json({

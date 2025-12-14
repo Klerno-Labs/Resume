@@ -298,13 +298,20 @@ If you see validation errors on startup:
 - Check OpenAI service status
 - Ensure you have access to GPT-5 model
 
-### File Upload Issues
+### File Upload Guidelines
 
-- Check file size (max 10MB)
-- Verify file type (PDF, DOCX, or TXT only)
-- Ensure sufficient disk space
+- **Accepted Formats & Limits** – Uploads must be PDF, DOCX, or TXT and smaller than 10 MB; files must contain at least ~50 characters or you’ll receive a validation error from `parseFile`. Legacy `.doc` files are not parsed, so convert them to `.docx` or TXT before uploading.
+- **Plan Credit Limits** – Free users start with one credit (per month), Basic/Pro/Premium plans unlock 1/3/unlimited credits respectively, and uploads deduct credits atomically; if credits reach zero you’ll see a 403 error with “No credits remaining.”
+- **Serverless PDF Support** – Vercel’s Hobby plan runs serverless functions that cannot execute `pdf-parse`, so PDF parsing is disabled in production builds. Upload a DOCX or TXT file, or convert your PDF to one of those formats before uploading (or run uploads locally using `npm run dev:server` if you need PDF support).
+- **Upload Stability** – Multipart parsing runs inside `api/index.ts`, so if uploads keep failing look at the console logs (or Vercel logs) for parser failures, credit enforcement, or schema validation errors before rerunning.
 
 ## Security Notes
+
+### Observability & Monitoring
+
+- **Sentry** – The API server initializes Sentry when `SENTRY_DSN` is configured so every 500/uncaught exception, unhandled rejection, or upload parser failure (with stack trace/context) is captured in production. Set `SENTRY_DSN`, `NODE_ENV=production`, and `VERCEL=1` before deploying to Vercel.
+- **Schema Validation** – The serverless handler now validates that `content_hash` and `original_file_name` exist on `resumes` at startup and runs `npm run db:push` before every build, so migrations must accompany schema changes in `shared/schema.ts`.
+- **Upload Transparency** – The logs include upload metadata (user ID, file name, parse status) so you know exactly why Vercel returns 500/400 responses; tail `vercel logs --prod` while exercising `/api/resumes/upload` when debugging.
 
 ### Production Checklist
 
