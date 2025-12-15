@@ -26,7 +26,7 @@ An AI-powered resume optimization platform that helps job seekers improve their 
 
 ### Backend
 
-- **Node.js + Express** with TypeScript
+- **Node.js serverless (Vercel API routes)** with TypeScript (`api/index.ts` is the primary entry point; legacy Express server archived under `archive/legacy-express-server`)
 - **PostgreSQL** database
 - **Drizzle ORM** for database management
 - **OpenAI GPT-5** for AI features
@@ -352,6 +352,10 @@ For issues and questions:
 - Check existing issues on GitHub
 - Review this README and `.env.example`
 - Check server logs for error messages
+
+## Fix History
+
+Legacy diagnostics, cleanup reports, and fix logs live under `docs/fix-history/` (e.g., `COMPLETE_FIX_SUMMARY.md`, `DIAGNOSTIC_REPORT.md`, `ANALYTICS_404_FIX.md`). Review those files if you need historical context for past hotfix work.
 
 ## Roadmap
 
