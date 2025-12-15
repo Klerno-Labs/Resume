@@ -193,9 +193,9 @@ Environment variables required for the worker:
 - `DATABASE_URL` - Postgres connection string
 - `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET`, `AWS_REGION` - S3 access
 - `OPENAI_API_KEY` - OpenAI API key
-- `REDIS_URL` - Redis connection for job queue (defaults to `redis://127.0.0.1:6379`)
+- `REDIS_URL` (optional) - Provide a Redis connection if you want the worker to use a Redis-backed queue; the default in-process queue works without Docker or extra services.
 
-CI note: The GitHub Actions workflow can run a MinIO service for end-to-end presign+upload tests and start a worker to process queued jobs during the test run.
+CI note: The GitHub Actions workflow simply runs the unit/integration suite (`npm run test`/`npm run test:integration`) without requiring MinIO or Redis.
 
 ## Features in Detail
 

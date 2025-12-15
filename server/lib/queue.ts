@@ -1,7 +1,4 @@
-import IORedis from 'ioredis';
-
-const redis = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379');
-const QUEUE_KEY = 'upload_jobs_v1';
+import { EventEmitter } from 'events';
 
 export type UploadJob = {
   resumeId: string;
@@ -11,21 +8,44 @@ export type UploadJob = {
   userId: string;
 };
 
+const QUEUE_KEY = 'upload_jobs_v1';
+const queue: UploadJob[] = [];
+const events = new EventEmitter();
+
+events.setMaxListeners(0);
+
 export async function enqueueJob(job: UploadJob) {
-  await redis.lpush(QUEUE_KEY, JSON.stringify(job));
+  queue.push(job);
+  events.emit(QUEUE_KEY);
 }
 
 export async function popJob(timeout = 5): Promise<UploadJob | null> {
-  // BRPOP returns [key, value] or null on timeout
-  const res = await redis.brpop(QUEUE_KEY, timeout);
-  if (!res) return null;
-  try {
-    const payload = JSON.parse(res[1]);
-    return payload as UploadJob;
-  } catch (err) {
-    console.error('Failed to parse job payload', err);
-    return null;
+  if (queue.length > 0) {
+    return queue.shift() || null;
   }
-}
 
-export default redis;
+  return new Promise((resolve) => {
+    let settled = false;
+    const cleanup = () => {
+      if (settled) return;
+      settled = true;
+      events.removeListener(QUEUE_KEY, onJob);
+      clearTimeout(timer);
+    };
+
+    const onJob = () => {
+      cleanup();
+      resolve(queue.shift() || null);
+    };
+
+    const timer =
+      timeout > 0
+        ? setTimeout(() => {
+            cleanup();
+            resolve(null);
+          }, timeout * 1000)
+        : undefined;
+
+    events.once(QUEUE_KEY, onJob);
+  });
+}
