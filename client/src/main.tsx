@@ -16,16 +16,22 @@ import '@fontsource/space-grotesk/600.css';
 import '@fontsource/space-grotesk/700.css';
 
 import './index.css';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { initSentry } from './lib/sentry';
 
-// Initialize Sentry for error tracking
-initSentry();
+console.log('Main.tsx loading...');
 
-createRoot(document.getElementById('root')!).render(
-  <ErrorBoundary>
-    <App />
-    <Analytics />
-    <SpeedInsights />
-  </ErrorBoundary>
-);
+try {
+  console.log('Creating root...');
+  const root = createRoot(document.getElementById('root')!);
+  console.log('Root created, rendering...');
+  root.render(
+    <>
+      <App />
+      <Analytics />
+      <SpeedInsights />
+    </>
+  );
+  console.log('Render complete!');
+} catch (error) {
+  console.error('FATAL ERROR in main.tsx:', error);
+  document.body.innerHTML = '<div style="padding:20px;color:red;font-family:monospace;"><h1>Fatal Error</h1><pre>' + (error instanceof Error ? error.message + '\n\n' + error.stack : String(error)) + '</pre></div>';
+}
