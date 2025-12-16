@@ -10,7 +10,8 @@ import { sql } from '../server/lib/db';
 import { processResume } from '../server/lib/processResume';
 import { enqueueJob } from '../server/lib/queue';
 import { parseFile } from '../server/lib/fileParser';
-import { initSentry, captureError } from '../server/lib/sentry';
+// Sentry disabled in serverless - causes Express integration crashes
+// import { initSentry, captureError } from '../server/lib/sentry';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 import crypto from 'crypto';
@@ -30,7 +31,8 @@ function validateEnv() {
 
 // Validate on module load
 validateEnv();
-initSentry();
+// Skip Sentry in Vercel serverless - Express integrations cause crashes
+// initSentry();
 
 // Initialize services - OpenAI and Stripe
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
