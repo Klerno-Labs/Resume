@@ -32,7 +32,7 @@ function validateEnv() {
 validateEnv();
 initSentry();
 
-// Initialize services
+// Initialize services - OpenAI and Stripe
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
