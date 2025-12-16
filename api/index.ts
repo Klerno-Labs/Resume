@@ -582,7 +582,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         console.log('[Upload] Processing file:', filename, mimetype, `${data.length} bytes`);
 
-        const originalText = await parseFile(data, mimetype, filename);
+        let originalText: string;
+        try {
+          originalText = await parseFile(data, mimetype, filename);
+        } catch (parseError) {
+          const message = parseError instanceof Error ? parseError.message : 'Failed to parse file';
+          console.error('[Upload] File parsing failed:', message);
+          return res.status(400).json({
+            error: 'File parsing failed',
+            message: message,
+          });
+        }
 
         let contentHash: string | null = null;
         try {
