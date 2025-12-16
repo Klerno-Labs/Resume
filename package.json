@@ -6,7 +6,7 @@
   "scripts": {
     "dev:client": "vite dev --port 5000",
     "dev": "npm run dev:client",
-    "build": "npm run db:push && vite build",
+    "build": "npm run db:push && cross-env NODE_ENV=production vite build",
     "preview": "vite preview",
     "check": "tsc",
     "db:generate": "drizzle-kit generate:pg",
