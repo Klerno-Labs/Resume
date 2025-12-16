@@ -81,7 +81,7 @@ async function parseMultipartForm(req: VercelRequest): Promise<{
   return new Promise((resolve, reject) => {
     const form = new formidable.IncomingForm({ multiples: false, keepExtensions: true });
 
-    form.parse(req as any, async (err, fieldsRaw, filesRaw) => {
+    form.parse(req as any, async (err: any, fieldsRaw: any, filesRaw: any) => {
       if (err) return reject(err);
 
       try {
@@ -240,10 +240,22 @@ function isAdmin(email: string): boolean {
   return adminEmails.includes(email.toLowerCase());
 }
 
+function getRequestPath(req: VercelRequest): string {
+  try {
+    const origin =
+      req.headers.origin ||
+      (req.headers.host ? `https://${req.headers.host}` : 'https://localhost');
+    const url = new URL(req.url || '/', origin);
+    return url.pathname;
+  } catch {
+    return req.url?.split('?')[0] || '';
+  }
+}
+
 // Main API handler - handles all /api/* requests
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const method = req.method || 'GET';
-  const path = req.url?.split('?')[0] || '';
+  const path = getRequestPath(req);
   try {
     await startupChecks;
     console.log(`[${method}] ${path}`);
@@ -267,9 +279,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (path === '/api/auth/me' && method === 'GET') {
       const user = await getUserFromRequest(req);
       if (!user) {
-        return res.status(401).json({ error: 'Not authenticated' });
+        return res.json({
+          authenticated: false,
+          user: null,
+        });
       }
       return res.json({
+        authenticated: true,
         user: {
           id: user.id,
           email: user.email,
@@ -909,57 +925,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 // Background resume processing
-async function processResume(resumeId: string, originalText: string, userId: string, userPlan: string) {
-  try {
-    const [optimizationResult, scoreResult] = await Promise.all([
-      openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'Optimize resumes. Output JSON only.' },
-          {
-            role: 'user',
-            content: `Rewrite this resume with strong action verbs and quantified achievements.\n\n${originalText}\n\n{"improvedText": "optimized resume"}`,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens: 2500,
-      }),
-      openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'Score resumes. Output JSON only.' },
-          {
-            role: 'user',
-            content: `Score this resume.\n\n${originalText.substring(0, 1500)}\n\n{"atsScore": 0-100, "keywordsScore": 0-10, "formattingScore": 0-10, "issues": [{"type": "issue", "message": "fix", "severity": "high"}]}`,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens: 500,
-      }),
-    ]);
-
-    const optimization = JSON.parse(optimizationResult.choices[0].message.content || '{}');
-    const scores = JSON.parse(scoreResult.choices[0].message.content || '{}');
-
-    await sql`
-      UPDATE resumes SET
-        improved_text = ${optimization.improvedText || originalText},
-        ats_score = ${scores.atsScore || 70},
-        keywords_score = ${scores.keywordsScore || 7},
-        formatting_score = ${scores.formattingScore || 7},
-        issues = ${JSON.stringify(scores.issues || [])},
-        status = 'completed',
-        updated_at = NOW()
-      WHERE id = ${resumeId}
-    `;
-  } catch (error) {
-    console.error('[Process] Error optimizing resume:', error);
-    await sql`UPDATE resumes SET status = 'failed' WHERE id = ${resumeId}`;
-
-    // Refund credit on failure (unless admin)
-    if (userPlan !== 'admin') {
-      await sql`UPDATE users SET credits_remaining = credits_remaining + 1 WHERE id = ${userId}`;
-      console.log(`[Credit] Refunded 1 credit to user ${userId} due to optimization failure`);
-    }
-  }
-}
+    // Use `processResume` from server/lib/processResume for background processing

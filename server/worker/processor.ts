@@ -1,8 +1,8 @@
-import { popJob } from '../server/lib/queue';
-import { getObjectBuffer } from '../server/lib/s3';
-import { parseFile } from '../server/lib/fileParser';
-import { sql } from '../server/lib/db';
-import { processResume } from '../server/lib/processResume';
+import { popJob } from '../lib/queue';
+import { getObjectBuffer } from '../lib/s3';
+import { parseFile } from '../lib/fileParser';
+import { sql } from '../lib/db';
+import { processResume } from '../lib/processResume';
 
 async function handleJob() {
   try {

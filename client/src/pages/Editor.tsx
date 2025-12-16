@@ -225,7 +225,7 @@ export default function Editor() {
                     originalText={originalText}
                     improvedText={improvedText}
                     requiresUpgrade={resume.requiresUpgrade}
-                    onUpgradeClick={() => triggerUpgrade('improved_text')}
+                    onUpgradeClick={() => triggerUpgrade('premium_feature', 'Improved Resume')}
                   />
                 </TabsContent>
                 <TabsContent

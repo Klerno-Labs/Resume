@@ -13,8 +13,20 @@ const ALLOWED_MIME_TYPES = [
   'text/plain',
 ];
 
+type MulterFile = {
+  fieldname?: string;
+  originalname: string;
+  encoding?: string;
+  mimetype: string;
+  buffer: Buffer;
+  size: number;
+  destination?: string;
+  filename?: string;
+  path?: string;
+};
+
 export class ResumeService {
-  async uploadAndProcess(file: Express.Multer.File, userId: string) {
+  async uploadAndProcess(file: MulterFile, userId: string) {
     if (!file) {
       throw new ValidationError('File is required');
     }

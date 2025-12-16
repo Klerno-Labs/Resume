@@ -120,12 +120,27 @@ class ApiClient {
     }
   }
 
-  async getCurrentUser(): Promise<{ user: User }> {
+  async getCurrentUser(): Promise<{ user: User | null; authenticated: boolean }> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/auth/me`);
     if (!res.ok) {
-      throw new Error('Not authenticated');
+      if (res.status === 401) {
+        return { user: null, authenticated: false };
+      }
+      let message = 'Failed to get current user';
+      try {
+        const error = await res.json();
+        message = this.toErrorMessage(error, message);
+      } catch {
+        // ignore parse errors and fall back to default message
+      }
+      throw new Error(message);
     }
-    return res.json();
+
+    const data = (await res.json()) as { user?: User | null; authenticated?: boolean };
+    return {
+      user: data.user ?? null,
+      authenticated: data.authenticated ?? Boolean(data.user),
+    };
   }
 
   async verifyEmail(token: string): Promise<{ success: boolean; message: string }> {
