@@ -86,7 +86,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background font-sans">
       {/* Nav */}
-      <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+      <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-backdrop-filter:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4 md:px-8 mx-auto max-w-7xl">
           <div className="flex items-center gap-2">
             <img src="/rewritemelogo.png" alt="RewriteMe" className="h-20 w-auto" />
@@ -153,7 +153,7 @@ export default function Home() {
       <section className="relative pt-20 pb-32 overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-40">
           <img src={heroBg} alt="Background" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background"></div>
+          <div className="absolute inset-0 bg-linear-to-b from-transparent via-background/50 to-background"></div>
         </div>
 
         <div className="container relative z-10 px-4 mx-auto max-w-7xl text-center">
@@ -168,7 +168,7 @@ export default function Home() {
           <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight text-foreground mb-6 max-w-4xl mx-auto leading-tight">
             Pass the ATS check.
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-violet-600">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-violet-600">
               Land the interview.
             </span>
           </h1>
