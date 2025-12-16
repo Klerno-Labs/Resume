@@ -204,7 +204,7 @@ export function ResumePreview({ text, className = '' }: ResumePreviewProps) {
                       key={lineIdx}
                       className="flex gap-2 text-[11px] text-slate-700 leading-relaxed pl-3"
                     >
-                      <span className="text-blue-500 flex-shrink-0">•</span>
+                      <span className="text-blue-500 shrink-0">•</span>
                       <span>{bulletText}</span>
                     </div>
                   );
@@ -223,7 +223,7 @@ export function ResumePreview({ text, className = '' }: ResumePreviewProps) {
                           <span className="text-[11px] text-slate-600 ml-1">| {parts[1]}</span>
                         )}
                       </div>
-                      <span className="text-[10px] text-slate-500 italic flex-shrink-0">
+                      <span className="text-[10px] text-slate-500 italic shrink-0">
                         {parts.find((p) => p.match(/\d{4}/)) || ''}
                       </span>
                     </div>

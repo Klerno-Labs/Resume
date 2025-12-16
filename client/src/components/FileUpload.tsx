@@ -215,7 +215,7 @@ export function FileUpload({ onUpload }: FileUploadProps) {
           title="Click to select or drag and drop your resume"
         />
 
-        <div className="p-12 flex flex-col items-center justify-center text-center space-y-4 min-h-[320px]">
+        <div className="p-12 flex flex-col items-center justify-center text-center space-y-4 min-h-80">
           <AnimatePresence mode="wait">
             {!file ? (
               <motion.div

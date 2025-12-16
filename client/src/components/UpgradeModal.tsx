@@ -68,7 +68,7 @@ export function UpgradeModal({ isOpen, onClose, trigger, featureName }: UpgradeM
           <ul className="space-y-2">
             {benefits.map((benefit, i) => (
               <li key={i} className="flex items-start gap-2">
-                <Zap className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
+                <Zap className="w-4 h-4 text-green-500 mt-1 shrink-0" />
                 <span className="text-sm">{benefit}</span>
               </li>
             ))}
