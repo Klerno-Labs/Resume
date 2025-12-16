@@ -128,7 +128,7 @@ export default function Auth() {
           <div className="space-y-4">
             <Button
               variant="outline"
-              className="w-full gap-2 min-h-[44px]"
+              className="w-full gap-2 min-h-11"
               type="button"
               onClick={(e) => {
                 e.preventDefault();
@@ -220,7 +220,7 @@ export default function Auth() {
 
             <Button
               type="submit"
-              className="w-full min-h-[44px]"
+              className="w-full min-h-11"
               disabled={isLoading}
               data-testid="button-submit-auth"
             >

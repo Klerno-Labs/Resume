@@ -74,7 +74,7 @@ export function UpgradeModal({ isOpen, onClose, trigger, featureName }: UpgradeM
             ))}
           </ul>
 
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-blue-200">
+          <div className="bg-linear-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-blue-200">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="w-4 h-4 text-blue-600" />
               <span className="font-semibold text-sm">Limited Time Offer</span>
@@ -93,7 +93,7 @@ export function UpgradeModal({ isOpen, onClose, trigger, featureName }: UpgradeM
               onClick={() => {
                 window.location.href = '/pricing';
               }}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600"
+              className="flex-1 bg-linear-to-r from-blue-600 to-purple-600"
             >
               Upgrade Now
             </Button>
