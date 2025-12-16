@@ -923,10 +923,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(404).json({ error: 'Not found' });
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
-    captureError(err, { method, path });
     const errorMessage = err.message || 'Unknown error';
     const errorStack = err.stack;
-    console.error('API Error:', errorMessage);
+    console.error('API Error:', errorMessage, { method, path });
     if (errorStack) console.error('Stack:', errorStack);
     return res.status(500).json({
       error: 'Internal server error',

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "vite build",
+  "buildCommand": "cross-env NODE_ENV=production vite build",
   "outputDirectory": "dist/public",
   "installCommand": "npm install",
   "framework": null,
