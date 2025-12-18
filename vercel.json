@@ -2,7 +2,7 @@
   "version": 2,
   "buildCommand": "cross-env NODE_ENV=production vite build",
   "outputDirectory": "dist/public",
-  "installCommand": "npm install",
+  "installCommand": "npm install --legacy-peer-deps",
   "framework": null,
   "functions": {
     "api/**/*.ts": {
