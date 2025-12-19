@@ -10,8 +10,6 @@ import { sql } from '../server/lib/db';
 import { processResume } from '../server/lib/processResume';
 import { enqueueJob } from '../server/lib/queue';
 import { parseFile } from '../server/lib/fileParser';
-// Sentry disabled in serverless - causes Express integration crashes
-// import { initSentry, captureError } from '../server/lib/sentry';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 import crypto from 'crypto';
@@ -31,8 +29,6 @@ function validateEnv() {
 
 // Validate on module load
 validateEnv();
-// Skip Sentry in Vercel serverless - Express integrations cause crashes
-// initSentry();
 
 // Initialize services - OpenAI and Stripe
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -67,6 +63,17 @@ async function verifySchema(): Promise<void> {
 }
 
 const startupChecks = verifySchema();
+
+// Helper to detect production environment (not hardcoded to specific domain)
+const isProductionEnv = (req: VercelRequest): boolean => {
+  // Check NODE_ENV first
+  if (process.env.NODE_ENV === 'production') return true;
+  // Check if deployed on Vercel
+  if (process.env.VERCEL === '1') return true;
+  // Check if host is production domain (not localhost)
+  const host = req.headers.host || '';
+  return !host.includes('localhost') && !host.includes('127.0.0.1');
+};
 
 // Price configuration
 const PRICES = {
@@ -262,10 +269,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await startupChecks;
     console.log(`[${method}] ${path}`);
 
-    // CORS - use request origin or default
-    const origin = req.headers.origin || 'https://rewriteme.app';
+    // CORS - use request origin if from allowed domains
+    const allowedOrigins = [
+      'https://rewriteme.app',
+      'http://localhost:5174',
+      'http://localhost:3003',
+      'http://localhost:5000'
+    ];
+    const origin = req.headers.origin || '';
+    const isAllowed = allowedOrigins.includes(origin) || origin.includes('vercel.app');
+
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Origin', isAllowed ? origin : allowedOrigins[0]);
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 
@@ -318,13 +333,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const token = generateToken({ userId: user.id, email: user.email });
-      const isProduction =
-        req.headers.host?.includes('rewriteme.app') || process.env.VERCEL === '1';
       res.setHeader(
         'Set-Cookie',
         serialize('token', token, {
           httpOnly: true,
-          secure: isProduction,
+          secure: isProductionEnv(req),
           sameSite: 'lax',
           maxAge: 7 * 24 * 60 * 60,
           path: '/',
@@ -369,13 +382,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const user = result[0];
 
       const token = generateToken({ userId: user.id, email: user.email });
-      const isProduction =
-        req.headers.host?.includes('rewriteme.app') || process.env.VERCEL === '1';
       res.setHeader(
         'Set-Cookie',
         serialize('token', token, {
           httpOnly: true,
-          secure: isProduction,
+          secure: isProductionEnv(req),
           sameSite: 'lax',
           maxAge: 7 * 24 * 60 * 60,
           path: '/',
@@ -395,13 +406,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Auth: Logout
     if (path === '/api/auth/logout' && method === 'POST') {
-      const isProductionLogout =
-        req.headers.host?.includes('rewriteme.app') || process.env.VERCEL === '1';
       res.setHeader(
         'Set-Cookie',
         serialize('token', '', {
           httpOnly: true,
-          secure: isProductionLogout,
+          secure: isProductionEnv(req),
           sameSite: 'lax',
           maxAge: 0,
           path: '/',
@@ -479,13 +488,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const token = generateToken({ userId: user.id, email: user.email });
-      const isProductionOAuth =
-        req.headers.host?.includes('rewriteme.app') || process.env.VERCEL === '1';
       res.setHeader(
         'Set-Cookie',
         serialize('token', token, {
           httpOnly: true,
-          secure: isProductionOAuth,
+          secure: isProductionEnv(req),
           sameSite: 'lax',
           maxAge: 7 * 24 * 60 * 60,
           path: '/',
