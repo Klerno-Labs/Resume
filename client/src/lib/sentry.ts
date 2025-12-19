@@ -7,7 +7,7 @@ export function initSentry() {
 
 export function captureError(error: Error, context?: Record<string, any>) {
   console.error('Error:', error.message, context);
-  Sentry.captureException(error, { extra: context });
+  // Sentry disabled - no remote error tracking
 }
 
 export { Sentry };
