@@ -51,7 +51,7 @@ export default function Editor() {
     };
 
     void fetchResume();
-  }, [navigate]);
+  }, []); // Removed navigate from dependencies to prevent infinite loop
 
   const handleOptimize = () => {
     setIsProcessing(true);

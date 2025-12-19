@@ -75,6 +75,14 @@ export default function Home() {
         }
         await new Promise((res) => setTimeout(res, 1500));
       }
+      // If we reached max retries without completion, show error
+      if (mounted) {
+        const finalCheck = await api.getResume(id).catch(() => null);
+        if (!finalCheck || finalCheck.status === 'processing') {
+          setLoadingResumeId(null);
+          console.error('Resume processing timed out after 30 seconds');
+        }
+      }
     }
 
     if (loadingResumeId) void pollResume(loadingResumeId);

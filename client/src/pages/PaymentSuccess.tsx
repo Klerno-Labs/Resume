@@ -29,7 +29,12 @@ export default function PaymentSuccess() {
           setCredits(result.credits);
           setStatus('success');
           // Refresh user data to get updated credits
-          await refreshUser();
+          try {
+            await refreshUser();
+          } catch (refreshError) {
+            console.error('Failed to refresh user data:', refreshError);
+            // Still show success since payment was verified
+          }
         } else {
           setStatus('error');
         }
@@ -40,7 +45,7 @@ export default function PaymentSuccess() {
     };
 
     void verifyPayment();
-  }, [refreshUser]);
+  }, []); // Removed refreshUser from dependencies to prevent multiple verification attempts
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
