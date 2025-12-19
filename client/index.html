@@ -90,6 +90,15 @@
     </div>
     <![endif]-->
     <div id="root"></div>
+    <script>
+      window.addEventListener('error', function(e) {
+        console.error('[Global Error]', e.error || e.message);
+        if (e.error) console.error('[Stack]', e.error.stack);
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('[Unhandled Promise Rejection]', e.reason);
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
     <script nomodule>
       document.addEventListener('DOMContentLoaded', () => {
