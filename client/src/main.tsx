@@ -1,7 +1,14 @@
+import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import App from './App';
+
+// CRITICAL FIX: Expose React globally for framer-motion compatibility
+// framer-motion tries to access React.Children but Vite doesn't expose React globally in production
+if (typeof window !== 'undefined') {
+  (window as any).React = React;
+}
 
 // Self-hosted fonts - no external dependencies, full cache control
 import '@fontsource/inter/300.css';

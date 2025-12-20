@@ -15,7 +15,10 @@ export default defineConfig(async ({ command, mode }) => {
 
   return {
   plugins: [
-    react(),
+    react({
+      jsxRuntime: 'automatic',
+      jsxImportSource: 'react',
+    }),
     runtimeErrorOverlay(),
     tailwindcss(),
     metaImagesPlugin(),
@@ -34,6 +37,9 @@ export default defineConfig(async ({ command, mode }) => {
     },
   },
   root: path.resolve(import.meta.dirname, 'client'),
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'framer-motion'],
+  },
   build: {
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,
@@ -43,7 +49,8 @@ export default defineConfig(async ({ command, mode }) => {
         manualChunks(id) {
           if (!id) return;
           if (id.includes('node_modules')) {
-            if (id.includes('react')) return 'vendor-react';
+            // Bundle React, React-DOM, and framer-motion together to avoid React.Children undefined error
+            if (id.includes('react') || id.includes('framer-motion')) return 'vendor-react';
             if (id.includes('@radix-ui')) return 'vendor-radix';
             return 'vendor';
           }

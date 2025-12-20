@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Production Diagnostic Test</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background: #1a1a1a;
+      color: #00ff00;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 { color: #00ff00; border-bottom: 2px solid #00ff00; padding-bottom: 10px; }
+    h2 { color: #ffff00; margin-top: 30px; }
+    .test {
+      background: #2a2a2a;
+      padding: 15px;
+      margin: 10px 0;
+      border-left: 4px solid #00ff00;
+      border-radius: 4px;
+    }
+    .error {
+      background: #3a0000;
+      border-left-color: #ff0000;
+      color: #ff6666;
+    }
+    .success {
+      background: #003a00;
+      border-left-color: #00ff00;
+    }
+    .warning {
+      background: #3a3a00;
+      border-left-color: #ffff00;
+      color: #ffff66;
+    }
+    pre {
+      background: #000;
+      padding: 10px;
+      overflow-x: auto;
+      border-radius: 4px;
+      color: #0ff;
+    }
+    .status { font-weight: bold; }
+    button {
+      background: #00ff00;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    button:hover { background: #00cc00; }
+    #iframe-container {
+      margin-top: 20px;
+      border: 2px solid #00ff00;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+      background: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 PRODUCTION DIAGNOSTIC TEST</h1>
+  <p>Testing: <a href="https://rewriteme.app" target="_blank" style="color: #00ff00;">https://rewriteme.app</a></p>
+
+  <div id="results"></div>
+
+  <h2>📋 Console Monitor</h2>
+  <button onclick="clearConsole()">Clear Console</button>
+  <div id="console-output"></div>
+
+  <h2>🖼️ Embedded Production Site</h2>
+  <div id="iframe-container">
+    <iframe id="prod-iframe" src="https://rewriteme.app"></iframe>
+  </div>
+
+  <script>
+    const results = document.getElementById('results');
+    const consoleOutput = document.getElementById('console-output');
+    let testResults = [];
+    let consoleMessages = [];
+
+    function addTest(name, status, detail = '') {
+      testResults.push({ name, status, detail });
+      updateResults();
+    }
+
+    function addConsoleMessage(level, message) {
+      const timestamp = new Date().toLocaleTimeString();
+      consoleMessages.push({ timestamp, level, message });
+      updateConsole();
+    }
+
+    function updateResults() {
+      results.innerHTML = testResults.map(test => {
+        const statusEmoji = {
+          success: '✅',
+          error: '❌',
+          warning: '⚠️'
+        }[test.status] || '➡️';
+
+        return `
+          <div class="test ${test.status}">
+            <div class="status">${statusEmoji} ${test.name}</div>
+            ${test.detail ? `<pre>${test.detail}</pre>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateConsole() {
+      consoleOutput.innerHTML = consoleMessages.map(msg => {
+        const className = msg.level === 'error' ? 'error' : (msg.level === 'warn' ? 'warning' : 'success');
+        return `
+          <div class="test ${className}">
+            <strong>[${msg.timestamp}] [${msg.level.toUpperCase()}]</strong>
+            <pre>${msg.message}</pre>
+          </div>
+        `;
+      }).reverse().join('');
+    }
+
+    function clearConsole() {
+      consoleMessages = [];
+      updateConsole();
+    }
+
+    // Listen for messages from iframe
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'console') {
+        addConsoleMessage(event.data.level, event.data.message);
+      }
+    });
+
+    // Run tests
+    async function runTests() {
+      addTest('Starting diagnostic tests...', 'success');
+
+      // Test 1: Fetch HTML
+      try {
+        const htmlRes = await fetch('https://rewriteme.app');
+        const html = await htmlRes.text();
+
+        if (htmlRes.ok) {
+          addTest('✓ Homepage HTTP response', 'success', `Status: ${htmlRes.status} ${htmlRes.statusText}`);
+        } else {
+          addTest('✗ Homepage HTTP response', 'error', `Status: ${htmlRes.status} ${htmlRes.statusText}`);
+        }
+
+        // Check for cache bust
+        const cacheBust = html.match(/Cache bust: ([^-]+)/);
+        if (cacheBust) {
+          addTest('✓ Cache bust string found', 'success', cacheBust[0]);
+        } else {
+          addTest('✗ Cache bust string missing', 'error');
+        }
+
+        // Check for diagnostic logging
+        if (html.includes('[PRE-REACT]')) {
+          addTest('✓ Diagnostic logging present', 'success', 'PRE-REACT logging detected');
+        } else {
+          addTest('✗ Diagnostic logging missing', 'error', 'PRE-REACT logging NOT found');
+        }
+
+        // Check for root div
+        if (html.includes('<div id="root">')) {
+          addTest('✓ Root div exists in HTML', 'success');
+        } else {
+          addTest('✗ Root div missing from HTML', 'error');
+        }
+
+        // Check for React bundle
+        const jsBundle = html.match(/src="\/assets\/index-([^"]+).js"/);
+        if (jsBundle) {
+          addTest('✓ React bundle referenced', 'success', jsBundle[0]);
+
+          // Try to fetch the bundle
+          const bundleUrl = `https://rewriteme.app${jsBundle[0].match(/src="([^"]+)"/)[1]}`;
+          const bundleRes = await fetch(bundleUrl);
+          if (bundleRes.ok) {
+            const contentType = bundleRes.headers.get('content-type');
+            if (contentType.includes('javascript')) {
+              addTest('✓ JS bundle loads with correct content-type', 'success', contentType);
+            } else {
+              addTest('✗ JS bundle has wrong content-type', 'error', contentType);
+            }
+
+            const bundleText = await bundleRes.text();
+            addTest('✓ JS bundle size', 'success', `${(bundleText.length / 1024).toFixed(0)} KB`);
+
+            if (bundleText.includes('ErrorBoundary')) {
+              addTest('✓ ErrorBoundary in bundle', 'success');
+            } else {
+              addTest('⚠️ ErrorBoundary NOT in bundle', 'warning');
+            }
+          } else {
+            addTest('✗ Failed to fetch JS bundle', 'error', `Status: ${bundleRes.status}`);
+          }
+        } else {
+          addTest('✗ React bundle reference missing', 'error');
+        }
+
+      } catch (error) {
+        addTest('✗ Test failed', 'error', error.message);
+      }
+
+      addTest('All diagnostic tests complete', 'success', 'Now check the embedded iframe and console output above');
+    }
+
+    // Setup iframe console interceptor
+    const iframe = document.getElementById('prod-iframe');
+    iframe.addEventListener('load', () => {
+      try {
+        const iframeWindow = iframe.contentWindow;
+        const script = iframeWindow.document.createElement('script');
+        script.textContent = `
+          (function() {
+            const originalLog = console.log;
+            const originalError = console.error;
+            const originalWarn = console.warn;
+
+            console.log = function(...args) {
+              window.parent.postMessage({
+                type: 'console',
+                level: 'log',
+                message: args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ')
+              }, '*');
+              originalLog.apply(console, args);
+            };
+
+            console.error = function(...args) {
+              window.parent.postMessage({
+                type: 'console',
+                level: 'error',
+                message: args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ')
+              }, '*');
+              originalError.apply(console, args);
+            };
+
+            console.warn = function(...args) {
+              window.parent.postMessage({
+                type: 'console',
+                level: 'warn',
+                message: args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ')
+              }, '*');
+              originalWarn.apply(console, args);
+            };
+
+            window.addEventListener('error', function(e) {
+              window.parent.postMessage({
+                type: 'console',
+                level: 'error',
+                message: '[Global Error] ' + (e.error?.message || e.message)
+              }, '*');
+            });
+
+            window.addEventListener('unhandledrejection', function(e) {
+              window.parent.postMessage({
+                type: 'console',
+                level: 'error',
+                message: '[Unhandled Promise] ' + (e.reason?.message || e.reason || 'Unknown rejection')
+              }, '*');
+            });
+
+            // Check if React mounted after 3 seconds
+            setTimeout(function() {
+              const root = document.getElementById('root');
+              if (root && !root.hasChildNodes()) {
+                window.parent.postMessage({
+                  type: 'console',
+                  level: 'error',
+                  message: '🚨 WHITE SCREEN DETECTED: React did not mount after 3 seconds'
+                }, '*');
+              } else if (root && root.hasChildNodes()) {
+                window.parent.postMessage({
+                  type: 'console',
+                  level: 'log',
+                  message: '✅ React app mounted successfully'
+                }, '*');
+              }
+            }, 3000);
+          })();
+        `;
+        iframeWindow.document.head.appendChild(script);
+      } catch (e) {
+        addConsoleMessage('error', 'Failed to inject console interceptor: ' + e.message);
+      }
+    });
+
+    // Run tests on load
+    runTests();
+  </script>
+</body>
+</html>
