@@ -17,12 +17,8 @@ docs/
 .eslintrc.cjs
 tsconfig.json
 
-# Build artifacts from old architecture
-server/
-!server/db/
-!server/lib/
-!server/config/
-!server/services/
+# Build artifacts from old architecture (exclude server/storage.ts but include lib, db, config, services)
+server/storage.ts
 
 # Temporary files
 *.log
