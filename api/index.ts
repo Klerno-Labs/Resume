@@ -32,22 +32,37 @@ function validateEnv() {
   }
 }
 
-// Validate on module load
-console.log('[Init] Starting module initialization');
-validateEnv();
+// Lazy initialize services
+let openai: OpenAI | null = null;
+let stripe: Stripe | null = null;
+let initError: Error | null = null;
 
-// Initialize services - OpenAI and Stripe
-console.log('[Init] Initializing OpenAI and Stripe');
-let openai: OpenAI;
-let stripe: Stripe;
+function ensureInitialized() {
+  if (initError) {
+    throw initError;
+  }
 
-try {
-  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-  console.log('[Init] Services initialized successfully');
-} catch (error) {
-  console.error('[Init] Service initialization error:', error);
-  throw error;
+  if (openai && stripe) {
+    return { openai, stripe };
+  }
+
+  try {
+    console.log('[Init] Starting initialization');
+    validateEnv();
+
+    console.log('[Init] Creating OpenAI client');
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    console.log('[Init] Creating Stripe client');
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
+    console.log('[Init] Initialization successful');
+    return { openai, stripe };
+  } catch (error) {
+    console.error('[Init] Initialization failed:', error);
+    initError = error instanceof Error ? error : new Error(String(error));
+    throw initError;
+  }
 }
 
 // CRITICAL: Disable Vercel body parsing globally to handle multipart uploads
@@ -261,6 +276,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const method = req.method || 'GET';
   const path = getRequestPath(req);
   try {
+    // Initialize services on first request
+    const { openai, stripe } = ensureInitialized();
     console.log(`[${method}] ${path}`);
 
     // CORS - use request origin if from allowed domains

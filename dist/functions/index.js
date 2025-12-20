@@ -63418,18 +63418,30 @@ function validateEnv() {
     throw error;
   }
 }
-console.log("[Init] Starting module initialization");
-validateEnv();
-console.log("[Init] Initializing OpenAI and Stripe");
-var openai2;
-var stripe;
-try {
-  openai2 = new OpenAI2({ apiKey: process.env.OPENAI_API_KEY });
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-  console.log("[Init] Services initialized successfully");
-} catch (error) {
-  console.error("[Init] Service initialization error:", error);
-  throw error;
+var openai2 = null;
+var stripe = null;
+var initError = null;
+function ensureInitialized() {
+  if (initError) {
+    throw initError;
+  }
+  if (openai2 && stripe) {
+    return { openai: openai2, stripe };
+  }
+  try {
+    console.log("[Init] Starting initialization");
+    validateEnv();
+    console.log("[Init] Creating OpenAI client");
+    openai2 = new OpenAI2({ apiKey: process.env.OPENAI_API_KEY });
+    console.log("[Init] Creating Stripe client");
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    console.log("[Init] Initialization successful");
+    return { openai: openai2, stripe };
+  } catch (error) {
+    console.error("[Init] Initialization failed:", error);
+    initError = error instanceof Error ? error : new Error(String(error));
+    throw initError;
+  }
 }
 var config = {
   api: {
@@ -63565,6 +63577,7 @@ async function handler(req, res) {
   const method = req.method || "GET";
   const path = getRequestPath(req);
   try {
+    const { openai: openai3, stripe: stripe2 } = ensureInitialized();
     console.log(`[${method}] ${path}`);
     const allowedOrigins = [
       "https://rewriteme.app",
@@ -63963,7 +63976,7 @@ async function handler(req, res) {
         return res.status(400).json({ error: "Invalid plan" });
       }
       const priceConfig = PRICES[plan];
-      const session = await stripe.checkout.sessions.create({
+      const session = await stripe2.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: [
           {
@@ -63997,7 +64010,7 @@ async function handler(req, res) {
       if (!sessionId) {
         return res.status(400).json({ error: "Session ID required" });
       }
-      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      const session = await stripe2.checkout.sessions.retrieve(sessionId);
       if (session.payment_status === "paid") {
         const userId = session.metadata?.userId;
         const plan = session.metadata?.plan;
@@ -64023,7 +64036,7 @@ async function handler(req, res) {
       let event;
       try {
         const rawBody = await getRawBody(req);
-        event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        event = stripe2.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("Webhook signature verification failed:", message);
