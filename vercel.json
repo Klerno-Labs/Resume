@@ -1,17 +1,18 @@
 {
   "version": 2,
-  "buildCommand": "cross-env NODE_ENV=production vite build",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
   "installCommand": "npm install --legacy-peer-deps",
   "framework": null,
   "functions": {
-    "api/**/*.ts": {
+    "dist/api/api/*.js": {
       "memory": 3008,
       "maxDuration": 30
     }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/api/health", "destination": "/dist/api/api/health" },
+    { "source": "/api/(.*)", "destination": "/dist/api/api/index" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
