@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Production Test - RewriteMe</title>
+  <style>
+    body { font-family: system-ui; max-width: 800px; margin: 50px auto; padding: 20px; }
+    .status { padding: 15px; margin: 10px 0; border-radius: 8px; }
+    .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+    .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+    pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Production Deployment Test</h1>
+  <div id="results"></div>
+
+  <script>
+    const results = document.getElementById('results');
+
+    async function testProduction() {
+      const tests = [];
+
+      // Test 1: Homepage loads
+      try {
+        const response = await fetch('https://rewriteme.app');
+        const html = await response.text();
+
+        if (response.ok && html.includes('vendor-react-CtngODs8.js')) {
+          tests.push({ name: 'Homepage loads with new React 18 bundle', status: 'success', detail: 'Bundle: vendor-react-CtngODs8.js' });
+        } else {
+          tests.push({ name: 'Homepage loads', status: 'error', detail: `Status: ${response.status}, Old bundle detected` });
+        }
+
+        // Check for error boundary
+        if (html.includes('ErrorBoundary')) {
+          tests.push({ name: 'Error Boundary imported', status: 'info', detail: 'ErrorBoundary component detected in bundle' });
+        }
+
+        // Check cache bust
+        const cacheBust = html.match(/Cache bust: ([^<]+)/);
+        if (cacheBust) {
+          tests.push({ name: 'Cache bust updated', status: 'success', detail: cacheBust[1] });
+        }
+
+      } catch (error) {
+        tests.push({ name: 'Homepage load', status: 'error', detail: error.message });
+      }
+
+      // Test 2: API health check
+      try {
+        const response = await fetch('https://rewriteme.app/api/health');
+        const data = await response.json();
+
+        if (response.ok && data.status === 'ok') {
+          tests.push({ name: 'API health check', status: 'success', detail: JSON.stringify(data) });
+        } else {
+          tests.push({ name: 'API health check', status: 'error', detail: `Status: ${response.status}` });
+        }
+      } catch (error) {
+        tests.push({ name: 'API health check', status: 'error', detail: error.message });
+      }
+
+      // Display results
+      results.innerHTML = tests.map(test => `
+        <div class="status ${test.status}">
+          <strong>${test.name}</strong>
+          ${test.detail ? `<pre>${test.detail}</pre>` : ''}
+        </div>
+      `).join('');
+
+      // Summary
+      const successCount = tests.filter(t => t.status === 'success').length;
+      const totalCount = tests.filter(t => t.status !== 'info').length;
+
+      results.innerHTML += `
+        <div class="status ${successCount === totalCount ? 'success' : 'error'}">
+          <h3>Summary: ${successCount}/${totalCount} tests passed</h3>
+        </div>
+      `;
+    }
+
+    testProduction();
+  </script>
+</body>
+</html>
