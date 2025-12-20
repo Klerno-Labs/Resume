@@ -5,14 +5,14 @@
   "installCommand": "npm install --legacy-peer-deps",
   "framework": null,
   "functions": {
-    "dist/api/api/*.js": {
+    "api/**/*.ts": {
       "memory": 3008,
       "maxDuration": 30
     }
   },
   "rewrites": [
-    { "source": "/api/health", "destination": "/dist/api/api/health" },
-    { "source": "/api/(.*)", "destination": "/dist/api/api/index" },
+    { "source": "/api/health", "destination": "/api/health" },
+    { "source": "/api/(.*)", "destination": "/api/index" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
