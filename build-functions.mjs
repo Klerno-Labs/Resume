@@ -13,10 +13,10 @@ const outDir = join(__dirname, 'dist/functions');
 await fs.rm(outDir, { recursive: true, force: true });
 await fs.mkdir(outDir, { recursive: true });
 
-// Entry points to bundle
+// Entry points to bundle - each route as a separate function
 const entryPoints = [
-  { in: join(apiDir, 'index.ts'), out: 'index' },
   { in: join(apiDir, 'health.ts'), out: 'health' },
+  { in: join(apiDir, 'auth/me.ts'), out: 'auth-me' },
 ];
 
 console.log('📦 Building serverless functions with esbuild...');

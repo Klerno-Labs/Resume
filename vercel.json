@@ -12,8 +12,7 @@
   },
   "rewrites": [
     { "source": "/api/health", "destination": "/dist/functions/health" },
-    { "source": "/api/auth/me", "destination": "/api/auth-me" },
-    { "source": "/api/(.*)", "destination": "/dist/functions/index" },
+    { "source": "/api/auth/me", "destination": "/dist/functions/auth-me" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
