@@ -40,7 +40,7 @@
     <!-- Favicons -->
     <link rel="icon" type="image/png" href="/rewritemeicon.png" />
     <link rel="apple-touch-icon" href="/rewritemeicon.png" />
-    <!-- Cache bust: 2025-12-19-v6-FIX-FRAMER-MOTION-REACT-CHILDREN -->
+    <!-- Cache bust: 2025-12-19-v7-INLINE-REACT-SHIM -->
 
     <!-- Schema.org Structured Data -->
     <script type="application/ld+json">
@@ -90,6 +90,13 @@
     </div>
     <![endif]-->
     <div id="root"></div>
+    <script type="module">
+      // CRITICAL FIX: Import and expose React globally BEFORE any other modules
+      // framer-motion expects React.Children to exist when it initializes
+      import * as React from 'react';
+      window.React = React;
+      console.log('[REACT-SHIM] React exposed globally');
+    </script>
     <script>
       // DIAGNOSTIC: Verify JavaScript execution BEFORE React loads
       console.log('[PRE-REACT] HTML loaded successfully');
