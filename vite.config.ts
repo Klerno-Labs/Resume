@@ -17,9 +17,13 @@ function reactGlobalShim(): Plugin {
       handler(html, { bundle }) {
         if (!bundle) return html;
 
-        // Find the vendor-react chunk filename
+        // Find ONLY the vendor-react chunk (not react-dom or framer)
+        // This ensures React loads first and is exposed globally
         const vendorReactChunk = Object.keys(bundle).find(
-          (key) => key.startsWith('assets/vendor-react-') && key.endsWith('.js')
+          (key) => key.startsWith('assets/vendor-react-') &&
+                   !key.includes('dom') &&
+                   !key.includes('framer') &&
+                   key.endsWith('.js')
         );
 
         if (!vendorReactChunk) {
@@ -87,8 +91,11 @@ export default defineConfig(async ({ command, mode }) => {
         manualChunks(id) {
           if (!id) return;
           if (id.includes('node_modules')) {
-            // Bundle React, React-DOM, and framer-motion together to avoid React.Children undefined error
-            if (id.includes('react') || id.includes('framer-motion')) return 'vendor-react';
+            // Separate React/React-DOM from framer-motion to avoid initialization race
+            // React must be available globally before framer-motion loads
+            if (id.includes('react-dom')) return 'vendor-react-dom';
+            if (id.includes('react') && !id.includes('framer')) return 'vendor-react';
+            if (id.includes('framer-motion')) return 'vendor-framer';
             if (id.includes('@radix-ui')) return 'vendor-radix';
             return 'vendor';
           }
