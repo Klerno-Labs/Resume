@@ -6,19 +6,38 @@ import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 import { metaImagesPlugin } from './vite-plugin-meta-images';
 import type { Plugin } from 'vite';
 
-// Plugin to inject React global shim into HTML
+// Plugin to preload vendor-react chunk and expose React globally
 // Fixes framer-motion error: "Cannot set properties of undefined (setting 'Children')"
 // framer-motion expects React.Children to be available when it initializes
 function reactGlobalShim(): Plugin {
   return {
     name: 'react-global-shim',
-    transformIndexHtml(html) {
-      const reactShim = `
-    <script type="module">
-      import * as React from 'react';
-      window.React = React;
-    </script>`;
-      return html.replace('</head>', `${reactShim}\n  </head>`);
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, { bundle }) {
+        if (!bundle) return html;
+
+        // Find the vendor-react chunk filename
+        const vendorReactChunk = Object.keys(bundle).find(
+          (key) => key.startsWith('assets/vendor-react-') && key.endsWith('.js')
+        );
+
+        if (!vendorReactChunk) {
+          console.warn('[react-global-shim] vendor-react chunk not found in bundle');
+          return html;
+        }
+
+        // Return tag descriptor to inject inline module script
+        // This will be inserted in the head, before other module scripts
+        return [
+          {
+            tag: 'script',
+            attrs: { type: 'module' },
+            children: `import * as React from '/${vendorReactChunk}';\nwindow.React = React;`,
+            injectTo: 'head-prepend',
+          },
+        ];
+      },
     },
   };
 }
