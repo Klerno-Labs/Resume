@@ -40,7 +40,7 @@
     <!-- Favicons -->
     <link rel="icon" type="image/png" href="/rewritemeicon.png" />
     <link rel="apple-touch-icon" href="/rewritemeicon.png" />
-    <!-- Cache bust: 2025-12-19-v4-FIXES-DEPLOYED -->
+    <!-- Cache bust: 2025-12-19-v5-DIAGNOSTIC-LOGGING -->
 
     <!-- Schema.org Structured Data -->
     <script type="application/ld+json">
@@ -91,13 +91,43 @@
     <![endif]-->
     <div id="root"></div>
     <script>
+      // DIAGNOSTIC: Verify JavaScript execution BEFORE React loads
+      console.log('[PRE-REACT] HTML loaded successfully');
+      console.log('[PRE-REACT] Root element exists:', !!document.getElementById('root'));
+      console.log('[PRE-REACT] Browser:', navigator.userAgent);
+      console.log('[PRE-REACT] Current URL:', window.location.href);
+
+      // Track module loading
+      let moduleLoadStarted = false;
+      let moduleLoadCompleted = false;
+
       window.addEventListener('error', function(e) {
         console.error('[Global Error]', e.error || e.message);
         if (e.error) console.error('[Stack]', e.error.stack);
+
+        // Show error on screen if React hasn't rendered
+        setTimeout(function() {
+          const root = document.getElementById('root');
+          if (root && !root.hasChildNodes()) {
+            root.innerHTML = '<div style="padding:20px;background:#fee;color:#c00;font-family:monospace;"><h1>Error Loading Application</h1><p>Error: ' + (e.error ? e.error.message : e.message) + '</p><p>Check browser console for details (F12)</p></div>';
+          }
+        }, 1000);
       });
+
       window.addEventListener('unhandledrejection', function(e) {
         console.error('[Unhandled Promise Rejection]', e.reason);
       });
+
+      // Timeout detection: if React doesn't render in 5 seconds, show diagnostic
+      setTimeout(function() {
+        const root = document.getElementById('root');
+        if (root && !root.hasChildNodes()) {
+          console.error('[DIAGNOSTIC] React failed to render after 5 seconds');
+          console.error('[DIAGNOSTIC] Module load started:', moduleLoadStarted);
+          console.error('[DIAGNOSTIC] Module load completed:', moduleLoadCompleted);
+          root.innerHTML = '<div style="padding:20px;background:#fee;color:#c00;font-family:monospace;"><h1>Application Failed to Load</h1><p>React did not render. Check browser console (F12) for errors.</p><p>Module load started: ' + moduleLoadStarted + '</p><p>Module completed: ' + moduleLoadCompleted + '</p></div>';
+        }
+      }, 5000);
     </script>
     <script type="module" src="/src/main.tsx"></script>
     <script nomodule>
