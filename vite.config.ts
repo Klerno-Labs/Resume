@@ -4,6 +4,27 @@ import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 import { metaImagesPlugin } from './vite-plugin-meta-images';
+import type { Plugin } from 'vite';
+
+// Plugin to inject React global shim into HTML
+function reactGlobalShim(): Plugin {
+  return {
+    name: 'react-global-shim',
+    transformIndexHtml(html) {
+      // Inject inline script that loads React before any other modules
+      const reactShim = `
+    <script type="module">
+      // CRITICAL: Expose React globally before framer-motion loads
+      import * as React from 'react';
+      window.React = React;
+      console.log('[REACT-SHIM] React exposed globally');
+    </script>`;
+
+      // Insert right before the closing </head> tag
+      return html.replace('</head>', `${reactShim}\n  </head>`);
+    },
+  };
+}
 
 export default defineConfig(async ({ command, mode }) => {
   const conditionalPlugins = process.env.NODE_ENV !== 'production' && process.env.REPL_ID !== undefined
@@ -15,6 +36,7 @@ export default defineConfig(async ({ command, mode }) => {
 
   return {
   plugins: [
+    reactGlobalShim(),
     react({
       jsxRuntime: 'automatic',
       jsxImportSource: 'react',
