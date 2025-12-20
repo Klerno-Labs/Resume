@@ -6,7 +6,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('[Minimal] Request received:', req.method, req.url);
 
     // Test importing db module
-    const { sql } = await import('../server/lib/db');
+    const { sql } = await import('./lib/db');
     console.log('[Minimal] DB module imported successfully');
 
     // Test simple query
