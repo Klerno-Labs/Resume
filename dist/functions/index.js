@@ -63405,17 +63405,32 @@ import formidable from "formidable";
 import fs from "fs/promises";
 import crypto2 from "crypto";
 function validateEnv() {
-  const required = ["DATABASE_URL", "JWT_SECRET", "OPENAI_API_KEY", "STRIPE_SECRET_KEY"];
-  const missing = required.filter((key) => !process.env[key]);
-  if (missing.length > 0) {
-    console.error("[ENV] Missing required environment variables:", missing.join(", "));
-    throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
+  try {
+    const required = ["DATABASE_URL", "JWT_SECRET", "OPENAI_API_KEY", "STRIPE_SECRET_KEY"];
+    const missing = required.filter((key) => !process.env[key]);
+    if (missing.length > 0) {
+      console.error("[ENV] Missing required environment variables:", missing.join(", "));
+      throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
+    }
+    console.log("[ENV] All required environment variables validated");
+  } catch (error) {
+    console.error("[ENV] Validation error:", error);
+    throw error;
   }
-  console.log("[ENV] All required environment variables validated");
 }
+console.log("[Init] Starting module initialization");
 validateEnv();
-var openai2 = new OpenAI2({ apiKey: process.env.OPENAI_API_KEY });
-var stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+console.log("[Init] Initializing OpenAI and Stripe");
+var openai2;
+var stripe;
+try {
+  openai2 = new OpenAI2({ apiKey: process.env.OPENAI_API_KEY });
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  console.log("[Init] Services initialized successfully");
+} catch (error) {
+  console.error("[Init] Service initialization error:", error);
+  throw error;
+}
 var config = {
   api: {
     bodyParser: false

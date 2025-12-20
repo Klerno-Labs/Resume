@@ -16,23 +16,39 @@ import crypto from 'crypto';
 
 // Validate critical environment variables
 function validateEnv() {
-  const required = ['DATABASE_URL', 'JWT_SECRET', 'OPENAI_API_KEY', 'STRIPE_SECRET_KEY'];
-  const missing = required.filter(key => !process.env[key]);
+  try {
+    const required = ['DATABASE_URL', 'JWT_SECRET', 'OPENAI_API_KEY', 'STRIPE_SECRET_KEY'];
+    const missing = required.filter(key => !process.env[key]);
 
-  if (missing.length > 0) {
-    console.error('[ENV] Missing required environment variables:', missing.join(', '));
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    if (missing.length > 0) {
+      console.error('[ENV] Missing required environment variables:', missing.join(', '));
+      throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    }
+
+    console.log('[ENV] All required environment variables validated');
+  } catch (error) {
+    console.error('[ENV] Validation error:', error);
+    throw error;
   }
-
-  console.log('[ENV] All required environment variables validated');
 }
 
 // Validate on module load
+console.log('[Init] Starting module initialization');
 validateEnv();
 
 // Initialize services - OpenAI and Stripe
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+console.log('[Init] Initializing OpenAI and Stripe');
+let openai: OpenAI;
+let stripe: Stripe;
+
+try {
+  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+  console.log('[Init] Services initialized successfully');
+} catch (error) {
+  console.error('[Init] Service initialization error:', error);
+  throw error;
+}
 
 // CRITICAL: Disable Vercel body parsing globally to handle multipart uploads
 export const config = {
