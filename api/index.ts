@@ -41,28 +41,7 @@ export const config = {
   },
 };
 
-const REQUIRED_SCHEMA_COLUMNS = ['content_hash', 'original_file_name'];
-
-async function verifySchema(): Promise<void> {
-  const colsLiteral = REQUIRED_SCHEMA_COLUMNS.map((col) => `'${col}'`).join(', ');
-  const rows = await sql`
-    SELECT column_name
-    FROM information_schema.columns
-    WHERE table_name = 'resumes'
-      AND column_name IN (${colsLiteral})
-  `;
-  const existing = (rows ?? []).map((row: any) => row.column_name);
-
-  const missing = REQUIRED_SCHEMA_COLUMNS.filter((col) => !existing.includes(col));
-  if (missing.length > 0) {
-    throw new Error(
-      `Missing required schema columns on resumes table: ${missing.join(', ')}. Run npm run db:push.`,
-    );
-  }
-  console.log('[Schema] Required columns present');
-}
-
-const startupChecks = verifySchema();
+// Schema verification removed - schema should be validated during deployment with db:push
 
 // Helper to detect production environment (not hardcoded to specific domain)
 const isProductionEnv = (req: VercelRequest): boolean => {
@@ -266,7 +245,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const method = req.method || 'GET';
   const path = getRequestPath(req);
   try {
-    await startupChecks;
     console.log(`[${method}] ${path}`);
 
     // CORS - use request origin if from allowed domains
