@@ -32,20 +32,10 @@ for (const { in: inFile, out } of entryPoints) {
     format: 'esm',
     outfile: join(outDir, `${out}.js`),
     external: [
-      // External AWS SDK - provided by Vercel runtime
-      '@aws-sdk/*',
-      // External database drivers - MUST be external
+      // External database drivers - MUST be external for serverless
       '@neondatabase/serverless',
-      'pg',
-      'postgres',
-      // External heavy dependencies
-      'formidable',
-      'openai',
-      'stripe',
-      'bcryptjs',
-      'jsonwebtoken',
-      'cookie',
-      '@vercel/node'
+      // External Vercel-specific packages
+      '@vercel/node',
     ],
     sourcemap: false,
     minify: false,
