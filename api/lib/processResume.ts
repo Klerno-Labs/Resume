@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { sql } from './db';
+import { sql } from './db.js';
 
 let _openai: OpenAI | null = null;
 

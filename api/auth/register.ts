@@ -101,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const sql = getSQL();
     const existing = await sql`SELECT id FROM users WHERE email = ${email}`;
-    if (existing.length > 0) {
+    if (Array.isArray(existing) && existing.length > 0) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 

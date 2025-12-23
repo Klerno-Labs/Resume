@@ -125,6 +125,7 @@ export async function generateCoverLetter(
     creative: 'creative',
   };
 
+  const openai = getOpenAI();
   const response = await openai.chat.completions.create({
     model: FAST_MODEL,
     messages: [

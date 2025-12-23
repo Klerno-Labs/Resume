@@ -5,8 +5,8 @@ import { neon } from '@neondatabase/serverless';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 import crypto from 'crypto';
-import { parseFile } from '../lib/fileParser';
-import { processResume } from '../lib/processResume';
+import { parseFile } from '../lib/fileParser.js';
+import { processResume } from '../lib/processResume.js';
 
 // CRITICAL: Disable Vercel body parsing to handle multipart uploads
 export const config = {
@@ -189,7 +189,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         LIMIT 1
       `;
 
-      if (existingResumes.length > 0) {
+      if (Array.isArray(existingResumes) && existingResumes.length > 0) {
         const existing = existingResumes[0] as any;
         console.log('[Upload] Duplicate detected:', existing.id);
         return res.status(200).json({
@@ -214,7 +214,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         RETURNING credits_remaining
       `;
 
-      if (updatedUsers.length === 0) {
+      if (Array.isArray(updatedUsers) && updatedUsers.length === 0) {
         console.log('[Upload] Credit deduction failed - no credits remaining');
         return res.status(403).json({
           error: 'No credits remaining',

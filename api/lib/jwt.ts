@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { env } from './env';
+import { env } from './env.js';
 import type { Request, Response, NextFunction } from 'express';
 
 export interface JWTPayload {

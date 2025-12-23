@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { parse } from 'cookie';
 import { neon } from '@neondatabase/serverless';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { getS3Client, PutObjectCommand } from '../lib/s3';
+import { getS3Client, PutObjectCommand } from '../lib/s3.js';
 
 // Lazy database connection
 let _sql: ReturnType<typeof neon> | null = null;

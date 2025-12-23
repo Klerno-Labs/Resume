@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
 import { parse } from 'cookie';
 import { neon } from '@neondatabase/serverless';
-import { enqueueJob } from '../lib/queue';
+import { enqueueJob } from '../lib/queue.js';
 
 // Lazy database connection
 let _sql: ReturnType<typeof neon> | null = null;

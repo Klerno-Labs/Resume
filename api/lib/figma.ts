@@ -1,4 +1,4 @@
-import { env } from './env';
+import { env } from './env.js';
 
 const FIGMA_API_BASE = 'https://api.figma.com/v1';
 const CACHE_TTL_MS = 1000 * 60 * 5; // 5 minutes
