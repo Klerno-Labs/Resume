@@ -29,7 +29,7 @@ for (const { in: inFile, out } of entryPoints) {
     bundle: true,
     platform: 'node',
     target: 'node20',
-    format: 'esm',
+    format: 'cjs',
     outfile: join(outDir, `${out}.js`),
     external: [
       // External database drivers - MUST be external for serverless
