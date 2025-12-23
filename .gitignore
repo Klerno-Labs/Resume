@@ -1,12 +1,14 @@
 node_modules
 dist
-!dist/api/api/*.js
-!dist/functions/*.js
 .vercel-build-output
 .DS_Store
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# API bundled files (not used by Vercel)
+api/bundled/
+api/**/*.disabled
 
 # Environment variables (contains secrets)
 .env
