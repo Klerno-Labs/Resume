@@ -5,10 +5,25 @@
 import jwt from "jsonwebtoken";
 import { parse } from "cookie";
 import { neon } from "@neondatabase/serverless";
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is required");
+var _sql = null;
+function getSQL() {
+  if (_sql) return _sql;
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required");
+  }
+  _sql = neon(process.env.DATABASE_URL);
+  return _sql;
 }
-var sql = neon(process.env.DATABASE_URL);
+var sql = new Proxy({}, {
+  get(target, prop) {
+    const db = getSQL();
+    return db[prop];
+  },
+  apply(target, thisArg, args) {
+    const db = getSQL();
+    return db(...args);
+  }
+});
 function verifyToken(token) {
   try {
     return jwt.verify(token, process.env.JWT_SECRET);
