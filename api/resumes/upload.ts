@@ -1,0 +1,263 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import jwt from 'jsonwebtoken';
+import { parse } from 'cookie';
+import { neon } from '@neondatabase/serverless';
+import formidable from 'formidable';
+import fs from 'fs/promises';
+import crypto from 'crypto';
+import { parseFile } from '../lib/fileParser';
+import { processResume } from '../lib/processResume';
+
+// CRITICAL: Disable Vercel body parsing to handle multipart uploads
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+// Lazy database connection
+let _sql: ReturnType<typeof neon> | null = null;
+
+function getSQL() {
+  if (_sql) return _sql;
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is required');
+  }
+  _sql = neon(process.env.DATABASE_URL);
+  return _sql;
+}
+
+// Helper to verify JWT
+function verifyToken(token: string): { userId: string; email: string } | null {
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET!) as { userId: string; email: string };
+  } catch {
+    return null;
+  }
+}
+
+// Helper to get user from request
+async function getUserFromRequest(req: VercelRequest): Promise<any | null> {
+  const cookies = parse(req.headers.cookie || '');
+  const token = cookies.token;
+  if (!token) return null;
+
+  const decoded = verifyToken(token);
+  if (!decoded) return null;
+
+  const sql = getSQL();
+  const users = await sql`SELECT * FROM users WHERE id = ${decoded.userId}`;
+  return users[0] || null;
+}
+
+// Helper to parse multipart form data using formidable
+async function parseMultipartForm(req: VercelRequest): Promise<{
+  fields: Record<string, string>;
+  files: Array<{ name: string; filename: string; mimetype: string; data: Buffer }>;
+}> {
+  return new Promise((resolve, reject) => {
+    const form = new formidable.IncomingForm({ multiples: false, keepExtensions: true });
+
+    form.parse(req as any, async (err: any, fieldsRaw: any, filesRaw: any) => {
+      if (err) return reject(err);
+
+      try {
+        const fields: Record<string, string> = {};
+        const files: Array<{ name: string; filename: string; mimetype: string; data: Buffer }> = [];
+
+        // Normalize fields (take first value if array)
+        for (const key of Object.keys(fieldsRaw || {})) {
+          const val = (fieldsRaw as any)[key];
+          fields[key] = Array.isArray(val) ? String(val[0]) : String(val);
+        }
+
+        // Normalize files
+        for (const key of Object.keys(filesRaw || {})) {
+          const fileEntry = (filesRaw as any)[key];
+          if (!fileEntry) continue;
+
+          // formidable may return either a single file or array
+          const fileList = Array.isArray(fileEntry) ? fileEntry : [fileEntry];
+
+          for (const f of fileList) {
+            const filepath = f.filepath || f.path || f.file;
+            const filename = f.originalFilename || f.name || f.filename || f.newFilename || f.path?.split('/').pop();
+            const mimetype = f.mimetype || f.type || 'application/octet-stream';
+
+            if (filepath) {
+              const data = await fs.readFile(String(filepath));
+              files.push({ name: key, filename: String(filename), mimetype: String(mimetype), data });
+              // attempt to remove the temp file
+              try {
+                await fs.unlink(String(filepath));
+              } catch {
+                // ignore
+              }
+            }
+          }
+        }
+
+        resolve({ fields, files });
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  try {
+    // CORS
+    const origin = req.headers.origin || '';
+    const allowedOrigins = ['https://rewriteme.app', 'http://localhost:5174'];
+    const isAllowed = allowedOrigins.includes(origin) || origin.includes('vercel.app');
+
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', isAllowed ? origin : allowedOrigins[0]);
+    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
+
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    console.log('[Upload] Starting upload handler...');
+    const user = await getUserFromRequest(req);
+    if (!user) {
+      console.log('[Upload] User not authenticated');
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    console.log(`[Upload] User authenticated: ${user.id}, plan: ${user.plan}, credits: ${user.credits_remaining}`);
+
+    const contentType = req.headers['content-type'] || '';
+    console.log('[Upload] Content-Type:', contentType);
+    if (!contentType.includes('multipart/form-data')) {
+      return res.status(400).json({
+        error: 'Invalid content type. Expected multipart/form-data',
+        received: contentType,
+      });
+    }
+
+    console.log('[Upload] Parsing multipart form data...');
+    let files;
+    try {
+      const parsed = await parseMultipartForm(req);
+      files = parsed.files;
+      console.log('[Upload] Files parsed:', files.length);
+    } catch (parseError) {
+      console.error('[Upload] Parse error:', parseError);
+      return res.status(400).json({
+        error: 'Failed to parse upload',
+        details: parseError instanceof Error ? parseError.message : String(parseError),
+      });
+    }
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const file = files[0];
+    const { filename, mimetype, data } = file;
+
+    console.log('[Upload] Processing file:', filename, mimetype, `${data.length} bytes`);
+
+    let originalText: string;
+    try {
+      originalText = await parseFile(data, mimetype, filename);
+    } catch (parseError) {
+      const message = parseError instanceof Error ? parseError.message : 'Failed to parse file';
+      console.error('[Upload] File parsing failed:', message);
+      return res.status(400).json({
+        error: 'File parsing failed',
+        message: message,
+      });
+    }
+
+    const sql = getSQL();
+
+    let contentHash: string | null = null;
+    try {
+      contentHash = crypto.createHash('sha256').update(originalText).digest('hex');
+      const existingResumes = await sql`
+        SELECT id, created_at FROM resumes
+        WHERE user_id = ${user.id} AND content_hash = ${contentHash}
+        LIMIT 1
+      `;
+
+      if (existingResumes.length > 0) {
+        const existing = existingResumes[0] as any;
+        console.log('[Upload] Duplicate detected:', existing.id);
+        return res.status(200).json({
+          resumeId: existing.id,
+          status: 'completed',
+          isDuplicate: true,
+          message: 'This resume has already been analyzed.',
+          originalUploadDate: existing.created_at,
+        });
+      }
+    } catch (dupError) {
+      console.warn('[Upload] Duplicate detection failed:', dupError);
+      contentHash = null;
+    }
+
+    // ATOMIC CREDIT DEDUCTION - deduct credit BEFORE creating resume to prevent race conditions
+    if (user.plan !== 'admin') {
+      const updatedUsers = await sql`
+        UPDATE users
+        SET credits_remaining = credits_remaining - 1
+        WHERE id = ${user.id} AND credits_remaining > 0
+        RETURNING credits_remaining
+      `;
+
+      if (updatedUsers.length === 0) {
+        console.log('[Upload] Credit deduction failed - no credits remaining');
+        return res.status(403).json({
+          error: 'No credits remaining',
+          message: 'Please purchase more credits to continue',
+        });
+      }
+
+      console.log('[Upload] Credit deducted atomically, remaining:', (updatedUsers[0] as any).credits_remaining);
+    }
+
+    let result;
+    if (contentHash) {
+      result = await sql`
+        INSERT INTO resumes (user_id, file_name, original_text, status, content_hash, original_file_name)
+        VALUES (${user.id}, ${filename}, ${originalText}, 'processing', ${contentHash}, ${filename})
+        RETURNING *
+      `;
+    } else {
+      result = await sql`
+        INSERT INTO resumes (user_id, file_name, original_text, status)
+        VALUES (${user.id}, ${filename}, ${originalText}, 'processing')
+        RETURNING *
+      `;
+    }
+
+    const resume = result[0] as any;
+    console.log('[Upload] Resume created:', resume.id);
+
+    // Process resume in background
+    processResume(resume.id, originalText, user.id, user.plan).catch((err) => {
+      console.error('[Upload] Background processing error:', err);
+    });
+
+    return res.json({ resumeId: resume.id, status: 'processing' });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to process file';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('[Upload] Unexpected error:', errorMessage);
+    if (errorStack) console.error('[Upload] Stack:', errorStack);
+    return res.status(500).json({
+      error: 'Upload failed',
+      message: errorMessage,
+      stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
+    });
+  }
+}
