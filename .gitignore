@@ -1,6 +1,7 @@
 node_modules
 dist
 !dist/api/api/*.js
+!dist/functions/*.js
 .vercel-build-output
 .DS_Store
 server/public
