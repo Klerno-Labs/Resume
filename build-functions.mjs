@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const apiDir = join(__dirname, 'api');
-const outDir = join(__dirname, 'dist/functions');
+const outDir = join(__dirname, 'api/bundled');
 
 // Clean and create output directory
 await fs.rm(outDir, { recursive: true, force: true });
