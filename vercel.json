@@ -5,15 +5,12 @@
   "installCommand": "npm install --legacy-peer-deps",
   "framework": null,
   "functions": {
-    "api/bundled/*.js": {
+    "api/**/*.ts": {
       "memory": 3008,
       "maxDuration": 30
     }
   },
   "rewrites": [
-    { "source": "/api/health", "destination": "/api/bundled/health" },
-    { "source": "/api/auth/me", "destination": "/api/bundled/auth-me" },
-    { "source": "/api/test-auth", "destination": "/api/bundled/test-auth" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
