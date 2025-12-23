@@ -17,6 +17,7 @@ await fs.mkdir(outDir, { recursive: true });
 const entryPoints = [
   { in: join(apiDir, 'health.ts'), out: 'health' },
   { in: join(apiDir, 'auth/me.ts'), out: 'auth-me' },
+  { in: join(apiDir, 'test-auth.ts'), out: 'test-auth' },
 ];
 
 console.log('📦 Building serverless functions with esbuild...');
