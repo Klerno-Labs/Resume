@@ -107,9 +107,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'filename and contentType required' });
     }
 
+    // Check if S3 is configured
     const bucket = process.env.S3_BUCKET;
-    if (!bucket) {
-      return res.status(500).json({ error: 'S3_BUCKET not configured' });
+    const hasAwsCredentials = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY;
+
+    if (!bucket || !hasAwsCredentials) {
+      // S3 not configured - return error so client falls back to multipart upload
+      console.log('[uploads/presign] S3 not configured, client will fallback to multipart upload');
+      return res.status(503).json({
+        error: 'S3 upload not available',
+        fallbackToMultipart: true
+      });
     }
 
     const key = `uploads/${user.id}/${Date.now()}-${filename}`;
@@ -121,8 +129,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const url = await getSignedUrl(s3, cmd, { expiresIn: 300 });
       return res.json({ url, key });
     } catch (err: unknown) {
-      console.error('[uploads/presign] Error:', err);
-      return res.status(500).json({ error: 'Failed to create presigned URL' });
+      console.error('[uploads/presign] Error creating presigned URL:', err);
+      // Return 503 so client falls back to multipart upload
+      return res.status(503).json({
+        error: 'Failed to create presigned URL',
+        fallbackToMultipart: true
+      });
     }
   } catch (error) {
     console.error('[uploads/presign] Error:', error);
