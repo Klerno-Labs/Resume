@@ -1,10 +1,20 @@
 import OpenAI from 'openai';
 import { sql } from './db';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _openai: OpenAI | null = null;
+
+function getOpenAI() {
+  if (_openai) return _openai;
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is required');
+  }
+  _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return _openai;
+}
 
 export async function processResume(resumeId: string, originalText: string, userId: string, userPlan: string) {
   try {
+    const openai = getOpenAI();
     const [optimizationResult, scoreResult] = await Promise.all([
       openai.chat.completions.create({
         model: 'gpt-4o-mini',

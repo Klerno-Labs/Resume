@@ -65,9 +65,14 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
+let _env: Env | null = null;
+
 export function validateEnv(): Env {
+  if (_env) return _env;
+
   try {
-    return envSchema.parse(process.env);
+    _env = envSchema.parse(process.env);
+    return _env;
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error('Environment validation failed:');
@@ -75,10 +80,16 @@ export function validateEnv(): Env {
         console.error(`  - ${err.path.join('.')}: ${err.message}`);
       });
       console.error('\nPlease check your .env file and compare with .env.example');
-      process.exit(1);
+      throw new Error('Environment validation failed');
     }
     throw error;
   }
 }
 
-export const env = validateEnv();
+// Lazy initialization with proxy for backwards compatibility
+export const env = new Proxy({} as Env, {
+  get(target, prop) {
+    const validated = validateEnv();
+    return (validated as any)[prop];
+  }
+});

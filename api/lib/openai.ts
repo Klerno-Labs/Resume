@@ -1,7 +1,16 @@
 import OpenAI from 'openai';
 import crypto from 'crypto';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _openai: OpenAI | null = null;
+
+function getOpenAI() {
+  if (_openai) return _openai;
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is required');
+  }
+  _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return _openai;
+}
 
 // Use gpt-4o-mini for maximum speed
 const FAST_MODEL = 'gpt-4o-mini';
@@ -33,6 +42,7 @@ export async function optimizeResume(originalText: string): Promise<ResumeOptimi
   }
 
   // Run analysis and optimization in parallel for speed
+  const openai = getOpenAI();
   const [optimizationResult, scoreResult] = await Promise.all([
     // Task 1: Optimize the resume text
     openai.chat.completions.create({
