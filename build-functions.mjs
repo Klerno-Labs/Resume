@@ -34,8 +34,8 @@ for (const { in: inFile, out } of entryPoints) {
     external: [
       // External AWS SDK - provided by Vercel runtime
       '@aws-sdk/*',
-      // External database drivers
-      '@neondatabase/*',
+      // External database drivers - MUST be external
+      '@neondatabase/serverless',
       'pg',
       'postgres',
       // External heavy dependencies
@@ -44,6 +44,7 @@ for (const { in: inFile, out } of entryPoints) {
       'stripe',
       'bcryptjs',
       'jsonwebtoken',
+      'cookie',
       '@vercel/node'
     ],
     sourcemap: false,
