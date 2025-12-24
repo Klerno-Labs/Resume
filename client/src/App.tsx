@@ -11,6 +11,7 @@ import Home from '@/pages/Home';
 import Editor from '@/pages/Editor';
 import Auth from '@/pages/Auth';
 import PaymentSuccess from '@/pages/PaymentSuccess';
+import Pricing from '@/pages/Pricing';
 import AiResumeBuilder from '@/pages/ai-resume-builder';
 import ResumeSoftwareEngineer from '@/pages/resume/software-engineer';
 import ResumeNurse from '@/pages/resume/nurse';
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/how-to/optimize-resume-for-ats" component={HowToOptimizeResumeForAts} />
       <Route path="/auth" component={Auth} />
       <Route path="/editor" component={Editor} />
+      <Route path="/pricing" component={Pricing} />
       <Route path="/payment-success" component={PaymentSuccess} />
       <Route component={NotFound} />
     </Switch>
