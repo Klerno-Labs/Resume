@@ -278,19 +278,72 @@ class ApiClient {
       console.warn('[api.uploadResume] Presign flow failed, falling back to multipart upload:', err);
     }
 
-    // Fallback: multipart POST to /resumes/upload
-    const formData = new FormData();
-    formData.append('file', file);
+    // Fallback: multipart POST to /resumes/upload with XHR for progress tracking
+    console.log('[api.uploadResume] Using multipart fallback upload');
 
-    const res = await this.fetchWithCredentials(`${this.baseUrl}/resumes/upload`, {
-      method: 'POST',
-      body: formData,
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${this.baseUrl}/resumes/upload`, true);
+      xhr.withCredentials = true; // Include cookies
+
+      let aborted = false;
+
+      const onAbort = () => {
+        aborted = true;
+        try {
+          xhr.abort();
+        } catch {}
+        reject(new Error('Upload aborted'));
+      };
+
+      if (signal) {
+        if (signal.aborted) return onAbort();
+        signal.addEventListener('abort', onAbort);
+      }
+
+      xhr.upload.onprogress = function (e) {
+        if (e.lengthComputable && onProgress) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          try {
+            onProgress(percent);
+          } catch {}
+        }
+      };
+
+      xhr.onload = function () {
+        if (signal) signal.removeEventListener('abort', onAbort);
+        if (aborted) return;
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const result = JSON.parse(xhr.responseText);
+            console.log('[api.uploadResume] Multipart upload successful:', result);
+            resolve(result);
+          } catch (err) {
+            reject(new Error('Failed to parse upload response'));
+          }
+        } else {
+          try {
+            const error = JSON.parse(xhr.responseText);
+            reject(new Error(error.message || error.error || `Upload failed with status ${xhr.status}`));
+          } catch {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        }
+      };
+
+      xhr.onerror = function () {
+        if (signal) signal.removeEventListener('abort', onAbort);
+        if (aborted) return;
+        reject(new Error('Network error during multipart upload'));
+      };
+
+      console.log('[api.uploadResume] Sending multipart form data...');
+      xhr.send(formData);
     });
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(this.toErrorMessage(error, 'Upload failed'));
-    }
-    return res.json();
   }
 
   async getResume(id: string): Promise<Resume> {
