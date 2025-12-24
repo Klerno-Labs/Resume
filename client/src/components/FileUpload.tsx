@@ -129,12 +129,15 @@ export function FileUpload({ onUpload }: FileUploadProps) {
         }
 
         // Normal flow for new uploads
-        if (onUpload) onUpload(uploadedFile, result.resumeId);
+        // Wait a moment to allow database write to complete before polling
+        setTimeout(() => {
+          if (onUpload) onUpload(uploadedFile, result.resumeId);
+        }, 500);
 
         // Wait a bit for UI then redirect
         setTimeout(() => {
           setLocation(`/editor?resumeId=${result.resumeId}`);
-        }, 800);
+        }, 1200);
       } catch (error) {
         const msg = error instanceof Error ? error.message : 'Failed to upload file';
         setErrorMessage(msg);

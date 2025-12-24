@@ -64,13 +64,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Resume ID is required' });
     }
 
+    console.log('[resumes/[id]] Fetching resume:', resumeId);
+
     const sql = getSQL();
     const resumes = await sql`SELECT * FROM resumes WHERE id = ${resumeId}`;
     const resume = resumes[0] as any;
 
     if (!resume) {
+      console.log('[resumes/[id]] Resume not found in database:', resumeId);
       return res.status(404).json({ error: 'Resume not found' });
     }
+
+    console.log('[resumes/[id]] Resume found:', resumeId, 'status:', resume.status);
 
     // Get user to check if they can access improved text
     const user = await getUserFromRequest(req);
