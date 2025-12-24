@@ -5,13 +5,14 @@ import { FileUpload } from '@/components/FileUpload';
 import { useAuth } from '@/lib/auth';
 import { api, type Resume } from '@/lib/api';
 import BeforeAfter from '@/components/BeforeAfter';
+import { LogOut, User } from 'lucide-react';
 
 export default function AiResumeBuilder() {
   const title = 'AI Resume Builder & ATS Resume Optimizer | RewriteMe';
   const description =
     'AI-powered resume optimizer: get an ATS score, keyword optimization, and a rewritten resume that lands interviews. Try free analysis now.';
 
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [, navigate] = useLocation();
   const [resume, setResume] = useState<Resume | null>(null);
   const [loadingResumeId, setLoadingResumeId] = useState<string | null>(null);
@@ -55,6 +56,69 @@ export default function AiResumeBuilder() {
         canonical="https://rewriteme.app/ai-resume-builder"
         ogImage="https://rewriteme.app/og-image.png"
       />
+
+      {/* Nav */}
+      <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-backdrop-filter:bg-background/60">
+        <div className="container flex h-16 items-center justify-between px-4 md:px-8 mx-auto max-w-7xl">
+          <Link href="/">
+            <div className="flex items-center gap-2 cursor-pointer">
+              <img src="/rewritemelogo.png" alt="RewriteMe" className="h-20 w-auto" />
+            </div>
+          </Link>
+          <div className="hidden md:flex gap-8 text-sm font-medium text-muted-foreground">
+            <Link href="/#features">
+              <a className="hover:text-primary transition-colors">Features</a>
+            </Link>
+            <Link href="/ai-resume-builder">
+              <a className="hover:text-primary transition-colors">AI Builder</a>
+            </Link>
+            <Link href="/#pricing">
+              <a className="hover:text-primary transition-colors">Pricing</a>
+            </Link>
+            <Link href="/#testimonials">
+              <a className="hover:text-primary transition-colors">Success Stories</a>
+            </Link>
+          </div>
+          <div className="flex gap-4 items-center">
+            {user ? (
+              <>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <User className="w-4 h-4" />
+                  <span>{user.email}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                    {user.creditsRemaining} credits
+                  </span>
+                </div>
+                <Link href="/editor">
+                  <button className="text-sm font-medium hover:text-primary transition-colors">
+                    Dashboard
+                  </button>
+                </Link>
+                <button
+                  onClick={() => logout()}
+                  className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth">
+                  <button className="text-sm font-medium hover:text-primary transition-colors">
+                    Log in
+                  </button>
+                </Link>
+                <Link href="/auth">
+                  <button className="bg-foreground text-background px-4 py-2 rounded-full text-sm font-medium hover:bg-primary hover:text-white transition-all shadow-lg hover:shadow-primary/25">
+                    Get Started
+                  </button>
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </nav>
 
       <main className="container mx-auto px-4 py-20 max-w-4xl">
         <header className="mb-8 text-center">
