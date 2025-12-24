@@ -116,17 +116,15 @@ export function FileUpload({ onUpload }: FileUploadProps) {
 
         // Handle duplicate detection response
         if (result.isDuplicate) {
+          setFile(null);
+          setProgress(null);
           toast({
-            title: 'Resume Already Analyzed',
+            title: 'Duplicate Resume Detected',
             description:
-              "You've uploaded this resume before. Redirecting to your existing analysis...",
-            duration: 3000,
+              "You've already uploaded this exact resume. Please upload a different file or modify your current resume to try again.",
+            variant: 'destructive',
+            duration: 5000,
           });
-
-          // Redirect to existing resume after showing message
-          setTimeout(() => {
-            setLocation(`/editor?resumeId=${result.resumeId}`);
-          }, 1000);
           return;
         }
 
