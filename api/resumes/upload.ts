@@ -181,28 +181,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const sql = getSQL();
 
     let contentHash: string | null = null;
-    try {
-      contentHash = crypto.createHash('sha256').update(originalText).digest('hex');
-      const existingResumes = await sql`
-        SELECT id, created_at FROM resumes
-        WHERE user_id = ${user.id} AND content_hash = ${contentHash}
-        LIMIT 1
-      `;
+    // Skip duplicate detection for admin users - they can upload anything
+    if (user.plan !== 'admin') {
+      try {
+        contentHash = crypto.createHash('sha256').update(originalText).digest('hex');
+        const existingResumes = await sql`
+          SELECT id, created_at, status FROM resumes
+          WHERE user_id = ${user.id} AND content_hash = ${contentHash}
+          LIMIT 1
+        `;
 
-      if (Array.isArray(existingResumes) && existingResumes.length > 0) {
-        const existing = existingResumes[0] as any;
-        console.log('[Upload] Duplicate detected:', existing.id);
-        return res.status(200).json({
-          resumeId: existing.id,
-          status: 'completed',
-          isDuplicate: true,
-          message: 'This resume has already been analyzed.',
-          originalUploadDate: existing.created_at,
-        });
+        if (Array.isArray(existingResumes) && existingResumes.length > 0) {
+          const existing = existingResumes[0] as any;
+
+          // Verify the duplicate resume actually exists and is valid
+          const verifyResume = await sql`
+            SELECT id, status FROM resumes
+            WHERE id = ${existing.id} AND user_id = ${user.id}
+          `;
+
+          if (Array.isArray(verifyResume) && verifyResume.length > 0) {
+            const verified = verifyResume[0] as any;
+            console.log('[Upload] Duplicate detected and verified:', verified.id, 'status:', verified.status);
+            return res.status(200).json({
+              resumeId: verified.id,
+              status: verified.status || 'completed',
+              isDuplicate: true,
+              message: 'This resume has already been analyzed.',
+              originalUploadDate: existing.created_at,
+            });
+          } else {
+            // Duplicate entry exists but resume is gone - allow new upload
+            console.log('[Upload] Duplicate hash found but resume deleted, allowing new upload');
+            contentHash = crypto.createHash('sha256').update(originalText).digest('hex');
+          }
+        }
+      } catch (dupError) {
+        console.warn('[Upload] Duplicate detection failed:', dupError);
+        contentHash = null;
       }
-    } catch (dupError) {
-      console.warn('[Upload] Duplicate detection failed:', dupError);
-      contentHash = null;
+    } else {
+      // For admin users, still generate hash but don't check for duplicates
+      contentHash = crypto.createHash('sha256').update(originalText).digest('hex');
+      console.log('[Upload] Admin user - bypassing duplicate detection');
     }
 
     // ATOMIC CREDIT DEDUCTION - deduct credit BEFORE creating resume to prevent race conditions
