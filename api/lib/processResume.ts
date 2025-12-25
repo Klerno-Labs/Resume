@@ -37,7 +37,7 @@ export async function processResume(resumeId: string, originalText: string, user
 7. Keep the same overall length and sections
 
 Resume to improve:
-${originalText}
+${originalText.substring(0, 3000)}
 
 Return ONLY valid JSON in this exact format:
 {"improvedText": "the complete improved resume text here"}`,
@@ -58,7 +58,7 @@ Return ONLY valid JSON in this exact format:
             content: `Analyze this resume and provide scores and specific issues:
 
 Resume:
-${originalText.substring(0, 1500)}
+${originalText.substring(0, 1200)}
 
 Evaluate:
 1. ATS Score (0-100): How well would this pass automated screening systems?
@@ -80,7 +80,7 @@ Return ONLY valid JSON in this exact format:
           },
         ],
         response_format: { type: 'json_object' },
-        max_tokens: 800,
+        max_tokens: 600,  // Reduced from 800
       }),
       // AI-generated HTML design
       openai.chat.completions.create({
@@ -95,7 +95,7 @@ Return ONLY valid JSON in this exact format:
             content: `Design a STUNNING professional resume in HTML/CSS that looks like it was created by a top design agency.
 
 Resume content:
-${originalText.substring(0, 2000)}
+${originalText.substring(0, 1500)}
 
 DESIGN REQUIREMENTS:
 
@@ -165,7 +165,7 @@ Return ONLY valid JSON:
           },
         ],
         response_format: { type: 'json_object' },
-        max_tokens: 4000,
+        max_tokens: 3000,  // Reduced from 4000 for faster generation
       }),
     ]);
 
@@ -187,38 +187,36 @@ Return ONLY valid JSON:
       WHERE id = ${resumeId}
     `;
 
-    // Save the generated design as a reusable template for others
+    // Save template in background (non-blocking) - don't await
     if (design.html && design.templateName) {
-      try {
-        await sql`
-          INSERT INTO resume_templates (
-            name,
-            style,
-            color_scheme,
-            html_template,
-            preview_image_url,
-            is_ai_generated,
-            usage_count,
-            created_from_resume_id
-          ) VALUES (
-            ${design.templateName},
-            ${design.style || 'modern'},
-            ${design.colorScheme || 'blue'},
-            ${design.html},
-            ${null},
-            ${true},
-            ${0},
-            ${resumeId}
-          )
-          ON CONFLICT (name) DO UPDATE SET
-            usage_count = resume_templates.usage_count + 1,
-            updated_at = NOW()
-        `;
+      sql`
+        INSERT INTO resume_templates (
+          name,
+          style,
+          color_scheme,
+          html_template,
+          preview_image_url,
+          is_ai_generated,
+          usage_count,
+          created_from_resume_id
+        ) VALUES (
+          ${design.templateName},
+          ${design.style || 'modern'},
+          ${design.colorScheme || 'blue'},
+          ${design.html},
+          ${null},
+          ${true},
+          ${0},
+          ${resumeId}
+        )
+        ON CONFLICT (name) DO UPDATE SET
+          usage_count = resume_templates.usage_count + 1,
+          updated_at = NOW()
+      `.then(() => {
         console.log(`[Template] Saved new template: ${design.templateName}`);
-      } catch (templateError) {
-        console.warn('[Template] Failed to save template:', templateError);
-        // Don't fail the whole resume process if template saving fails
-      }
+      }).catch(err => {
+        console.warn('[Template] Failed to save template:', err);
+      });
     }
   } catch (error) {
     console.error('[Process] Error optimizing resume:', error);
