@@ -32,25 +32,42 @@ export default function Editor() {
       return;
     }
 
-    // Poll for resume updates
+    // Add initial delay to account for database replication lag
+    let retryCount = 0;
+    const maxRetries = 10;
+
+    // Poll for resume updates with retry logic
     const fetchResume = async () => {
       try {
         const data = await api.getResume(resumeId);
         setResume(data);
+        retryCount = 0; // Reset retry count on success
 
         if (data.status === 'processing') {
           setTimeout(fetchResume, 2000); // Poll every 2 seconds
         }
       } catch (error: any) {
-        toast({
-          title: 'Error',
-          description: error.message,
-          variant: 'destructive',
-        });
+        retryCount++;
+
+        // If resume not found and we haven't exceeded retries, try again
+        if (error.message.includes('not found') && retryCount < maxRetries) {
+          console.log(`[Editor] Resume not found yet, retry ${retryCount}/${maxRetries} in 1.5s...`);
+          setTimeout(fetchResume, 1500); // Retry after 1.5 seconds
+        } else {
+          // Show error only after all retries exhausted
+          toast({
+            title: 'Error Loading Resume',
+            description: retryCount >= maxRetries
+              ? 'Resume not found. It may still be uploading. Please wait a moment and refresh the page.'
+              : error.message,
+            variant: 'destructive',
+          });
+        }
       }
     };
 
-    void fetchResume();
+    // Start with a small delay to allow database write
+    setTimeout(() => void fetchResume(), 800);
   }, []); // Removed navigate from dependencies to prevent infinite loop
 
   const handleOptimize = () => {
