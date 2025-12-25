@@ -16,7 +16,7 @@ export async function processResume(resumeId: string, originalText: string, user
   try {
     const sql = getSQL();
     const openai = getOpenAI();
-    const [optimizationResult, scoreResult] = await Promise.all([
+    const [optimizationResult, scoreResult, designResult] = await Promise.all([
       openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
@@ -82,14 +82,56 @@ Return ONLY valid JSON in this exact format:
         response_format: { type: 'json_object' },
         max_tokens: 800,
       }),
+      // AI-generated HTML design
+      openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert web designer specializing in professional resume layouts. Create beautiful, modern HTML/CSS templates that are ATS-friendly, print-optimized, and visually stunning. Always output valid JSON with complete HTML code.'
+          },
+          {
+            role: 'user',
+            content: `Create a professional HTML resume design with inline CSS. Use modern design principles, clean typography, and a unique visual style.
+
+Resume content to design:
+${originalText.substring(0, 2000)}
+
+Requirements:
+- Complete standalone HTML document with inline CSS
+- Modern, professional design (choose a unique style each time: minimal, creative, classic, or modern)
+- Use a cohesive color scheme (subtle, professional colors)
+- Typography: Mix of sans-serif and optional serif accents
+- Sections clearly separated with visual hierarchy
+- Print-optimized (fits on standard paper)
+- ATS-friendly structure (proper HTML tags)
+- Responsive margins and spacing
+- Include subtle design elements (borders, backgrounds, spacing)
+- Make it UNIQUE and BEAUTIFUL - every design should be different!
+
+Return ONLY valid JSON in this exact format:
+{
+  "html": "<!DOCTYPE html><html>...complete styled resume...</html>",
+  "templateName": "descriptive name like 'Modern Blue Minimal' or 'Creative Teal Sidebar'",
+  "style": "modern|classic|creative|minimal",
+  "colorScheme": "primary color used (e.g., 'blue', 'teal', 'purple')"
+}`,
+          },
+        ],
+        response_format: { type: 'json_object' },
+        max_tokens: 3500,
+      }),
     ]);
 
     const optimization = JSON.parse(optimizationResult.choices[0].message.content || '{}');
     const scores = JSON.parse(scoreResult.choices[0].message.content || '{}');
+    const design = JSON.parse(designResult.choices[0].message.content || '{}');
 
+    // Update resume with improvements and design
     await sql`
       UPDATE resumes SET
         improved_text = ${optimization.improvedText || originalText},
+        improved_html = ${design.html || null},
         ats_score = ${scores.atsScore || 70},
         keywords_score = ${scores.keywordsScore || 7},
         formatting_score = ${scores.formattingScore || 7},
@@ -98,6 +140,40 @@ Return ONLY valid JSON in this exact format:
         updated_at = NOW()
       WHERE id = ${resumeId}
     `;
+
+    // Save the generated design as a reusable template for others
+    if (design.html && design.templateName) {
+      try {
+        await sql`
+          INSERT INTO resume_templates (
+            name,
+            style,
+            color_scheme,
+            html_template,
+            preview_image_url,
+            is_ai_generated,
+            usage_count,
+            created_from_resume_id
+          ) VALUES (
+            ${design.templateName},
+            ${design.style || 'modern'},
+            ${design.colorScheme || 'blue'},
+            ${design.html},
+            ${null},
+            ${true},
+            ${0},
+            ${resumeId}
+          )
+          ON CONFLICT (name) DO UPDATE SET
+            usage_count = resume_templates.usage_count + 1,
+            updated_at = NOW()
+        `;
+        console.log(`[Template] Saved new template: ${design.templateName}`);
+      } catch (templateError) {
+        console.warn('[Template] Failed to save template:', templateError);
+        // Don't fail the whole resume process if template saving fails
+      }
+    }
   } catch (error) {
     console.error('[Process] Error optimizing resume:', error);
     const sql = getSQL();
