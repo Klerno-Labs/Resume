@@ -5,6 +5,7 @@ import { AtsScore } from '@/components/AtsScore';
 import { ComparisonView } from '@/components/ComparisonView';
 import { CoverLetterDialog } from '@/components/CoverLetterDialog';
 import { ResumePreviewStyled } from '@/components/ResumePreview';
+import { TemplateGallery } from '@/components/TemplateGallery';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
@@ -228,11 +229,12 @@ export default function Editor() {
           {/* Editor Area */}
           <main className="flex-1 flex flex-col bg-muted/20 relative">
             <div className="p-2 border-b bg-white dark:bg-slate-950 flex justify-center">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[600px]">
-                <TabsList className="grid w-full grid-cols-3">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[800px]">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="resume">Resume Editor</TabsTrigger>
                   <TabsTrigger value="preview">Print Preview</TabsTrigger>
                   <TabsTrigger value="design">AI Design</TabsTrigger>
+                  <TabsTrigger value="templates">Templates</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -289,6 +291,26 @@ export default function Editor() {
                       )}
                     </div>
                   )}
+                </TabsContent>
+                <TabsContent value="templates" className="h-full mt-0">
+                  <TemplateGallery
+                    currentTemplate={selectedDesign || undefined}
+                    onSelectTemplate={(template) => {
+                      setSelectedDesign(template.id);
+                      // Apply template to current resume
+                      setResume(prev => prev ? {
+                        ...prev,
+                        improvedHtml: template.htmlTemplate
+                      } : null);
+                      toast({
+                        title: "Template Applied!",
+                        description: `${template.name} is now your active design.`,
+                      });
+                      setActiveTab('design'); // Switch to design tab to see it
+                    }}
+                    userTier={user?.plan || 'free'}
+                    onUpgradeClick={() => triggerUpgrade('template_access', 'Template Gallery')}
+                  />
                 </TabsContent>
               </Tabs>
             </div>
