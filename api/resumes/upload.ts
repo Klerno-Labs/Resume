@@ -246,19 +246,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log('[Upload] Credit deducted atomically, remaining:', (updatedUsers[0] as any).credits_remaining);
     }
 
+    // Try to insert with content_hash if available, but gracefully handle if columns don't exist
     let result;
-    if (contentHash) {
-      result = await sql`
-        INSERT INTO resumes (user_id, file_name, original_text, status, content_hash, original_file_name)
-        VALUES (${user.id}, ${filename}, ${originalText}, 'processing', ${contentHash}, ${filename})
-        RETURNING *
-      `;
-    } else {
+    try {
+      if (contentHash) {
+        result = await sql`
+          INSERT INTO resumes (user_id, file_name, original_text, status, content_hash, original_file_name)
+          VALUES (${user.id}, ${filename}, ${originalText}, 'processing', ${contentHash}, ${filename})
+          RETURNING *
+        `;
+      } else {
+        result = await sql`
+          INSERT INTO resumes (user_id, file_name, original_text, status)
+          VALUES (${user.id}, ${filename}, ${originalText}, 'processing')
+          RETURNING *
+        `;
+      }
+    } catch (insertError) {
+      // If insert with content_hash fails (column doesn't exist), try without it
+      console.warn('[Upload] Insert with content_hash failed, retrying without:', insertError);
       result = await sql`
         INSERT INTO resumes (user_id, file_name, original_text, status)
         VALUES (${user.id}, ${filename}, ${originalText}, 'processing')
         RETURNING *
       `;
+      console.log('[Upload] Resume created without content_hash - migration may not have run');
     }
 
     const resume = result[0] as any;
