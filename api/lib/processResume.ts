@@ -99,35 +99,39 @@ ${originalText.substring(0, 2000)}
 
 DESIGN REQUIREMENTS:
 
-1. LAYOUT & STRUCTURE:
-   - Use CSS Grid or Flexbox for sophisticated layouts
-   - Consider 2-column layouts, sidebar designs, or asymmetric grids
-   - Add a header section with name prominently displayed
-   - Use cards or panels to group information
-   - Generous whitespace (padding: 20-40px where appropriate)
+1. LAYOUT & STRUCTURE (CRITICAL - MUST USE 2-COLUMN):
+   - MUST use 2-column layout: colored sidebar (35%) + main content (65%)
+   - CSS Grid: display: grid; grid-template-columns: 280px 1fr;
+   - SIDEBAR (left): Colored background with gradient, contains contact, skills, education
+   - MAIN (right): White background, contains summary and experience
+   - Sidebar text: white or very light colors
+   - Photo circle or icon at top of sidebar
+   - Full-height sidebar with gradient background
 
 2. TYPOGRAPHY (CRITICAL):
-   - Use Google Fonts or web-safe font stacks
-   - Name: 32-48px, bold, striking
-   - Section headers: 20-24px, uppercase or small-caps
-   - Body text: 11-12px, line-height: 1.6-1.8
-   - Mix font weights (300, 400, 600, 700)
-   - Letter-spacing for headers (1-2px)
+   - Google Fonts CDN: Poppins, Inter, Montserrat, or Roboto
+   - Name: 28-36px, font-weight: 700, in sidebar (white text)
+   - Job title: 14-16px, in sidebar below name
+   - Section headers: 18-22px, uppercase, letter-spacing: 2px
+   - Body text: 11px, line-height: 1.7
+   - Sidebar section headers: smaller, white, uppercase
 
-3. COLOR & VISUAL DESIGN:
-   - Choose ONE accent color (vibrant but professional)
-   - Use color for: headers, borders, icons, backgrounds
-   - Add subtle gradients or color overlays
-   - Background: white or very light gray (#f8f9fa)
-   - Text: dark gray (#2c3e50) not pure black
-   - Include a colored header bar or sidebar
+3. COLOR & VISUAL DESIGN (CRITICAL - SIDEBAR FOCUS):
+   - Sidebar background: LINEAR GRADIENT of accent color
+   - Examples: linear-gradient(135deg, #667eea 0%, #764ba2 100%) for purple
+   - linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) for blue
+   - linear-gradient(135deg, #10b981 0%, #059669 100%) for green
+   - Sidebar ALL text: white (#ffffff)
+   - Main area: white background, dark text (#2c3e50)
+   - Headers in main area: accent color matching sidebar
 
-4. VISUAL ELEMENTS:
-   - Add thin borders or dividing lines (1-3px)
-   - Use box-shadows for depth (subtle: 0 2px 4px rgba(0,0,0,0.1))
-   - Include geometric shapes (circles, rectangles, lines)
-   - Consider icons for contact info (using Unicode symbols)
-   - Add background patterns or textures (very subtle)
+4. VISUAL ELEMENTS (MAKE IT POP):
+   - Circular photo placeholder: 120px circle, border: 4px solid white, in sidebar
+   - Contact icons: 📧 ☎ 🌐 📍 (white, in sidebar)
+   - Skill tags: white pills with semi-transparent background in sidebar
+   - Divider lines in sidebar: 1px solid rgba(255,255,255,0.3)
+   - Box-shadow on entire container: 0 10px 30px rgba(0,0,0,0.15)
+   - Clean professional look like TopTierResumes or BeamJobs templates
 
 5. SECTIONS:
    - Clear visual separation between sections
