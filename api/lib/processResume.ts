@@ -20,11 +20,27 @@ export async function processResume(resumeId: string, originalText: string, user
       openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'Optimize resumes. Output JSON only.' },
+          {
+            role: 'system',
+            content: 'You are an expert resume writer and career coach. Your task is to transform resumes into ATS-optimized, professional documents that highlight achievements and use strong action verbs. Always output valid JSON with an "improvedText" field containing the complete rewritten resume.'
+          },
           {
             role: 'user',
-            content:
-              `Rewrite this resume with strong action verbs and quantified achievements.\n\n${originalText}\n\n{"improvedText": "optimized resume"}`,
+            content: `Rewrite this resume to make it more professional and ATS-friendly. Follow these guidelines:
+
+1. Use strong action verbs (Led, Managed, Achieved, Spearheaded, etc.)
+2. Quantify achievements with numbers, percentages, or metrics
+3. Remove weak language like "some", "most of the time", "still learning"
+4. Make bullet points concise and impact-focused
+5. Improve formatting and structure
+6. Maintain all contact information and dates exactly as provided
+7. Keep the same overall length and sections
+
+Resume to improve:
+${originalText}
+
+Return ONLY valid JSON in this exact format:
+{"improvedText": "the complete improved resume text here"}`,
           },
         ],
         response_format: { type: 'json_object' },
@@ -33,15 +49,38 @@ export async function processResume(resumeId: string, originalText: string, user
       openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'Score resumes. Output JSON only.' },
+          {
+            role: 'system',
+            content: 'You are an ATS (Applicant Tracking System) expert and resume evaluator. Analyze resumes and provide detailed scores and actionable feedback. Always output valid JSON.'
+          },
           {
             role: 'user',
-            content:
-              `Score this resume.\n\n${originalText.substring(0, 1500)}\n\n{"atsScore": 0-100, "keywordsScore": 0-10, "formattingScore": 0-10, "issues": [{"type": "issue", "message": "fix", "severity": "high"}]}`,
+            content: `Analyze this resume and provide scores and specific issues:
+
+Resume:
+${originalText.substring(0, 1500)}
+
+Evaluate:
+1. ATS Score (0-100): How well would this pass automated screening systems?
+   - Consider: keywords, formatting, structure, quantifiable achievements
+2. Keywords Score (0-10): Presence of relevant industry keywords and action verbs
+3. Formatting Score (0-10): Professional structure, consistency, readability
+4. Issues: Specific problems to fix (weak verbs, missing metrics, formatting issues, etc.)
+
+Return ONLY valid JSON in this exact format:
+{
+  "atsScore": 85,
+  "keywordsScore": 7,
+  "formattingScore": 8,
+  "issues": [
+    {"type": "weak-language", "message": "Replace 'some experience' with specific metrics", "severity": "high"},
+    {"type": "missing-achievement", "message": "Add quantifiable results to work experience", "severity": "medium"}
+  ]
+}`,
           },
         ],
         response_format: { type: 'json_object' },
-        max_tokens: 500,
+        max_tokens: 800,
       }),
     ]);
 
