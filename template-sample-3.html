@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            color: #2c3e50;
+            line-height: 1.7;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        header {
+            text-align: center;
+        }
+        h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin: 0;
+            padding: 20px 0;
+        }
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 10px;
+            color: #2563eb;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #2563eb;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .contact {
+            font-size: 12px;
+            margin: 10px 0;
+        }
+        .contact span {
+            margin-right: 20px;
+        }
+        .item {
+            margin-bottom: 10px;
+        }
+        .skills {
+            display: flex;
+            flex-wrap: wrap;
+            margin: -5px;
+        }
+        .skill {
+            background: #e9ecef;
+            border-radius: 5px;
+            padding: 5px 10px;
+            margin: 5px;
+            font-size: 12px;
+        }
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                max-width: 800px;
+                margin: 0;
+                padding: 0;
+            }
+            @page {
+                size: letter;
+                margin: 0.5in;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>JOHN DOE</h1>
+            <h2>Software Engineer</h2>
+            <div class="contact">
+                <span>📧 john.doe@email.com</span>
+                <span>☎ (555) 123-4567</span>
+                <span>🔗 linkedin.com/in/johndoe</span>
+            </div>
+        </header>
+        <div class="section">
+            <h2>Professional Summary</h2>
+            <p>Experienced software engineer with 5+ years developing scalable web applications. Proficient in JavaScript, React, Node.js, and cloud technologies.</p>
+        </div>
+        <div class="section">
+            <h2>Experience</h2>
+            <div class="item">
+                <strong>Senior Software Engineer | Tech Company Inc.</strong> | 2021 - Present
+                <ul>
+                    <li>Led development of customer-facing dashboard serving 50,000+ users</li>
+                    <li>Improved application performance by 40% through code optimization</li>
+                    <li>Mentored team of 4 junior developers</li>
+                    <li>Implemented CI/CD pipeline reducing deployment time by 60%</li>
+                </ul>
+            </div>
+            <div class="item">
+                <strong>Software Engineer | StartupXYZ</strong> | 2019 - 2021
+                <ul>
+                    <li>Built RESTful APIs handling 1M+ requests daily</li>
+                    <li>Developed React components for e-commerce platform</li>
+                    <li>Reduced page load times by 35% through optimization</li>
+                </ul>
+            </div>
+        </div>
+        <div class="section">
+            <h2>Education</h2>
+            <p><strong>Bachelor of Science in Computer Science</strong><br>University of Technology | 2015 - 2019<br>GPA: 3.8/4.0</p>
+        </div>
+        <div class="section">
+            <h2>Skills</h2>
+            <div class="skills">
+                <span class="skill">JavaScript</span>
+                <span class="skill">TypeScript</span>
+                <span class="skill">Python</span>
+                <span class="skill">SQL</span>
+                <span class="skill">React</span>
+                <span class="skill">Node.js</span>
+                <span class="skill">Express</span>
+                <span class="skill">Next.js</span>
+                <span class="skill">Git</span>
+                <span class="skill">Docker</span>
+                <span class="skill">AWS</span>
+                <span class="skill">MongoDB</span>
+                <span class="skill">PostgreSQL</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
