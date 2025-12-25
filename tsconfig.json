@@ -2,11 +2,11 @@
   "include": [
     "client/src/**/*",
     "shared/**/*",
-    "server/**/*",
     "playwright.config.ts",
-    "script/**/*"
+    "script/**/*",
+    "vite.config.ts"
   ],
-  "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
+  "exclude": ["node_modules", "build", "dist", "**/*.test.ts", "server/**/*"],
   "compilerOptions": {
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
@@ -20,9 +20,7 @@
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
     "moduleResolution": "bundler",
-    "baseUrl": ".",
     "types": ["node", "vite/client"],
-    "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": ["./client/src/*"],
       "@shared/*": ["./shared/*"]
