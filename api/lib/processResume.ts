@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { sql } from './db.js';
+import { getSQL } from './db.js';
 
 let _openai: OpenAI | null = null;
 
@@ -14,6 +14,7 @@ function getOpenAI() {
 
 export async function processResume(resumeId: string, originalText: string, userId: string, userPlan: string) {
   try {
+    const sql = getSQL();
     const openai = getOpenAI();
     const [optimizationResult, scoreResult] = await Promise.all([
       openai.chat.completions.create({
@@ -60,6 +61,7 @@ export async function processResume(resumeId: string, originalText: string, user
     `;
   } catch (error) {
     console.error('[Process] Error optimizing resume:', error);
+    const sql = getSQL();
     await sql`UPDATE resumes SET status = 'failed' WHERE id = ${resumeId}`;
 
     if (userPlan !== 'admin') {
