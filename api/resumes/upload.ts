@@ -276,12 +276,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const resume = result[0] as any;
     console.log('[Upload] Resume created:', resume.id);
 
-    // Process resume in background
-    processResume(resume.id, originalText, user.id, user.plan).catch((err) => {
-      console.error('[Upload] Background processing error:', err);
-    });
+    // IMPORTANT: In serverless environments, we MUST await processing
+    // Otherwise the function terminates before OpenAI calls complete
+    console.log('[Upload] Starting resume processing...');
+    await processResume(resume.id, originalText, user.id, user.plan);
+    console.log('[Upload] Resume processing completed');
 
-    return res.json({ resumeId: resume.id, status: 'processing' });
+    return res.json({ resumeId: resume.id, status: 'completed' });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to process file';
     const errorStack = error instanceof Error ? error.stack : undefined;
