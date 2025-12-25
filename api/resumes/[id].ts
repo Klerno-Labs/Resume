@@ -59,8 +59,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Extract resume ID from URL path
-    const resumeId = req.url?.split('/').pop();
+    console.log('[resumes/[id]] Raw URL:', req.url);
+    console.log('[resumes/[id]] Query:', req.query);
+
+    // Try query param first (Vercel dynamic routes use query.id)
+    const resumeId = (req.query?.id as string) || req.url?.split('/').pop();
     if (!resumeId) {
+      console.log('[resumes/[id]] No resume ID found in query or URL');
       return res.status(400).json({ error: 'Resume ID is required' });
     }
 
