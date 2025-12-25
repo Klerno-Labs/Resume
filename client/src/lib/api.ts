@@ -15,6 +15,7 @@ export interface Resume {
   fileName: string;
   originalText: string;
   improvedText?: string;
+  improvedHtml?: string;
   atsScore?: number;
   keywordsScore?: number;
   formattingScore?: number;

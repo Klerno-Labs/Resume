@@ -94,6 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       fileName: resume.file_name,
       originalText: resume.original_text,
       improvedText: canAccessImprovedText ? resume.improved_text : null,
+      improvedHtml: canAccessImprovedText ? resume.improved_html : null,
       atsScore: resume.ats_score,
       keywordsScore: resume.keywords_score,
       formattingScore: resume.formatting_score,

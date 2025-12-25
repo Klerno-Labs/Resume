@@ -227,10 +227,11 @@ export default function Editor() {
           {/* Editor Area */}
           <main className="flex-1 flex flex-col bg-muted/20 relative">
             <div className="p-2 border-b bg-white dark:bg-slate-950 flex justify-center">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[400px]">
-                <TabsList className="grid w-full grid-cols-2">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[600px]">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="resume">Resume Editor</TabsTrigger>
                   <TabsTrigger value="preview">Print Preview</TabsTrigger>
+                  <TabsTrigger value="design">AI Design</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -252,6 +253,32 @@ export default function Editor() {
                   <div className="bg-white shadow-2xl w-[595px] min-h-[842px] overflow-hidden border rounded-sm">
                     <ResumePreviewStyled text={improvedText} />
                   </div>
+                </TabsContent>
+                <TabsContent
+                  value="design"
+                  className="h-full mt-0 flex items-center justify-center overflow-auto py-4"
+                >
+                  {resume.improvedHtml ? (
+                    <div className="bg-white shadow-2xl w-[595px] min-h-[842px] overflow-hidden border rounded-sm">
+                      <iframe
+                        srcDoc={resume.improvedHtml}
+                        className="w-full h-full min-h-[842px] border-0"
+                        title="AI-Generated Resume Design"
+                        sandbox="allow-same-origin"
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <p className="text-muted-foreground mb-2">
+                        {isCompleted
+                          ? 'No AI design generated for this resume'
+                          : 'AI design is being generated...'}
+                      </p>
+                      {!isCompleted && (
+                        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mt-4"></div>
+                      )}
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
             </div>
