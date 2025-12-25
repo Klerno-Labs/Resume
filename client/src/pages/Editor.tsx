@@ -18,6 +18,7 @@ export default function Editor() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('resume');
   const [resume, setResume] = useState<Resume | null>(null);
+  const [selectedDesign, setSelectedDesign] = useState<string | null>(null);
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const { showUpgrade, upgradeTrigger, featureName, triggerUpgrade, closeUpgrade } =
@@ -245,6 +246,14 @@ export default function Editor() {
                     improvedHtml={resume.improvedHtml}
                     requiresUpgrade={resume.requiresUpgrade}
                     onUpgradeClick={() => triggerUpgrade('premium_feature', 'Improved Resume')}
+                    onChooseDesign={() => {
+                      setSelectedDesign(resume.id);
+                      toast({
+                        title: "Design Selected!",
+                        description: "This AI-generated design is now your active resume.",
+                      });
+                    }}
+                    isDesignSelected={selectedDesign === resume.id}
                   />
                 </TabsContent>
                 <TabsContent

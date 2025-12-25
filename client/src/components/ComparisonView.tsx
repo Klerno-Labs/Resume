@@ -1,8 +1,10 @@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { motion } from 'framer-motion';
-import { Lock } from 'lucide-react';
+import { Lock, Maximize2 } from 'lucide-react';
 import { ResumePreview } from './ResumePreview';
 import { Button } from './ui/button';
+import { useState } from 'react';
+import { DesignModal } from './DesignModal';
 
 interface ComparisonViewProps {
   originalText: string;
@@ -10,9 +12,34 @@ interface ComparisonViewProps {
   improvedHtml?: string;
   requiresUpgrade?: boolean;
   onUpgradeClick?: () => void;
+  onChooseDesign?: () => void;
+  isDesignSelected?: boolean;
 }
 
-export function ComparisonView({ originalText, improvedText, improvedHtml, requiresUpgrade, onUpgradeClick }: ComparisonViewProps) {
+export function ComparisonView({
+  originalText,
+  improvedText,
+  improvedHtml,
+  requiresUpgrade,
+  onUpgradeClick,
+  onChooseDesign,
+  isDesignSelected = false
+}: ComparisonViewProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleDesignClick = () => {
+    if (!requiresUpgrade && improvedHtml) {
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleChooseDesign = () => {
+    if (onChooseDesign) {
+      onChooseDesign();
+      setIsModalOpen(false);
+    }
+  };
+
   return (
     <div className={`grid grid-cols-1 ${improvedHtml ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-6 h-full`}>
       {/* Original Pane */}
@@ -101,7 +128,12 @@ export function ComparisonView({ originalText, improvedText, improvedHtml, requi
               transition={{ duration: 0.5, delay: 0.2 }}
               className="p-6"
             >
-              <div className="bg-white rounded-lg shadow-lg border-2 border-purple-500/10 overflow-hidden ring-4 ring-purple-500/5">
+              <div
+                className={`bg-white rounded-lg shadow-lg border-2 border-purple-500/10 overflow-hidden ring-4 ring-purple-500/5 ${
+                  !requiresUpgrade ? 'cursor-pointer hover:ring-purple-500/20 transition-all group' : ''
+                }`}
+                onClick={handleDesignClick}
+              >
                 {requiresUpgrade ? (
                   <div className="h-[500px] bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center">
                     <Lock className="w-16 h-16 text-purple-500 mb-4" />
@@ -114,17 +146,37 @@ export function ComparisonView({ originalText, improvedText, improvedHtml, requi
                     </Button>
                   </div>
                 ) : (
-                  <iframe
-                    srcDoc={improvedHtml}
-                    className="w-full h-[500px] border-0"
-                    title="AI-Generated Resume Design"
-                    sandbox="allow-same-origin"
-                  />
+                  <div className="relative">
+                    <iframe
+                      srcDoc={improvedHtml}
+                      className="w-full h-[500px] border-0 pointer-events-none"
+                      title="AI-Generated Resume Design"
+                      sandbox="allow-same-origin"
+                    />
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-purple-500/0 group-hover:bg-purple-500/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <div className="bg-white/95 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg flex items-center gap-2">
+                        <Maximize2 className="w-5 h-5 text-purple-600" />
+                        <span className="font-semibold text-purple-600">Click to view full size</span>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             </motion.div>
           </ScrollArea>
         </div>
+      )}
+
+      {/* Design Modal */}
+      {improvedHtml && (
+        <DesignModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          htmlContent={improvedHtml}
+          onChooseDesign={handleChooseDesign}
+          isSelected={isDesignSelected}
+        />
       )}
     </div>
   );
