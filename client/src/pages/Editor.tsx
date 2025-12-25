@@ -242,6 +242,7 @@ export default function Editor() {
                   <ComparisonView
                     originalText={originalText}
                     improvedText={improvedText}
+                    improvedHtml={resume.improvedHtml}
                     requiresUpgrade={resume.requiresUpgrade}
                     onUpgradeClick={() => triggerUpgrade('premium_feature', 'Improved Resume')}
                   />
