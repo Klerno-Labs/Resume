@@ -75,43 +75,78 @@ async function generateTemplate(spec, index) {
       messages: [
         {
           role: 'system',
-          content: 'You are an expert web designer specializing in professional resume layouts. Create beautiful, modern HTML/CSS templates that are ATS-friendly, print-optimized, and visually stunning. Always output valid JSON with complete HTML code.'
+          content: 'You are an elite resume designer with expertise in modern web design, typography, and professional branding. Create stunning, magazine-quality resume designs that stand out while maintaining ATS compatibility. Use contemporary design trends: geometric shapes, gradients, whitespace mastery, and sophisticated color palettes. Think Behance, Dribbble quality. Always output valid JSON.'
         },
         {
           role: 'user',
-          content: `Create a professional HTML resume design with inline CSS. Use the following specifications:
+          content: `Design a STUNNING professional resume in HTML/CSS that looks like it was created by a top design agency.
 
-Style: ${style}
-Primary Color: ${color}
-Design Variant: ${variant}
-
-Resume content to design:
+Resume content:
 ${sampleResume}
 
-Requirements:
-- Complete standalone HTML document with inline CSS
-- ${style} design aesthetic
-- Use ${color} as the primary accent color
-- ${variant} layout approach
-- Modern, professional typography
-- Sections clearly separated with visual hierarchy
-- Print-optimized (fits on standard paper)
-- ATS-friendly structure (proper HTML tags)
-- Responsive margins and spacing
-- Include subtle design elements (borders, backgrounds, spacing)
-- Make it UNIQUE and BEAUTIFUL - every design should be different!
+TARGET DESIGN:
+- Style: ${style}
+- Primary Color: ${color}
+- Variant: ${variant}
 
-Return ONLY valid JSON in this exact format:
+DESIGN REQUIREMENTS:
+
+1. LAYOUT & STRUCTURE (CRITICAL - MUST USE 2-COLUMN):
+   - MUST use 2-column layout: colored sidebar (35%) + main content (65%)
+   - CSS Grid: display: grid; grid-template-columns: 280px 1fr;
+   - SIDEBAR (left): Colored background with gradient, contains contact, skills, education
+   - MAIN (right): White background, contains summary and experience
+   - Sidebar text: white or very light colors
+   - Photo circle or icon at top of sidebar
+   - Full-height sidebar with gradient background
+
+2. TYPOGRAPHY (CRITICAL):
+   - Google Fonts CDN: Poppins, Inter, Montserrat, or Roboto
+   - Name: 28-36px, font-weight: 700, in sidebar (white text)
+   - Job title: 14-16px, in sidebar below name
+   - Section headers: 18-22px, uppercase, letter-spacing: 2px
+   - Body text: 11px, line-height: 1.7
+   - Sidebar section headers: smaller, white, uppercase
+
+3. COLOR & VISUAL DESIGN (CRITICAL - SIDEBAR FOCUS):
+   - Sidebar background: LINEAR GRADIENT of accent color
+   - ${color === 'blue' ? 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)' : color === 'teal' ? 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)' : color === 'purple' ? 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)' : color === 'green' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : color === 'orange' ? 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)' : color === 'coral' ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)' : 'linear-gradient(135deg, [color1], [color2])'}
+   - Sidebar ALL text: white (#ffffff)
+   - Main area: white background, dark text (#2c3e50)
+   - Headers in main area: accent color matching sidebar
+
+4. VISUAL ELEMENTS (MAKE IT POP):
+   - Circular photo placeholder: 120px circle, border: 4px solid white, in sidebar
+   - Contact icons: 📧 ☎ 🌐 📍 (white, in sidebar)
+   - Skill tags: white pills with semi-transparent background in sidebar
+   - Divider lines in sidebar: 1px solid rgba(255,255,255,0.3)
+   - Box-shadow on entire container: 0 10px 30px rgba(0,0,0,0.15)
+   - Clean professional look like TopTierResumes or BeamJobs templates
+
+5. SECTIONS:
+   - Clear visual separation
+   - ${style === 'modern' ? 'Alternating background colors' : 'Consistent styling with borders'}
+   - Highlight achievements with accent color
+   - Use padding/margin for breathing room
+
+6. PRINT OPTIMIZATION:
+   - Max-width: 800px, margins: 40px
+   - @page { size: letter; margin: 0.5in; }
+   - Print-friendly colors
+
+Make it look EXPENSIVE and PROFESSIONAL like Apple, Nike, or Stripe designs.
+
+Return ONLY valid JSON:
 {
-  "html": "<!DOCTYPE html><html>...complete styled resume...</html>",
-  "templateName": "descriptive name like '${style.charAt(0).toUpperCase() + style.slice(1)} ${color.charAt(0).toUpperCase() + color.slice(1)} ${variant.charAt(0).toUpperCase() + variant.slice(1)}'",
+  "html": "<!DOCTYPE html><html>...complete HTML...</html>",
+  "templateName": "${style.charAt(0).toUpperCase() + style.slice(1)} ${color.charAt(0).toUpperCase() + color.slice(1)} ${variant.charAt(0).toUpperCase() + variant.slice(1)}",
   "style": "${style}",
   "colorScheme": "${color}"
 }`
         }
       ],
       response_format: { type: 'json_object' },
-      max_tokens: 3500,
+      max_tokens: 4000,
     });
 
     const design = JSON.parse(response.choices[0].message.content || '{}');
