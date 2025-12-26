@@ -7,6 +7,7 @@ import { CoverLetterDialog } from '@/components/CoverLetterDialog';
 import { ResumePreviewStyled } from '@/components/ResumePreview';
 import { TemplateGallery } from '@/components/TemplateGallery';
 import { JobMatcher } from '@/components/JobMatcher';
+import { IndustryOptimizer } from '@/components/IndustryOptimizer';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
@@ -230,13 +231,14 @@ export default function Editor() {
           {/* Editor Area */}
           <main className="flex-1 flex flex-col bg-muted/20 relative">
             <div className="p-2 border-b bg-white dark:bg-slate-950 flex justify-center">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-4xl">
-                <TabsList className="grid w-full grid-cols-5">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-5xl">
+                <TabsList className="grid w-full grid-cols-6">
                   <TabsTrigger value="resume">Resume Editor</TabsTrigger>
                   <TabsTrigger value="preview">Print Preview</TabsTrigger>
                   <TabsTrigger value="design">AI Design</TabsTrigger>
                   <TabsTrigger value="templates">Templates</TabsTrigger>
                   <TabsTrigger value="jobmatcher">Job Matcher</TabsTrigger>
+                  <TabsTrigger value="industry">Industry</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -321,6 +323,24 @@ export default function Editor() {
                     onUpgradeClick={() => triggerUpgrade('job_matcher', 'Job Description Matcher')}
                     onMatchComplete={(suggestions) => {
                       console.log('[JobMatcher] Suggestions:', suggestions);
+                    }}
+                  />
+                </TabsContent>
+                <TabsContent value="industry" className="h-full mt-0 overflow-auto">
+                  <IndustryOptimizer
+                    resumeText={improvedText || originalText}
+                    userTier={user?.plan || 'free'}
+                    onUpgradeClick={() => triggerUpgrade('industry_optimizer', 'Industry Optimization')}
+                    onOptimizationComplete={(optimizedText) => {
+                      setResume(prev => prev ? {
+                        ...prev,
+                        improvedText: optimizedText
+                      } : null);
+                      toast({
+                        title: "Optimization Applied!",
+                        description: "Your resume has been updated. Check the Resume Editor tab to see changes.",
+                      });
+                      setActiveTab('resume');
                     }}
                   />
                 </TabsContent>
