@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { getSQL } from './db.js';
+import { getRandomTemplate } from './designTemplates.js';
 
 let _openai: OpenAI | null = null;
 
@@ -16,6 +17,10 @@ export async function processResume(resumeId: string, originalText: string, user
   try {
     const sql = getSQL();
     const openai = getOpenAI();
+
+    // Get a random unique design template
+    const template = getRandomTemplate();
+
     const [optimizationResult, scoreResult, designResult] = await Promise.all([
       openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -82,7 +87,7 @@ Return ONLY valid JSON in this exact format:
         response_format: { type: 'json_object' },
         max_tokens: 600,  // Reduced from 800
       }),
-      // AI-generated HTML design
+      // AI-generated HTML design with unique random template
       openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
@@ -92,80 +97,84 @@ Return ONLY valid JSON in this exact format:
           },
           {
             role: 'user',
-            content: `Design a STUNNING professional resume in HTML/CSS that looks like it was created by a top design agency.
+            content: `Design a STUNNING professional resume in HTML/CSS using this EXACT design template specification.
 
 Resume content:
 ${originalText.substring(0, 1500)}
 
-DESIGN REQUIREMENTS:
+DESIGN TEMPLATE TO USE:
+Template Name: ${template.name}
+Style: ${template.style}
+Gradient: ${template.gradient}
+Accent Color: ${template.accentColor}
+Fonts: ${template.fonts[0]} (headers), ${template.fonts[1]} (body)
+Description: ${template.description}
 
-1. LAYOUT & STRUCTURE (CRITICAL - MUST USE 2-COLUMN):
+CRITICAL DESIGN REQUIREMENTS:
+
+1. LAYOUT & STRUCTURE (MUST USE 2-COLUMN):
    - MUST use 2-column layout: colored sidebar (35%) + main content (65%)
    - CSS Grid: display: grid; grid-template-columns: 280px 1fr;
-   - SIDEBAR (left): Colored background with gradient, contains contact, skills, education
+   - SIDEBAR (left): Use gradient "${template.gradient}"
    - MAIN (right): White background, contains summary and experience
-   - Sidebar text: white or very light colors
-   - Photo circle or icon at top of sidebar
+   - Sidebar text: white (#ffffff)
+   - Photo circle at top of sidebar: 120px, white border
    - Full-height sidebar with gradient background
 
-2. TYPOGRAPHY (CRITICAL):
-   - Google Fonts CDN: Poppins, Inter, Montserrat, or Roboto
-   - Name: 28-36px, font-weight: 700, in sidebar (white text)
-   - Job title: 14-16px, in sidebar below name
-   - Section headers: 18-22px, uppercase, letter-spacing: 2px
-   - Body text: 11px, line-height: 1.7
-   - Sidebar section headers: smaller, white, uppercase
+2. TYPOGRAPHY (EXACT FONTS):
+   - Google Fonts CDN: "${template.fonts[0]}" and "${template.fonts[1]}"
+   - Name: 28-36px, font-weight: 700, font-family: '${template.fonts[0]}', in sidebar (white)
+   - Job title: 14-16px, font-family: '${template.fonts[1]}', in sidebar below name
+   - Section headers: 18-22px, uppercase, letter-spacing: 2px, font-family: '${template.fonts[0]}'
+   - Body text: 11px, line-height: 1.7, font-family: '${template.fonts[1]}'
+   - Sidebar section headers: smaller, white, uppercase, font-family: '${template.fonts[0]}'
 
-3. COLOR & VISUAL DESIGN (CRITICAL - SIDEBAR FOCUS):
-   - Sidebar background: LINEAR GRADIENT of accent color
-   - Examples: linear-gradient(135deg, #667eea 0%, #764ba2 100%) for purple
-   - linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) for blue
-   - linear-gradient(135deg, #10b981 0%, #059669 100%) for green
+3. COLOR & VISUAL DESIGN (USE EXACT COLORS):
+   - Sidebar background: ${template.gradient}
+   - Accent color for headers in main area: ${template.accentColor}
    - Sidebar ALL text: white (#ffffff)
-   - Main area: white background, dark text (#2c3e50)
-   - Headers in main area: accent color matching sidebar
+   - Main area: white background (#ffffff), dark text (#2c3e50)
+   - Section headers in main: ${template.accentColor}
+   - Links and highlights: ${template.accentColor}
 
-4. VISUAL ELEMENTS (MAKE IT POP):
+4. VISUAL ELEMENTS (MAKE IT UNIQUE):
    - Circular photo placeholder: 120px circle, border: 4px solid white, in sidebar
    - Contact icons: 📧 ☎ 🌐 📍 (white, in sidebar)
-   - Skill tags: white pills with semi-transparent background in sidebar
+   - Skill tags: white pills with background: rgba(255,255,255,0.2) in sidebar
    - Divider lines in sidebar: 1px solid rgba(255,255,255,0.3)
-   - Box-shadow on entire container: 0 10px 30px rgba(0,0,0,0.15)
-   - Clean professional look like TopTierResumes or BeamJobs templates
+   - Box-shadow on container: 0 10px 30px rgba(0,0,0,0.15)
+   - Add unique decorative elements based on style: ${template.style}
 
-5. SECTIONS:
-   - Clear visual separation between sections
-   - Use different backgrounds for alternating sections
-   - Add subtle borders or divider lines
-   - Highlight key achievements with different styling
+5. STYLE-SPECIFIC VARIATIONS:
+   ${template.style === 'modern' ? '- Use clean lines, bold typography, geometric shapes' : ''}
+   ${template.style === 'classic' ? '- Use serif fonts, traditional spacing, elegant borders' : ''}
+   ${template.style === 'creative' ? '- Use bold colors, creative layouts, unique shapes' : ''}
+   ${template.style === 'minimal' ? '- Use maximum whitespace, simple lines, restrained design' : ''}
 
 6. PRINT OPTIMIZATION:
    - Page size: 8.5" × 11" (max-width: 800px)
    - Margins: 0.5-1 inch
    - Use @page CSS for print styles
-   - Ensure colors print well (not too light)
 
 7. MUST INCLUDE:
    - Complete <!DOCTYPE html> declaration
    - All CSS inline in <style> tag
-   - Semantic HTML (header, section, h1-h6)
-   - Professional color scheme
-   - Modern, eye-catching design
-   - NO external resources (fonts can use Google Fonts CDN)
+   - Semantic HTML
+   - Google Fonts link for: ${template.fonts.join(' and ')}
 
-Make it look EXPENSIVE and PROFESSIONAL. Think Apple, Nike, or tech startup aesthetics.
+Make this design UNIQUE from other resumes. Use the specified gradient and fonts to create a distinct visual identity.
 
 Return ONLY valid JSON:
 {
   "html": "<!DOCTYPE html><html>...complete HTML with inline CSS...</html>",
-  "templateName": "Creative Professional Blue Gradient",
-  "style": "modern|classic|creative|minimal",
-  "colorScheme": "primary accent color"
+  "templateName": "${template.name}",
+  "style": "${template.style}",
+  "colorScheme": "${template.accentColor}"
 }`,
           },
         ],
         response_format: { type: 'json_object' },
-        max_tokens: 3000,  // Reduced from 4000 for faster generation
+        max_tokens: 3000,
       }),
     ]);
 

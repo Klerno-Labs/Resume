@@ -21,6 +21,7 @@ export default function Editor() {
   const [activeTab, setActiveTab] = useState('preview');
   const [resume, setResume] = useState<Resume | null>(null);
   const [selectedDesign, setSelectedDesign] = useState<string | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const { showUpgrade, upgradeTrigger, featureName, triggerUpgrade, closeUpgrade } =
@@ -289,6 +290,54 @@ export default function Editor() {
                         Download Improved Resume
                       </Button>
                     </div>
+
+                    {/* Regenerate Design Button (only for AI designs) */}
+                    {resume.improvedHtml && (
+                      <div className="flex justify-center mb-4">
+                        <Button
+                          variant="outline"
+                          onClick={async () => {
+                            try {
+                              setIsRegenerating(true);
+                              const result = await api.regenerateDesign(resume.id);
+
+                              // Update resume with new design
+                              setResume(prev => ({
+                                ...prev,
+                                improvedHtml: result.improvedHtml,
+                              }));
+
+                              toast({
+                                title: 'New Design Generated!',
+                                description: `${result.templateName} - ${result.regenerationsRemaining === Infinity ? 'Unlimited' : result.regenerationsRemaining} regenerations remaining`,
+                              });
+                            } catch (error) {
+                              toast({
+                                title: 'Regeneration Failed',
+                                description: error instanceof Error ? error.message : 'Failed to regenerate design',
+                                variant: 'destructive',
+                              });
+                            } finally {
+                              setIsRegenerating(false);
+                            }
+                          }}
+                          disabled={!isCompleted || isRegenerating}
+                          className="gap-2"
+                        >
+                          {isRegenerating ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                              Generating New Design...
+                            </>
+                          ) : (
+                            <>
+                              <Palette className="w-4 h-4" />
+                              Regenerate Design
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
 
                     {/* Preview - Fits on One Page, No Scroll */}
                     <div className="w-full flex justify-center">

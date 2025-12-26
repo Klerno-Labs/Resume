@@ -375,6 +375,35 @@ class ApiClient {
     return res.json() as Promise<Resume>;
   }
 
+  async regenerateDesign(resumeId: string): Promise<{
+    success: boolean;
+    improvedHtml: string;
+    templateName: string;
+    style: string;
+    regenerationsUsed: number;
+    regenerationsLimit: number;
+    regenerationsRemaining: number;
+  }> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/resumes/regenerate-design`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resumeId }),
+    });
+    if (!res.ok) {
+      const error = await res.json() as { message?: string; error?: string };
+      throw new Error(error.message || error.error || 'Failed to regenerate design');
+    }
+    return res.json() as Promise<{
+      success: boolean;
+      improvedHtml: string;
+      templateName: string;
+      style: string;
+      regenerationsUsed: number;
+      regenerationsLimit: number;
+      regenerationsRemaining: number;
+    }>;
+  }
+
   async getUserResumes(userId: string): Promise<Resume[]> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/users/${userId}/resumes`);
     if (!res.ok) {
