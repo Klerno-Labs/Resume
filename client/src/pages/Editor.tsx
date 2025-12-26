@@ -140,7 +140,7 @@ export default function Editor() {
                     description: 'Generating your resume PDF...',
                   });
 
-                  if (user?.plan === 'free' && user?.plan !== 'admin') {
+                  if (user?.plan === 'free') {
                     triggerUpgrade('watermark_notice');
                   }
 
@@ -290,17 +290,20 @@ export default function Editor() {
                       </Button>
                     </div>
 
-                    {/* Preview */}
-                    <div className="bg-white shadow-2xl w-[595px] min-h-[842px] overflow-hidden border rounded-sm">
+                    {/* Preview - Single Page, No Scroll */}
+                    <div className="bg-white shadow-2xl w-[595px] h-[842px] overflow-hidden border rounded-sm relative">
                       {resume.improvedHtml ? (
                         <iframe
                           srcDoc={resume.improvedHtml}
-                          className="w-full h-full min-h-[842px] border-0"
+                          className="w-full h-full border-0 absolute inset-0"
                           title="AI-Generated Resume Design"
                           sandbox="allow-same-origin"
+                          style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
                         />
                       ) : (
-                        <ResumePreviewStyled text={improvedText} />
+                        <div className="w-full h-full overflow-hidden">
+                          <ResumePreviewStyled text={improvedText} />
+                        </div>
                       )}
                     </div>
                   </div>
