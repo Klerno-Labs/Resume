@@ -6,6 +6,7 @@ import { ComparisonView } from '@/components/ComparisonView';
 import { CoverLetterDialog } from '@/components/CoverLetterDialog';
 import { ResumePreviewStyled } from '@/components/ResumePreview';
 import { TemplateGallery } from '@/components/TemplateGallery';
+import { JobMatcher } from '@/components/JobMatcher';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
@@ -229,12 +230,13 @@ export default function Editor() {
           {/* Editor Area */}
           <main className="flex-1 flex flex-col bg-muted/20 relative">
             <div className="p-2 border-b bg-white dark:bg-slate-950 flex justify-center">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[800px]">
-                <TabsList className="grid w-full grid-cols-4">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-4xl">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="resume">Resume Editor</TabsTrigger>
                   <TabsTrigger value="preview">Print Preview</TabsTrigger>
                   <TabsTrigger value="design">AI Design</TabsTrigger>
                   <TabsTrigger value="templates">Templates</TabsTrigger>
+                  <TabsTrigger value="jobmatcher">Job Matcher</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -310,6 +312,16 @@ export default function Editor() {
                     }}
                     userTier={user?.plan || 'free'}
                     onUpgradeClick={() => triggerUpgrade('template_access', 'Template Gallery')}
+                  />
+                </TabsContent>
+                <TabsContent value="jobmatcher" className="h-full mt-0 overflow-auto">
+                  <JobMatcher
+                    resumeText={improvedText || originalText}
+                    userTier={user?.plan || 'free'}
+                    onUpgradeClick={() => triggerUpgrade('job_matcher', 'Job Description Matcher')}
+                    onMatchComplete={(suggestions) => {
+                      console.log('[JobMatcher] Suggestions:', suggestions);
+                    }}
                   />
                 </TabsContent>
               </Tabs>
