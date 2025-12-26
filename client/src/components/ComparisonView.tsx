@@ -41,25 +41,7 @@ export function ComparisonView({
   };
 
   return (
-    <div className={`grid grid-cols-1 ${improvedHtml ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-6 h-full`}>
-      {/* Original Pane */}
-      <div className="flex flex-col h-[650px] bg-card border rounded-xl shadow-sm overflow-hidden">
-        <div className="p-4 bg-muted/30 border-b flex items-center justify-between">
-          <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
-            Original Resume
-          </h3>
-          <span className="text-xs text-red-500 font-medium bg-red-50 px-2 py-1 rounded-full">
-            Before
-          </span>
-        </div>
-        <ScrollArea className="flex-1 bg-slate-50 dark:bg-slate-900">
-          <div className="p-6" data-testid="text-original">
-            <div className="bg-white dark:bg-slate-950 rounded-lg shadow-sm border p-6 min-h-[500px]">
-              <ResumePreview text={originalText} />
-            </div>
-          </div>
-        </ScrollArea>
-      </div>
+    <div className={`grid grid-cols-1 ${improvedHtml ? 'lg:grid-cols-2' : 'lg:grid-cols-1'} gap-6 h-full`}>
 
       {/* Improved Pane */}
       <div className="flex flex-col h-[650px] bg-card border-2 border-primary/30 rounded-xl shadow-xl overflow-hidden relative">

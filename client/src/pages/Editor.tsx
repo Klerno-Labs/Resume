@@ -234,8 +234,8 @@ export default function Editor() {
             <div className="p-3 border-b bg-white dark:bg-slate-950">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 h-12">
-                  <TabsTrigger value="resume" className="text-base" title="Compare original and AI-improved versions">
-                    📝 Your Resume
+                  <TabsTrigger value="resume" className="text-base" title="View your AI-optimized resume">
+                    ✨ Improved Resume
                   </TabsTrigger>
                   <TabsTrigger value="preview" className="text-base" title="Preview and download your improved resume">
                     👁️ Preview & Download
