@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { ArrowLeft, Download, RefreshCw, Wand2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Download, RefreshCw, Wand2, AlertTriangle, Target, Briefcase, Palette } from 'lucide-react';
 import { AtsScore } from '@/components/AtsScore';
 import { ComparisonView } from '@/components/ComparisonView';
 import { CoverLetterDialog } from '@/components/CoverLetterDialog';
@@ -230,26 +230,17 @@ export default function Editor() {
 
           {/* Editor Area */}
           <main className="flex-1 flex flex-col bg-muted/20 relative">
-            <div className="p-2 border-b bg-white dark:bg-slate-950 flex justify-center">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-5xl">
-                <TabsList className="grid w-full grid-cols-6">
-                  <TabsTrigger value="resume" title="View original and AI-improved versions side by side">
-                    Resume Editor
+            <div className="p-3 border-b bg-white dark:bg-slate-950">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 h-12">
+                  <TabsTrigger value="resume" className="text-base" title="Compare original and AI-improved versions">
+                    📝 Your Resume
                   </TabsTrigger>
-                  <TabsTrigger value="preview" title="See how your resume will look when printed">
-                    Print Preview
+                  <TabsTrigger value="preview" className="text-base" title="Preview and download your improved resume">
+                    👁️ Preview & Download
                   </TabsTrigger>
-                  <TabsTrigger value="design" title="View AI-generated HTML design templates">
-                    AI Design
-                  </TabsTrigger>
-                  <TabsTrigger value="templates" title="Browse 21 professional resume templates">
-                    Templates
-                  </TabsTrigger>
-                  <TabsTrigger value="jobmatcher" title="Analyze how well your resume matches a job posting">
-                    Job Matcher
-                  </TabsTrigger>
-                  <TabsTrigger value="industry" title="Optimize your resume for specific industries">
-                    Industry
+                  <TabsTrigger value="advanced" className="text-base" title="Templates, job matching, and industry optimization">
+                    🛠️ Advanced Tools
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -276,85 +267,246 @@ export default function Editor() {
                 </TabsContent>
                 <TabsContent
                   value="preview"
-                  className="h-full mt-0 flex items-center justify-center overflow-auto py-4"
+                  className="h-full mt-0 flex flex-col gap-4 overflow-auto py-4"
                 >
-                  <div className="bg-white shadow-2xl w-[595px] min-h-[842px] overflow-hidden border rounded-sm">
-                    <ResumePreviewStyled text={improvedText} />
-                  </div>
-                </TabsContent>
-                <TabsContent
-                  value="design"
-                  className="h-full mt-0 flex items-center justify-center overflow-auto py-4"
-                >
-                  {resume.improvedHtml ? (
-                    <div className="bg-white shadow-2xl w-[595px] min-h-[842px] overflow-hidden border rounded-sm">
-                      <iframe
-                        srcDoc={resume.improvedHtml}
-                        className="w-full h-full min-h-[842px] border-0"
-                        title="AI-Generated Resume Design"
-                        sandbox="allow-same-origin"
-                      />
+                  <div className="flex flex-col items-center gap-4 max-w-4xl mx-auto w-full">
+                    {/* Download Action Bar */}
+                    <div className="w-full bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-lg p-6 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-1">Your Improved Resume is Ready!</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Download your ATS-optimized resume or continue editing below
+                        </p>
+                      </div>
+                      <Button
+                        size="lg"
+                        onClick={async () => {
+                          try {
+                            await exportResumeToPDF({
+                              originalText,
+                              improvedText,
+                              atsScore: resume.atsScore,
+                              watermarkText:
+                                user?.plan === 'free' ? 'Resume Repairer • Free Plan' : undefined,
+                            });
+
+                            toast({
+                              title: 'Success!',
+                              description: 'Your resume has been downloaded.',
+                            });
+                          } catch (_error) {
+                            toast({
+                              title: 'Export Failed',
+                              description: 'Failed to export PDF. Please try again.',
+                              variant: 'destructive',
+                            });
+                          }
+                        }}
+                        disabled={!isCompleted}
+                        className="gap-2 px-6"
+                      >
+                        <Download className="w-5 h-5" />
+                        Download Improved Resume
+                      </Button>
                     </div>
-                  ) : (
-                    <div className="text-center">
-                      <p className="text-muted-foreground mb-2">
-                        {isCompleted
-                          ? 'No AI design generated for this resume'
-                          : 'AI design is being generated...'}
-                      </p>
-                      {!isCompleted && (
-                        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mt-4"></div>
+
+                    {/* Preview */}
+                    <div className="bg-white shadow-2xl w-[595px] min-h-[842px] overflow-hidden border rounded-sm">
+                      {resume.improvedHtml ? (
+                        <iframe
+                          srcDoc={resume.improvedHtml}
+                          className="w-full h-full min-h-[842px] border-0"
+                          title="AI-Generated Resume Design"
+                          sandbox="allow-same-origin"
+                        />
+                      ) : (
+                        <ResumePreviewStyled text={improvedText} />
                       )}
                     </div>
-                  )}
+                  </div>
                 </TabsContent>
-                <TabsContent value="templates" className="h-full mt-0">
-                  <TemplateGallery
-                    currentTemplate={selectedDesign || undefined}
-                    onSelectTemplate={(template) => {
-                      setSelectedDesign(template.id);
-                      // Apply template to current resume
-                      setResume(prev => prev ? {
-                        ...prev,
-                        improvedHtml: template.htmlTemplate
-                      } : null);
-                      toast({
-                        title: "Template Applied!",
-                        description: `${template.name} is now your active design.`,
-                      });
-                      setActiveTab('design'); // Switch to design tab to see it
-                    }}
-                    userTier={user?.plan || 'free'}
-                    onUpgradeClick={() => triggerUpgrade('template_access', 'Template Gallery')}
-                  />
-                </TabsContent>
-                <TabsContent value="jobmatcher" className="h-full mt-0 overflow-auto">
-                  <JobMatcher
-                    resumeText={improvedText || originalText}
-                    userTier={user?.plan || 'free'}
-                    onUpgradeClick={() => triggerUpgrade('job_matcher', 'Job Description Matcher')}
-                    onMatchComplete={(suggestions) => {
-                      console.log('[JobMatcher] Suggestions:', suggestions);
-                    }}
-                  />
-                </TabsContent>
-                <TabsContent value="industry" className="h-full mt-0 overflow-auto">
-                  <IndustryOptimizer
-                    resumeText={improvedText || originalText}
-                    userTier={user?.plan || 'free'}
-                    onUpgradeClick={() => triggerUpgrade('industry_optimizer', 'Industry Optimization')}
-                    onOptimizationComplete={(optimizedText) => {
-                      setResume(prev => prev ? {
-                        ...prev,
-                        improvedText: optimizedText
-                      } : null);
-                      toast({
-                        title: "Optimization Applied!",
-                        description: "Your resume has been updated. Check the Resume Editor tab to see changes.",
-                      });
-                      setActiveTab('resume');
-                    }}
-                  />
+                <TabsContent value="advanced" className="h-full mt-0 overflow-auto">
+                  <div className="max-w-6xl mx-auto space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Templates Card */}
+                      <div className="bg-white dark:bg-slate-950 border rounded-lg p-6 flex flex-col">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+                            <Palette className="w-6 h-6 text-purple-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">Resume Templates</h3>
+                            <p className="text-xs text-muted-foreground">21 professional designs</p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4 flex-1">
+                          Choose from modern, classic, creative, or minimal templates
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => {
+                            const modal = document.getElementById('templates-modal');
+                            if (modal) modal.classList.remove('hidden');
+                          }}
+                        >
+                          Browse Templates
+                        </Button>
+                      </div>
+
+                      {/* Job Matcher Card */}
+                      <div className="bg-white dark:bg-slate-950 border rounded-lg p-6 flex flex-col">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                            <Target className="w-6 h-6 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">Job Matcher</h3>
+                            <p className="text-xs text-muted-foreground">AI-powered analysis</p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4 flex-1">
+                          See how well your resume matches specific job postings
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => {
+                            const modal = document.getElementById('jobmatcher-modal');
+                            if (modal) modal.classList.remove('hidden');
+                          }}
+                        >
+                          Analyze Job Match
+                        </Button>
+                      </div>
+
+                      {/* Industry Optimizer Card */}
+                      <div className="bg-white dark:bg-slate-950 border rounded-lg p-6 flex flex-col">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                            <Briefcase className="w-6 h-6 text-green-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">Industry Optimizer</h3>
+                            <p className="text-xs text-muted-foreground">10 specialized industries</p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4 flex-1">
+                          Optimize your resume for tech, finance, healthcare, and more
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => {
+                            const modal = document.getElementById('industry-modal');
+                            if (modal) modal.classList.remove('hidden');
+                          }}
+                        >
+                          Optimize by Industry
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Modals/Expandable Sections */}
+                    <div id="templates-modal" className="hidden">
+                      <div className="bg-white dark:bg-slate-950 border rounded-lg p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold">Resume Templates</h3>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const modal = document.getElementById('templates-modal');
+                              if (modal) modal.classList.add('hidden');
+                            }}
+                          >
+                            Close
+                          </Button>
+                        </div>
+                        <TemplateGallery
+                          currentTemplate={selectedDesign || undefined}
+                          onSelectTemplate={(template) => {
+                            setSelectedDesign(template.id);
+                            setResume(prev => prev ? {
+                              ...prev,
+                              improvedHtml: template.htmlTemplate
+                            } : null);
+                            toast({
+                              title: "Template Applied!",
+                              description: `${template.name} is now active. Check the Preview tab to see it.`,
+                            });
+                            const modal = document.getElementById('templates-modal');
+                            if (modal) modal.classList.add('hidden');
+                            setActiveTab('preview');
+                          }}
+                          userTier={user?.plan || 'free'}
+                          onUpgradeClick={() => triggerUpgrade('template_access', 'Template Gallery')}
+                        />
+                      </div>
+                    </div>
+
+                    <div id="jobmatcher-modal" className="hidden">
+                      <div className="bg-white dark:bg-slate-950 border rounded-lg p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold">Job Description Matcher</h3>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const modal = document.getElementById('jobmatcher-modal');
+                              if (modal) modal.classList.add('hidden');
+                            }}
+                          >
+                            Close
+                          </Button>
+                        </div>
+                        <JobMatcher
+                          resumeText={improvedText || originalText}
+                          userTier={user?.plan || 'free'}
+                          onUpgradeClick={() => triggerUpgrade('job_matcher', 'Job Description Matcher')}
+                          onMatchComplete={(suggestions) => {
+                            console.log('[JobMatcher] Suggestions:', suggestions);
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div id="industry-modal" className="hidden">
+                      <div className="bg-white dark:bg-slate-950 border rounded-lg p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold">Industry Optimization</h3>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const modal = document.getElementById('industry-modal');
+                              if (modal) modal.classList.add('hidden');
+                            }}
+                          >
+                            Close
+                          </Button>
+                        </div>
+                        <IndustryOptimizer
+                          resumeText={improvedText || originalText}
+                          userTier={user?.plan || 'free'}
+                          onUpgradeClick={() => triggerUpgrade('industry_optimizer', 'Industry Optimization')}
+                          onOptimizationComplete={(optimizedText) => {
+                            setResume(prev => prev ? {
+                              ...prev,
+                              improvedText: optimizedText
+                            } : null);
+                            toast({
+                              title: "Optimization Applied!",
+                              description: "Your resume has been updated. Check the Resume tab to see changes.",
+                            });
+                            const modal = document.getElementById('industry-modal');
+                            if (modal) modal.classList.add('hidden');
+                            setActiveTab('resume');
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </TabsContent>
               </Tabs>
             </div>
