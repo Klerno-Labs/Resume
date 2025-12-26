@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { ArrowLeft, Download, RefreshCw, Wand2, AlertTriangle, Target, Briefcase, Palette } from 'lucide-react';
 import { AtsScore } from '@/components/AtsScore';
-import { ComparisonView } from '@/components/ComparisonView';
 import { CoverLetterDialog } from '@/components/CoverLetterDialog';
 import { ResumePreviewStyled } from '@/components/ResumePreview';
 import { TemplateGallery } from '@/components/TemplateGallery';
@@ -19,7 +18,7 @@ import { UpgradeModal } from '@/components/UpgradeModal';
 
 export default function Editor() {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [activeTab, setActiveTab] = useState('resume');
+  const [activeTab, setActiveTab] = useState('preview');
   const [resume, setResume] = useState<Resume | null>(null);
   const [selectedDesign, setSelectedDesign] = useState<string | null>(null);
   const [, navigate] = useLocation();
@@ -233,10 +232,7 @@ export default function Editor() {
           <main className="flex-1 flex flex-col bg-muted/20 relative">
             <div className="p-3 border-b bg-white dark:bg-slate-950">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 h-12">
-                  <TabsTrigger value="resume" className="text-base" title="View your AI-optimized resume">
-                    ✨ Improved Resume
-                  </TabsTrigger>
+                <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2 h-12">
                   <TabsTrigger value="preview" className="text-base" title="Preview and download your improved resume">
                     👁️ Preview & Download
                   </TabsTrigger>
@@ -249,23 +245,6 @@ export default function Editor() {
 
             <div className="flex-1 p-8 overflow-hidden">
               <Tabs value={activeTab} className="h-full">
-                <TabsContent value="resume" className="h-full mt-0">
-                  <ComparisonView
-                    originalText={originalText}
-                    improvedText={improvedText}
-                    improvedHtml={resume.improvedHtml}
-                    requiresUpgrade={resume.requiresUpgrade}
-                    onUpgradeClick={() => triggerUpgrade('premium_feature', 'Improved Resume')}
-                    onChooseDesign={() => {
-                      setSelectedDesign(resume.id);
-                      toast({
-                        title: "Design Selected!",
-                        description: "This AI-generated design is now your active resume.",
-                      });
-                    }}
-                    isDesignSelected={selectedDesign === resume.id}
-                  />
-                </TabsContent>
                 <TabsContent
                   value="preview"
                   className="h-full mt-0 flex flex-col gap-4 overflow-auto py-4"
