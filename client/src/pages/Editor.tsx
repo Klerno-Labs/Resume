@@ -50,11 +50,12 @@ export default function Editor() {
         if (data.status === 'processing') {
           setTimeout(fetchResume, 2000); // Poll every 2 seconds
         }
-      } catch (error: any) {
+      } catch (error) {
         retryCount++;
 
         // If resume not found and we haven't exceeded retries, try again
-        if (error.message.includes('not found') && retryCount < maxRetries) {
+        const errorMessage = error instanceof Error ? error.message : '';
+        if (errorMessage.includes('not found') && retryCount < maxRetries) {
           console.log(`[Editor] Resume not found yet, retry ${retryCount}/${maxRetries} in 1.5s...`);
           setTimeout(fetchResume, 1500); // Retry after 1.5 seconds
         } else {
@@ -156,7 +157,7 @@ export default function Editor() {
                     title: 'Success!',
                     description: 'Your resume has been downloaded.',
                   });
-                } catch (_error) {
+                } catch {
                   toast({
                     title: 'Export Failed',
                     description: 'Failed to export PDF. Please try again.',
@@ -280,9 +281,9 @@ export default function Editor() {
                       </div>
                       <Button
                         size="lg"
-                        onClick={async () => {
+                        onClick={() => {
                           try {
-                            await exportResumeToPDF({
+                            exportResumeToPDF({
                               originalText,
                               improvedText,
                               atsScore: resume.atsScore,
@@ -294,7 +295,7 @@ export default function Editor() {
                               title: 'Success!',
                               description: 'Your resume has been downloaded.',
                             });
-                          } catch (_error) {
+                          } catch {
                             toast({
                               title: 'Export Failed',
                               description: 'Failed to export PDF. Please try again.',

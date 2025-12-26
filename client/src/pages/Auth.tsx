@@ -82,9 +82,10 @@ export default function Auth() {
         Analytics.track('signup', { method: 'email', referralCode: referralCode || undefined });
       }
       setLocation('/editor');
-    } catch (error: any) {
+    } catch (error) {
       // If login fails with "Invalid credentials", offer to create account
-      if (isLogin && error.message?.toLowerCase().includes('invalid')) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+      if (isLogin && errorMessage.toLowerCase().includes('invalid')) {
         toast({
           title: 'Account not found',
           description: 'Would you like to create a new account with this email?',
@@ -93,7 +94,7 @@ export default function Auth() {
       } else {
         toast({
           title: 'Error',
-          description: error.message,
+          description: errorMessage,
           variant: 'destructive',
         });
       }
@@ -168,7 +169,7 @@ export default function Auth() {
             </div>
           </div>
 
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
