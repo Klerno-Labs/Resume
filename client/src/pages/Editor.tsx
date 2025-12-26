@@ -60,18 +60,18 @@ export default function Editor() {
         } else {
           // Show error only after all retries exhausted
           toast({
-            title: 'Error Loading Resume',
+            title: 'Having Trouble Loading Your Resume',
             description: retryCount >= maxRetries
-              ? 'Resume not found. It may still be uploading. Please wait a moment and refresh the page.'
-              : error.message,
+              ? 'Your resume is still being processed. This usually takes just a few seconds. Try refreshing the page in a moment.'
+              : 'There was an issue loading your resume. Please try uploading again or contact support if this continues.',
             variant: 'destructive',
           });
         }
       }
     };
 
-    // Start with a small delay to allow database write
-    setTimeout(() => void fetchResume(), 800);
+    // Start fetching immediately - backend handles timing
+    void fetchResume();
   }, []); // Removed navigate from dependencies to prevent infinite loop
 
   const handleOptimize = () => {
@@ -233,12 +233,24 @@ export default function Editor() {
             <div className="p-2 border-b bg-white dark:bg-slate-950 flex justify-center">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-5xl">
                 <TabsList className="grid w-full grid-cols-6">
-                  <TabsTrigger value="resume">Resume Editor</TabsTrigger>
-                  <TabsTrigger value="preview">Print Preview</TabsTrigger>
-                  <TabsTrigger value="design">AI Design</TabsTrigger>
-                  <TabsTrigger value="templates">Templates</TabsTrigger>
-                  <TabsTrigger value="jobmatcher">Job Matcher</TabsTrigger>
-                  <TabsTrigger value="industry">Industry</TabsTrigger>
+                  <TabsTrigger value="resume" title="View original and AI-improved versions side by side">
+                    Resume Editor
+                  </TabsTrigger>
+                  <TabsTrigger value="preview" title="See how your resume will look when printed">
+                    Print Preview
+                  </TabsTrigger>
+                  <TabsTrigger value="design" title="View AI-generated HTML design templates">
+                    AI Design
+                  </TabsTrigger>
+                  <TabsTrigger value="templates" title="Browse 21 professional resume templates">
+                    Templates
+                  </TabsTrigger>
+                  <TabsTrigger value="jobmatcher" title="Analyze how well your resume matches a job posting">
+                    Job Matcher
+                  </TabsTrigger>
+                  <TabsTrigger value="industry" title="Optimize your resume for specific industries">
+                    Industry
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>

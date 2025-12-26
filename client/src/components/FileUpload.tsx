@@ -227,21 +227,24 @@ export function FileUpload({ onUpload }: FileUploadProps) {
                 <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                   <Upload className="w-10 h-10 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold text-foreground">Drop your resume here</h3>
-                <p className="text-muted-foreground mt-2 max-w-xs">
-                  Support for PDF, DOCX, DOC, and TXT files. We'll analyze it instantly.
+                <h3 className="text-xl font-semibold text-foreground">Upload Your Resume</h3>
+                <p className="text-muted-foreground mt-2 max-w-md text-sm leading-relaxed">
+                  Drag and drop your file here, or click to browse
                 </p>
-                <p className="text-muted-foreground mt-2 text-xs">
-                  Need to convert a legacy Word file?&nbsp;
-                  <a
-                    className="text-primary underline"
-                    href="https://support.google.com/docs/answer/6000292"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    How to convert .doc → .docx
-                  </a>
-                </p>
+                <div className="mt-4 flex flex-col gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    <span>PDF, DOCX, DOC, or TXT (max 10MB)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    <span>Get instant ATS score and AI optimization</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    <span>100% secure and confidential</span>
+                  </div>
+                </div>
                 <div className="mt-8">
                   <span className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-primary bg-primary/10 rounded-full hover:bg-primary/20 transition-colors">
                     Or browse files
@@ -276,17 +279,22 @@ export function FileUpload({ onUpload }: FileUploadProps) {
                     <FileText className="w-8 h-8 text-green-600" />
                   </div>
                 </div>
-                <h3 className="text-xl font-semibold text-green-700">Analyzing {file.name}</h3>
-                <p className="text-green-600 mt-2">Checking ATS compatibility...</p>
+                <h3 className="text-xl font-semibold text-green-700">Uploading...</h3>
+                <p className="text-sm text-green-600 mt-2 max-w-xs">{file.name}</p>
                 {progress !== null && (
-                  <div className="w-56 mt-4">
-                    <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div className="w-full max-w-xs mt-4">
+                    <div className="bg-gray-200 rounded-full h-2.5 overflow-hidden">
                       <div
-                        className="bg-green-500 h-2"
+                        className="bg-gradient-to-r from-green-500 to-emerald-500 h-2.5 transition-all duration-300"
                         style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
                       />
                     </div>
-                    <div className="text-xs text-muted-foreground text-center mt-2">{progress}%</div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-xs text-muted-foreground">
+                        {progress < 50 ? 'Uploading...' : progress < 90 ? 'Processing...' : 'Almost done...'}
+                      </span>
+                      <span className="text-xs font-medium text-green-600">{progress}%</span>
+                    </div>
                     <div className="flex items-center justify-center gap-2 mt-3">
                       {controller && (
                         <button
