@@ -149,7 +149,7 @@ export default function Editor() {
                     fileName: resume.fileName,
                     atsScore: resume.atsScore,
                     watermarkText:
-                      (user?.plan === 'free' && user?.plan !== 'admin') ? 'Resume Repairer • Free Plan' : undefined,
+                      (user?.plan === 'free') ? 'Resume Repairer • Free Plan' : undefined,
                   });
 
                   toast({
@@ -287,7 +287,7 @@ export default function Editor() {
                               improvedText,
                               atsScore: resume.atsScore,
                               watermarkText:
-                                (user?.plan === 'free' && user?.plan !== 'admin') ? 'Resume Repairer • Free Plan' : undefined,
+                                (user?.plan === 'free') ? 'Resume Repairer • Free Plan' : undefined,
                             });
 
                             toast({
