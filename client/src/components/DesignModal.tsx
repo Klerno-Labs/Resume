@@ -1,6 +1,7 @@
-import { X, Check } from 'lucide-react';
+import { X, Check, Download, FileCode } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
+import { toast } from '@/hooks/use-toast';
 
 interface DesignModalProps {
   isOpen: boolean;
@@ -8,10 +9,69 @@ interface DesignModalProps {
   htmlContent: string;
   onChooseDesign: () => void;
   isSelected?: boolean;
+  userTier?: 'free' | 'premium' | 'pro';
+  onUpgradeClick?: () => void;
 }
 
-export function DesignModal({ isOpen, onClose, htmlContent, onChooseDesign, isSelected = false }: DesignModalProps) {
+export function DesignModal({
+  isOpen,
+  onClose,
+  htmlContent,
+  onChooseDesign,
+  isSelected = false,
+  userTier = 'free',
+  onUpgradeClick
+}: DesignModalProps) {
   if (!isOpen) return null;
+
+  const handleDownloadHTML = () => {
+    if (userTier === 'free') {
+      onUpgradeClick?.();
+      return;
+    }
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `resume-${Date.now()}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Downloaded!",
+      description: "Your resume HTML has been downloaded.",
+    });
+  };
+
+  const handleDownloadPDF = async () => {
+    if (userTier === 'free') {
+      onUpgradeClick?.();
+      return;
+    }
+
+    toast({
+      title: "Generating PDF...",
+      description: "This may take a few seconds.",
+    });
+
+    // Use existing PDF export functionality
+    try {
+      const iframe = document.querySelector('iframe[title="Resume Design Preview"]') as HTMLIFrameElement;
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.print();
+      }
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      toast({
+        title: "PDF Export",
+        description: "Use your browser's Print function (Ctrl/Cmd + P) and select 'Save as PDF'",
+        variant: "default",
+      });
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -86,6 +146,22 @@ export function DesignModal({ isOpen, onClose, htmlContent, onChooseDesign, isSe
                 <span className="font-medium">Tip:</span> This 2-column gradient design is ATS-friendly and professional
               </div>
               <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadHTML}
+                  className="flex items-center gap-2"
+                >
+                  <FileCode className="w-4 h-4" />
+                  Download HTML
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadPDF}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download PDF
+                </Button>
                 <Button variant="outline" onClick={onClose}>
                   Close Preview
                 </Button>

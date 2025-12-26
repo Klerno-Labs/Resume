@@ -176,6 +176,8 @@ export function ComparisonView({
           htmlContent={improvedHtml}
           onChooseDesign={handleChooseDesign}
           isSelected={isDesignSelected}
+          userTier={requiresUpgrade ? 'free' : 'premium'}
+          onUpgradeClick={onUpgradeClick}
         />
       )}
     </div>
