@@ -175,8 +175,8 @@ CRITICAL DESIGN REQUIREMENTS:
    - Links and highlights: ${template.accentColor}
 
 4. VISUAL ELEMENTS (MAKE IT UNIQUE):
-   - Circular photo placeholder: 120px circle, border: 4px solid white, in sidebar
-   - Contact icons: 📧 ☎ 🌐 📍 (white, in sidebar)
+   - NO photo placeholder - leave space or use decorative element instead
+   - Contact icons: Email, Phone, Location, Website (use simple white icons or text in sidebar)
    - Skill tags: white pills with background: rgba(255,255,255,0.2) in sidebar
    - Divider lines in sidebar: 1px solid rgba(255,255,255,0.3)
    - Box-shadow on container: 0 10px 30px rgba(0,0,0,0.15)
