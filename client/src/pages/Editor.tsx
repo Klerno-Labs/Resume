@@ -92,15 +92,15 @@ export default function Editor() {
     <>
       <div className="h-screen flex flex-col bg-background font-sans overflow-hidden">
         {/* Header */}
-        <header className="h-16 border-b flex items-center justify-between px-6 bg-white dark:bg-slate-950 z-20 shrink-0">
-          <div className="flex items-center gap-4">
+        <header className="h-14 md:h-16 border-b flex items-center justify-between px-3 md:px-6 bg-white dark:bg-slate-950 z-20 shrink-0">
+          <div className="flex items-center gap-2 md:gap-4 min-w-0">
             <Link href="/">
-              <button className="p-2 hover:bg-secondary rounded-full transition-colors">
-                <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+              <button className="p-1.5 md:p-2 hover:bg-secondary rounded-full transition-colors">
+                <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
               </button>
             </Link>
-            <div className="flex flex-col">
-              <h1 className="font-semibold text-sm">{resume.fileName}</h1>
+            <div className="flex flex-col min-w-0">
+              <h1 className="font-semibold text-xs md:text-sm truncate">{resume.fileName}</h1>
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}
@@ -110,11 +110,13 @@ export default function Editor() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <CoverLetterDialog resumeId={resume.id} />
+          <div className="flex items-center gap-1.5 md:gap-3">
+            <div className="hidden sm:block">
+              <CoverLetterDialog resumeId={resume.id} />
+            </div>
             <Button
               size="sm"
-              className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
+              className="gap-1 md:gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 text-xs md:text-sm"
               onClick={() => {
                 try {
                   toast({
@@ -148,8 +150,8 @@ export default function Editor() {
               }}
               disabled={!isCompleted}
             >
-              <Download className="w-4 h-4" />
-              Export PDF
+              <Download className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden xs:inline">Export</span>
             </Button>
           </div>
         </header>
@@ -158,36 +160,39 @@ export default function Editor() {
         <div className="flex-1 flex overflow-hidden">
           {/* Editor Area */}
           <main className="flex-1 flex flex-col bg-muted/20 relative">
-            <div className="p-3 border-b bg-white dark:bg-slate-950">
+            <div className="p-2 md:p-3 border-b bg-white dark:bg-slate-950">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2 h-12">
-                  <TabsTrigger value="preview" className="text-base" title="Preview and download your improved resume">
-                    👁️ Preview & Download
+                <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2 h-10 md:h-12">
+                  <TabsTrigger value="preview" className="text-xs md:text-base" title="Preview and download your improved resume">
+                    <span className="hidden sm:inline">👁️ Preview & Download</span>
+                    <span className="sm:hidden">👁️ Preview</span>
                   </TabsTrigger>
-                  <TabsTrigger value="advanced" className="text-base" title="Templates, job matching, and industry optimization">
-                    🛠️ Advanced Tools
+                  <TabsTrigger value="advanced" className="text-xs md:text-base" title="Templates, job matching, and industry optimization">
+                    <span className="hidden sm:inline">🛠️ Advanced Tools</span>
+                    <span className="sm:hidden">🛠️ Tools</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
 
-            <div className="flex-1 p-8 overflow-hidden">
+            <div className="flex-1 p-3 md:p-8 overflow-hidden">
               <Tabs value={activeTab} className="h-full">
                 <TabsContent
                   value="preview"
                   className="h-full mt-0 flex items-center justify-center overflow-hidden"
                 >
-                  <div className="flex flex-col items-center gap-4 w-full h-full justify-center">
+                  <div className="flex flex-col items-center gap-3 md:gap-4 w-full h-full justify-center">
                     {/* Download Action Bar */}
-                    <div className="w-full bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-lg p-6 flex items-center justify-between">
+                    <div className="w-full max-w-4xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-lg p-3 md:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:justify-between">
                       <div>
-                        <h3 className="text-lg font-semibold mb-1">Your Improved Resume is Ready!</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Download your ATS-optimized resume or continue editing below
+                        <h3 className="text-base md:text-lg font-semibold mb-1">Your Improved Resume is Ready!</h3>
+                        <p className="text-xs md:text-sm text-muted-foreground">
+                          Download your ATS-optimized resume
                         </p>
                       </div>
                       <Button
-                        size="lg"
+                        size="default"
+                        className="w-full sm:w-auto"
                         onClick={() => {
                           try {
                             exportResumeToPDF({
@@ -211,18 +216,20 @@ export default function Editor() {
                           }
                         }}
                         disabled={!isCompleted}
-                        className="gap-2 px-6"
                       >
-                        <Download className="w-5 h-5" />
-                        Download Improved Resume
+                        <Download className="w-4 h-4 md:w-5 md:h-5" />
+                        <span className="hidden xs:inline">Download Resume</span>
+                        <span className="xs:hidden">Download</span>
                       </Button>
                     </div>
 
                     {/* Regenerate Design Button (only for AI designs) */}
                     {resume.improvedHtml && (
-                      <div className="flex justify-center mb-4">
+                      <div className="flex justify-center w-full max-w-4xl">
                         <Button
                           variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto"
                           onClick={async () => {
                             try {
                               setIsRegenerating(true);
@@ -249,46 +256,47 @@ export default function Editor() {
                             }
                           }}
                           disabled={!isCompleted || isRegenerating}
-                          className="gap-2"
                         >
                           {isRegenerating ? (
                             <>
-                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                              Generating New Design...
+                              <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                              <span className="text-xs md:text-sm">Generating...</span>
                             </>
                           ) : (
                             <>
-                              <Palette className="w-4 h-4" />
-                              Regenerate Design
+                              <Palette className="w-3 h-3 md:w-4 md:h-4" />
+                              <span className="text-xs md:text-sm">Regenerate Design</span>
                             </>
                           )}
                         </Button>
                       </div>
                     )}
 
-                    {/* Preview - Fits on One Page, No Scroll */}
-                    <div className="flex-1 flex justify-center items-center w-full">
-                      <div
-                        className="bg-white shadow-2xl border rounded-sm overflow-hidden"
-                        style={{
-                          width: '595px',
-                          height: '842px',
-                          transform: 'scale(0.65)',
-                          transformOrigin: 'center center'
-                        }}
-                      >
-                        {resume.improvedHtml ? (
-                          <iframe
-                            srcDoc={resume.improvedHtml}
-                            className="w-full h-full border-0"
-                            title="AI-Generated Resume Design"
-                            sandbox="allow-same-origin"
-                          />
-                        ) : (
-                          <div className="w-full h-full overflow-hidden">
-                            <ResumePreviewStyled text={improvedText} />
-                          </div>
-                        )}
+                    {/* Preview - Responsive, Fits on Screen */}
+                    <div className="flex-1 flex justify-center items-center w-full overflow-hidden px-2 md:px-0">
+                      <div className="relative w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[595px]" style={{ aspectRatio: '595 / 842' }}>
+                        <div
+                          className="absolute inset-0 bg-white shadow-lg md:shadow-2xl border rounded-sm overflow-hidden origin-center"
+                          style={{
+                            width: '595px',
+                            height: '842px',
+                            transform: 'scale(calc(min(95vw, 100%) / 595))',
+                            transformOrigin: 'top left'
+                          }}
+                        >
+                          {resume.improvedHtml ? (
+                            <iframe
+                              srcDoc={resume.improvedHtml}
+                              className="w-full h-full border-0"
+                              title="AI-Generated Resume Design"
+                              sandbox="allow-same-origin"
+                            />
+                          ) : (
+                            <div className="w-full h-full overflow-hidden">
+                              <ResumePreviewStyled text={improvedText} />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
