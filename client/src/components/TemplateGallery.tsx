@@ -17,7 +17,7 @@ interface Template {
 interface TemplateGalleryProps {
   currentTemplate?: string;
   onSelectTemplate: (template: Template) => void;
-  userTier: 'free' | 'premium' | 'pro';
+  userTier: 'free' | 'premium' | 'pro' | 'admin';
   onUpgradeClick: () => void;
 }
 

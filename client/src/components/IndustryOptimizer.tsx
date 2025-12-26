@@ -9,7 +9,7 @@ import { toast } from '@/hooks/use-toast';
 interface IndustryOptimizerProps {
   resumeText: string;
   onOptimizationComplete?: (optimizedText: string) => void;
-  userTier: 'free' | 'premium' | 'pro';
+  userTier: 'free' | 'premium' | 'pro' | 'admin';
   onUpgradeClick: () => void;
 }
 
@@ -30,7 +30,7 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
   const [selectedIndustry, setSelectedIndustry] = useState<string>('');
   const [isOptimizing, setIsOptimizing] = useState(false);
 
-  const canUseFeature = userTier === 'premium' || userTier === 'pro';
+  const canUseFeature = userTier === 'premium' || userTier === 'pro' || userTier === 'admin';
 
   const optimizeForIndustry = async () => {
     if (!canUseFeature) {

@@ -9,7 +9,7 @@ interface DesignModalProps {
   htmlContent: string;
   onChooseDesign: () => void;
   isSelected?: boolean;
-  userTier?: 'free' | 'premium' | 'pro';
+  userTier?: 'free' | 'premium' | 'pro' | 'admin';
   onUpgradeClick?: () => void;
 }
 

@@ -8,7 +8,7 @@ import { toast } from '@/hooks/use-toast';
 
 interface JobMatcherProps {
   resumeText: string;
-  userTier: 'free' | 'premium' | 'pro';
+  userTier: 'free' | 'premium' | 'pro' | 'admin';
   onUpgradeClick: () => void;
   onMatchComplete?: (suggestions: string[]) => void;
 }
@@ -25,7 +25,7 @@ export function JobMatcher({ resumeText, userTier, onUpgradeClick, onMatchComple
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
 
-  const canUseFeature = userTier === 'premium' || userTier === 'pro';
+  const canUseFeature = userTier === 'premium' || userTier === 'pro' || userTier === 'admin';
 
   const analyzeMatch = async () => {
     if (!canUseFeature) {
