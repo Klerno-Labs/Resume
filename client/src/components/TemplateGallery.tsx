@@ -88,6 +88,7 @@ export function TemplateGallery({ currentTemplate, onSelectTemplate, userTier, o
         <div className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">Your tier:</span>
           <span className={`font-semibold px-3 py-1 rounded-full ${
+            userTier === 'admin' ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-700' :
             userTier === 'pro' ? 'bg-purple-100 text-purple-700' :
             userTier === 'premium' ? 'bg-blue-100 text-blue-700' :
             'bg-gray-100 text-gray-700'
@@ -214,7 +215,7 @@ export function TemplateGallery({ currentTemplate, onSelectTemplate, userTier, o
       </ScrollArea>
 
       {/* Tier Upgrade CTA */}
-      {userTier !== 'pro' && (
+      {userTier !== 'pro' && userTier !== 'admin' && (
         <div className="mt-6 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
           <div className="flex items-center justify-between">
             <div>

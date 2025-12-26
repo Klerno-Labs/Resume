@@ -101,6 +101,7 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
         <div className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">Your tier:</span>
           <span className={`font-semibold px-3 py-1 rounded-full ${
+            userTier === 'admin' ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-700' :
             userTier === 'pro' ? 'bg-purple-100 text-purple-700' :
             userTier === 'premium' ? 'bg-blue-100 text-blue-700' :
             'bg-gray-100 text-gray-700'
