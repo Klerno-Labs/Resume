@@ -25,7 +25,7 @@ export function DesignModal({
   if (!isOpen) return null;
 
   const handleDownloadHTML = () => {
-    if (userTier === 'free' && userTier !== 'admin') {
+    if (userTier === 'free') {
       onUpgradeClick?.();
       return;
     }
@@ -47,7 +47,7 @@ export function DesignModal({
   };
 
   const handleDownloadPDF = () => {
-    if (userTier === 'free' && userTier !== 'admin') {
+    if (userTier === 'free') {
       onUpgradeClick?.();
       return;
     }
