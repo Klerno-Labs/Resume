@@ -15,14 +15,18 @@ export async function processResume(resumeId: string, originalText: string, user
           content: `Transform this resume into a PERFECT ATS-optimized version that will score 100/100. Requirements:
 
 CRITICAL ATS OPTIMIZATION RULES:
-1. Use powerful action verbs (Led, Achieved, Drove, Spearheaded, Engineered, etc.)
-2. Add specific metrics and quantified results to EVERY achievement (%, $, numbers)
-3. Include industry-standard keywords and technical skills throughout
-4. Use clear section headers: PROFESSIONAL SUMMARY, WORK EXPERIENCE, SKILLS, EDUCATION
-5. Format consistently with bullet points and proper spacing
-6. Remove vague statements - make everything concrete and measurable
-7. Ensure 10+ industry keywords are naturally integrated
-8. Make formatting ATS-friendly (no tables, columns, or complex layouts in text)
+1. **ONE PAGE MAXIMUM** - The resume MUST fit on a single page (max 50-55 lines total)
+2. Use powerful action verbs (Led, Achieved, Drove, Spearheaded, Engineered, etc.)
+3. Add specific metrics and quantified results to EVERY achievement (%, $, numbers)
+4. Include industry-standard keywords and technical skills throughout
+5. Use clear section headers: PROFESSIONAL SUMMARY, WORK EXPERIENCE, SKILLS, EDUCATION
+6. Format consistently with bullet points and proper spacing
+7. Remove vague statements - make everything concrete and measurable
+8. Ensure 10+ industry keywords are naturally integrated
+9. Make formatting ATS-friendly (no tables, columns, or complex layouts in text)
+10. Keep it CONCISE - prioritize quality over quantity, show only the most impactful achievements
+
+ONE PAGE RULE: Limit to ~3-4 bullet points per job, keep summary to 2-3 sentences max.
 
 Original Resume:
 ${originalText}
