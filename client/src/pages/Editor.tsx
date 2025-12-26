@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { ArrowLeft, Download, RefreshCw, Wand2, AlertTriangle, Target, Briefcase, Palette } from 'lucide-react';
-import { AtsScore } from '@/components/AtsScore';
+import { ArrowLeft, Download, Target, Briefcase, Palette } from 'lucide-react';
 import { CoverLetterDialog } from '@/components/CoverLetterDialog';
 import { ResumePreviewStyled } from '@/components/ResumePreview';
 import { TemplateGallery } from '@/components/TemplateGallery';
@@ -17,7 +16,6 @@ import { useUpgradePrompt } from '@/hooks/useUpgradePrompt';
 import { UpgradeModal } from '@/components/UpgradeModal';
 
 export default function Editor() {
-  const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('preview');
   const [resume, setResume] = useState<Resume | null>(null);
   const [selectedDesign, setSelectedDesign] = useState<string | null>(null);
@@ -75,22 +73,6 @@ export default function Editor() {
     void fetchResume();
   }, []); // Removed navigate from dependencies to prevent infinite loop
 
-  const handleOptimize = () => {
-    setIsProcessing(true);
-    toast({
-      title: 'Optimizing Resume',
-      description: 'AI is rewriting your bullets for maximum impact...',
-    });
-
-    setTimeout(() => {
-      setIsProcessing(false);
-      toast({
-        title: 'Optimization Complete',
-        description: 'Your resume score increased!',
-      });
-    }, 2000);
-  };
-
   if (!resume) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -105,7 +87,6 @@ export default function Editor() {
   const isCompleted = resume.status === 'completed';
   const originalText = resume.originalText || '';
   const improvedText = resume.improvedText || (isCompleted ? '' : 'Processing your resume...');
-  const atsScore = resume.atsScore ?? 0;
 
   return (
     <>
@@ -175,60 +156,6 @@ export default function Editor() {
 
         {/* Main Layout */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar Tools */}
-          <aside className="w-80 border-r bg-secondary/30 flex flex-col overflow-y-auto">
-            <div className="p-6 border-b bg-white dark:bg-slate-950">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-                Performance
-              </h2>
-              <AtsScore
-                score={atsScore}
-                keywordsScore={resume.keywordsScore}
-                formattingScore={resume.formattingScore}
-              />
-            </div>
-
-            <div className="p-6 space-y-6">
-              <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                  Critical Issues ({resume.issues?.length || 0})
-                </h3>
-                <div className="space-y-2">
-                  {resume.issues?.slice(0, 3).map((issue, i) => (
-                    <div
-                      key={i}
-                      className="p-3 bg-white dark:bg-slate-950 border rounded-lg text-sm shadow-sm"
-                    >
-                      <div
-                        className={`font-medium mb-1 ${issue.severity === 'high' ? 'text-red-500' : 'text-yellow-500'}`}
-                      >
-                        {issue.type.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-                      </div>
-                      <p className="text-muted-foreground text-xs">{issue.message}</p>
-                    </div>
-                  )) || <p className="text-muted-foreground text-sm">No issues detected.</p>}
-                </div>
-              </div>
-
-              <div className="pt-4 border-t">
-                <Button
-                  className="w-full gap-2"
-                  onClick={handleOptimize}
-                  disabled={isProcessing}
-                  data-testid="button-optimize"
-                >
-                  {isProcessing ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-4 h-4" />
-                  )}
-                  {isProcessing ? 'Optimizing...' : 'Re-Optimize with AI'}
-                </Button>
-              </div>
-            </div>
-          </aside>
-
           {/* Editor Area */}
           <main className="flex-1 flex flex-col bg-muted/20 relative">
             <div className="p-3 border-b bg-white dark:bg-slate-950">
@@ -248,9 +175,9 @@ export default function Editor() {
               <Tabs value={activeTab} className="h-full">
                 <TabsContent
                   value="preview"
-                  className="h-full mt-0 flex flex-col gap-4 overflow-auto py-4"
+                  className="h-full mt-0 flex items-center justify-center overflow-hidden"
                 >
-                  <div className="flex flex-col items-center gap-4 max-w-4xl mx-auto w-full">
+                  <div className="flex flex-col items-center gap-4 w-full h-full justify-center">
                     {/* Download Action Bar */}
                     <div className="w-full bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-lg p-6 flex items-center justify-between">
                       <div>
@@ -340,14 +267,14 @@ export default function Editor() {
                     )}
 
                     {/* Preview - Fits on One Page, No Scroll */}
-                    <div className="w-full flex justify-center">
+                    <div className="flex-1 flex justify-center items-center w-full">
                       <div
                         className="bg-white shadow-2xl border rounded-sm overflow-hidden"
                         style={{
-                          width: 'min(595px, 90vw)',
-                          height: 'min(842px, calc(90vw * 842 / 595))',
-                          maxHeight: '75vh',
-                          aspectRatio: '595 / 842'
+                          width: '595px',
+                          height: '842px',
+                          transform: 'scale(0.65)',
+                          transformOrigin: 'center center'
                         }}
                       >
                         {resume.improvedHtml ? (
@@ -358,10 +285,8 @@ export default function Editor() {
                             sandbox="allow-same-origin"
                           />
                         ) : (
-                          <div className="w-full h-full overflow-auto">
-                            <div className="scale-[0.7] origin-top-left w-[142%] h-[142%]">
-                              <ResumePreviewStyled text={improvedText} />
-                            </div>
+                          <div className="w-full h-full overflow-hidden">
+                            <ResumePreviewStyled text={improvedText} />
                           </div>
                         )}
                       </div>
