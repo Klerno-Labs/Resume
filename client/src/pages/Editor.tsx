@@ -290,21 +290,32 @@ export default function Editor() {
                       </Button>
                     </div>
 
-                    {/* Preview - Single Page, No Scroll */}
-                    <div className="bg-white shadow-2xl w-[595px] h-[842px] overflow-hidden border rounded-sm relative">
-                      {resume.improvedHtml ? (
-                        <iframe
-                          srcDoc={resume.improvedHtml}
-                          className="w-full h-full border-0 absolute inset-0"
-                          title="AI-Generated Resume Design"
-                          sandbox="allow-same-origin"
-                          style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
-                        />
-                      ) : (
-                        <div className="w-full h-full overflow-hidden">
-                          <ResumePreviewStyled text={improvedText} />
-                        </div>
-                      )}
+                    {/* Preview - Fits on One Page, No Scroll */}
+                    <div className="w-full flex justify-center">
+                      <div
+                        className="bg-white shadow-2xl border rounded-sm overflow-hidden"
+                        style={{
+                          width: 'min(595px, 90vw)',
+                          height: 'min(842px, calc(90vw * 842 / 595))',
+                          maxHeight: '75vh',
+                          aspectRatio: '595 / 842'
+                        }}
+                      >
+                        {resume.improvedHtml ? (
+                          <iframe
+                            srcDoc={resume.improvedHtml}
+                            className="w-full h-full border-0"
+                            title="AI-Generated Resume Design"
+                            sandbox="allow-same-origin"
+                          />
+                        ) : (
+                          <div className="w-full h-full overflow-auto">
+                            <div className="scale-[0.7] origin-top-left w-[142%] h-[142%]">
+                              <ResumePreviewStyled text={improvedText} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
