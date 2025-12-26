@@ -61,7 +61,7 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
 
       if (!response.ok) throw new Error('Failed to optimize');
 
-      const result = await response.json();
+      const result = await response.json() as { optimizedText?: string };
 
       if (onOptimizationComplete && result.optimizedText) {
         onOptimizationComplete(result.optimizedText);
@@ -176,7 +176,7 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
                 AI will rewrite your resume to match {selectedIndustryData?.label || 'your selected industry'}
               </p>
               <Button
-                onClick={optimizeForIndustry}
+                onClick={() => void optimizeForIndustry()}
                 disabled={isOptimizing || !selectedIndustry}
                 className="bg-gradient-to-r from-indigo-500 to-purple-500"
               >

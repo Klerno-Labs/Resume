@@ -40,11 +40,12 @@ export function PricingModal({ trigger, defaultPlan = 'pro' }: PricingModalProps
       if (url) {
         window.location.href = url;
       }
-    } catch (error: any) {
+    } catch (error) {
       setIsLoading(false);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start checkout';
       toast({
         title: 'Error',
-        description: error.message || 'Failed to start checkout',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
@@ -65,7 +66,7 @@ export function PricingModal({ trigger, defaultPlan = 'pro' }: PricingModalProps
             <DialogTitle className="text-xl">Choose your plan</DialogTitle>
           </DialogHeader>
 
-          <RadioGroup value={plan} onValueChange={(v: any) => setPlan(v)} className="grid gap-4">
+          <RadioGroup value={plan} onValueChange={(v) => setPlan(v as 'basic' | 'premium' | 'pro')} className="grid gap-4">
             {/* Basic */}
             <Label
               htmlFor="basic"
@@ -172,7 +173,7 @@ export function PricingModal({ trigger, defaultPlan = 'pro' }: PricingModalProps
             If you're not landing more interviews within 30 days, we'll refund your payment in full.
           </div>
 
-          <Button onClick={handleCheckout} className="w-full" size="lg" disabled={isLoading}>
+          <Button onClick={() => void handleCheckout()} className="w-full" size="lg" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />

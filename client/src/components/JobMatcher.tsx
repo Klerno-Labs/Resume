@@ -56,7 +56,7 @@ export function JobMatcher({ resumeText, userTier, onUpgradeClick, onMatchComple
 
       if (!response.ok) throw new Error('Failed to analyze match');
 
-      const result = await response.json();
+      const result = await response.json() as MatchResult;
       setMatchResult(result);
 
       if (onMatchComplete && result.suggestions) {
@@ -142,7 +142,7 @@ export function JobMatcher({ resumeText, userTier, onUpgradeClick, onMatchComple
                 {jobDescription.length} characters
               </p>
               <Button
-                onClick={analyzeMatch}
+                onClick={() => void analyzeMatch()}
                 disabled={isAnalyzing || !jobDescription.trim()}
                 className="bg-gradient-to-r from-blue-500 to-purple-500"
               >

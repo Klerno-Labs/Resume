@@ -28,13 +28,13 @@ export function TemplateGallery({ currentTemplate, onSelectTemplate, userTier, o
   const [hoveredTemplate, setHoveredTemplate] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchTemplates();
+    void fetchTemplates();
   }, []);
 
   const fetchTemplates = async () => {
     try {
       const response = await fetch('/api/templates');
-      const data = await response.json();
+      const data = await response.json() as Template[];
       setTemplates(data);
     } catch (error) {
       console.error('Failed to fetch templates:', error);
