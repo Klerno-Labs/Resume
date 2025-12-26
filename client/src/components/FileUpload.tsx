@@ -109,7 +109,9 @@ export function FileUpload({ onUpload }: FileUploadProps) {
             setProgress(percent);
             try {
               toastHandle.update({ id: toastHandle.id, description: `${percent}%` });
-            } catch {}
+            } catch {
+              // Ignore toast update errors
+            }
           },
           ac.signal
         );
@@ -129,15 +131,9 @@ export function FileUpload({ onUpload }: FileUploadProps) {
         }
 
         // Normal flow for new uploads
-        // Wait a moment to allow database write to complete before polling (increased from 500ms to 1000ms)
-        setTimeout(() => {
-          if (onUpload) onUpload(uploadedFile, result.resumeId);
-        }, 1000);
-
-        // Wait for UI and database write, then redirect (increased from 1200ms to 1800ms)
-        setTimeout(() => {
-          setLocation(`/editor?resumeId=${result.resumeId}`);
-        }, 1800);
+        // Immediate redirect for faster UX - database write is async
+        if (onUpload) onUpload(uploadedFile, result.resumeId);
+        setLocation(`/editor?resumeId=${result.resumeId}`);
       } catch (error) {
         const msg = error instanceof Error ? error.message : 'Failed to upload file';
         setErrorMessage(msg);
@@ -149,7 +145,9 @@ export function FileUpload({ onUpload }: FileUploadProps) {
       finally {
         try {
           toastHandle.dismiss();
-        } catch {}
+        } catch {
+          // Ignore toast dismiss errors
+        }
         setController(null);
       }
     },

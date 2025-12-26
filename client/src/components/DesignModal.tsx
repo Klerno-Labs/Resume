@@ -46,7 +46,7 @@ export function DesignModal({
     });
   };
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = () => {
     if (userTier === 'free') {
       onUpgradeClick?.();
       return;

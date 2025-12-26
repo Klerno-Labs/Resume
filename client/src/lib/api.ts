@@ -222,7 +222,9 @@ class ApiClient {
             aborted = true;
             try {
               xhr.abort();
-            } catch {}
+            } catch {
+              // Ignore XHR abort errors
+            }
             reject(new Error('Upload aborted'));
           };
 
@@ -236,7 +238,9 @@ class ApiClient {
               const percent = Math.round((e.loaded / e.total) * 100);
               try {
                 onProgress(percent);
-              } catch {}
+              } catch {
+                // Ignore progress callback errors
+              }
             }
           };
 
@@ -296,7 +300,9 @@ class ApiClient {
         aborted = true;
         try {
           xhr.abort();
-        } catch {}
+        } catch {
+          // Ignore XHR abort errors
+        }
         reject(new Error('Upload aborted'));
       };
 
@@ -310,7 +316,9 @@ class ApiClient {
           const percent = Math.round((e.loaded / e.total) * 100);
           try {
             onProgress(percent);
-          } catch {}
+          } catch {
+            // Ignore progress callback errors
+          }
         }
       };
 
