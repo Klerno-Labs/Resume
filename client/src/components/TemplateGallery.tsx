@@ -51,7 +51,7 @@ export function TemplateGallery({ currentTemplate, onSelectTemplate, userTier, o
 
   // Tier restrictions
   const getTemplateAccess = (template: Template, index: number) => {
-    if (userTier === 'pro') return { canAccess: true, reason: null };
+    if (userTier === 'admin' || userTier === 'pro') return { canAccess: true, reason: null };
     if (userTier === 'premium') {
       // Premium: 10 templates
       return index < 10

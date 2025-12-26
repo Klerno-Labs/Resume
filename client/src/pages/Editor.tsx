@@ -140,7 +140,7 @@ export default function Editor() {
                     description: 'Generating your resume PDF...',
                   });
 
-                  if (user?.plan === 'free') {
+                  if (user?.plan === 'free' && user?.plan !== 'admin') {
                     triggerUpgrade('watermark_notice');
                   }
 
@@ -149,7 +149,7 @@ export default function Editor() {
                     fileName: resume.fileName,
                     atsScore: resume.atsScore,
                     watermarkText:
-                      user?.plan === 'free' ? 'Resume Repairer • Free Plan' : undefined,
+                      (user?.plan === 'free' && user?.plan !== 'admin') ? 'Resume Repairer • Free Plan' : undefined,
                   });
 
                   toast({
@@ -287,7 +287,7 @@ export default function Editor() {
                               improvedText,
                               atsScore: resume.atsScore,
                               watermarkText:
-                                user?.plan === 'free' ? 'Resume Repairer • Free Plan' : undefined,
+                                (user?.plan === 'free' && user?.plan !== 'admin') ? 'Resume Repairer • Free Plan' : undefined,
                             });
 
                             toast({
