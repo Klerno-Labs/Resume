@@ -93,10 +93,10 @@ class ApiClient {
       body: JSON.stringify({ email, password, name, referralCode }),
     });
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Registration failed'));
     }
-    return res.json();
+    return res.json() as Promise<{ user: User }>;
   }
 
   async login(email: string, password: string): Promise<{ user: User }> {
@@ -106,10 +106,10 @@ class ApiClient {
       body: JSON.stringify({ email, password }),
     });
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Login failed'));
     }
-    return res.json();
+    return res.json() as Promise<{ user: User }>;
   }
 
   async logout(): Promise<void> {
@@ -129,7 +129,7 @@ class ApiClient {
       }
       let message = 'Failed to get current user';
       try {
-        const error = await res.json();
+        const error = await res.json() as { message?: string };
         message = this.toErrorMessage(error, message);
       } catch {
         // ignore parse errors and fall back to default message
@@ -151,10 +151,10 @@ class ApiClient {
       body: JSON.stringify({ token }),
     });
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Email verification failed'));
     }
-    return res.json();
+    return res.json() as Promise<{ success: boolean; message: string }>;
   }
 
   async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
@@ -164,10 +164,10 @@ class ApiClient {
       body: JSON.stringify({ email }),
     });
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to send reset email'));
     }
-    return res.json();
+    return res.json() as Promise<{ success: boolean; message: string }>;
   }
 
   async resetPassword(
@@ -180,10 +180,10 @@ class ApiClient {
       body: JSON.stringify({ token, password }),
     });
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Password reset failed'));
     }
-    return res.json();
+    return res.json() as Promise<{ success: boolean; message: string }>;
   }
 
   // Resumes
@@ -208,7 +208,7 @@ class ApiClient {
       });
 
       if (presignRes.ok) {
-        const { url, key } = await presignRes.json();
+        const { url, key } = await presignRes.json() as { url: string; key: string };
 
         // Upload file to presigned URL using XHR so we can report progress
         await new Promise<void>((resolve, reject) => {
@@ -272,15 +272,20 @@ class ApiClient {
         });
 
         if (!completeRes.ok) {
-          const error = await completeRes.json();
+          const error = await completeRes.json() as { message?: string };
           throw new Error(this.toErrorMessage(error, 'Upload completion failed'));
         }
 
-        return completeRes.json();
+        return completeRes.json() as Promise<{
+          resumeId: string;
+          status: string;
+          isDuplicate?: boolean;
+          message?: string;
+          originalUploadDate?: string;
+        }>;
       }
-    } catch (err) {
-      // Fall through to multipart upload fallback
-      console.warn('[api.uploadResume] Presign flow failed, falling back to multipart upload:', err);
+    } catch {
+      // Fall through to multipart upload fallback (don't log err - it's unused)
     }
 
     // Fallback: multipart POST to /resumes/upload with XHR for progress tracking
@@ -328,15 +333,21 @@ class ApiClient {
 
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
-            const result = JSON.parse(xhr.responseText);
+            const result = JSON.parse(xhr.responseText) as {
+              resumeId: string;
+              status: string;
+              isDuplicate?: boolean;
+              message?: string;
+              originalUploadDate?: string;
+            };
             console.log('[api.uploadResume] Multipart upload successful:', result);
             resolve(result);
-          } catch (err) {
+          } catch {
             reject(new Error('Failed to parse upload response'));
           }
         } else {
           try {
-            const error = JSON.parse(xhr.responseText);
+            const error = JSON.parse(xhr.responseText) as { message?: string; error?: string };
             reject(new Error(error.message || error.error || `Upload failed with status ${xhr.status}`));
           } catch {
             reject(new Error(`Upload failed with status ${xhr.status}`));
@@ -358,16 +369,16 @@ class ApiClient {
   async getResume(id: string): Promise<Resume> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/resumes/${id}`);
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to fetch resume'));
     }
-    return res.json();
+    return res.json() as Promise<Resume>;
   }
 
   async getUserResumes(userId: string): Promise<Resume[]> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/users/${userId}/resumes`);
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to fetch resumes'));
     }
     return res.json();
@@ -385,7 +396,7 @@ class ApiClient {
       body: JSON.stringify({ resumeId, jobDescription, tone }),
     });
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to generate cover letter'));
     }
     return res.json();
@@ -400,7 +411,7 @@ class ApiClient {
     if (!res.ok) {
       let message = 'Failed to fetch design templates';
       try {
-        const error = await res.json();
+        const error = await res.json() as { message?: string };
         message = this.toErrorMessage(error, message);
       } catch {
         // ignore JSON parse error
@@ -418,7 +429,7 @@ class ApiClient {
       body: JSON.stringify({ plan }),
     });
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to create checkout'));
     }
     return res.json();
@@ -433,7 +444,7 @@ class ApiClient {
       body: JSON.stringify({ sessionId }),
     });
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to verify payment'));
     }
     return res.json();
@@ -448,7 +459,7 @@ class ApiClient {
       body: JSON.stringify({ plan }),
     });
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to create payment'));
     }
     return res.json();
@@ -457,7 +468,7 @@ class ApiClient {
   async getPayment(id: string): Promise<Payment> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/payments/${id}`);
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to fetch payment'));
     }
     return res.json();
@@ -474,7 +485,7 @@ class ApiClient {
       body: JSON.stringify({ planId, billingInterval }),
     });
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to start subscription checkout'));
     }
     return res.json();
@@ -489,7 +500,7 @@ class ApiClient {
       body: JSON.stringify({ packSize }),
     });
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to start credit checkout'));
     }
     return res.json();
@@ -500,7 +511,7 @@ class ApiClient {
       method: 'POST',
     });
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to cancel subscription'));
     }
     return res.json();
@@ -511,7 +522,7 @@ class ApiClient {
       method: 'POST',
     });
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to reactivate subscription'));
     }
     return res.json();
@@ -520,7 +531,7 @@ class ApiClient {
   async getUsage(): Promise<any> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/subscriptions/usage`);
     if (!res.ok) {
-      const error = await res.json();
+      const error = await res.json() as { message?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to fetch usage analytics'));
     }
     return res.json();
