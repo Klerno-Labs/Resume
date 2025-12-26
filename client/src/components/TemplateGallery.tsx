@@ -117,7 +117,7 @@ export function TemplateGallery({ currentTemplate, onSelectTemplate, userTier, o
 
       {/* Templates Grid */}
       <ScrollArea className="h-[600px]">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
           {filteredTemplates.map((template, index) => {
             const access = getTemplateAccess(template, index);
             const isSelected = currentTemplate === template.id;
@@ -147,12 +147,12 @@ export function TemplateGallery({ currentTemplate, onSelectTemplate, userTier, o
                   </div>
                 )}
 
-                {/* Template Preview */}
-                <div className="aspect-[8.5/11] bg-white relative">
+                {/* Template Preview - Compact and Clean */}
+                <div className="h-64 bg-white relative overflow-hidden">
                   <iframe
                     srcDoc={template.htmlTemplate}
-                    className="w-full h-full border-0 pointer-events-none transform scale-[0.4] origin-top-left"
-                    style={{ width: '250%', height: '250%' }}
+                    className="w-full h-full border-0 pointer-events-none transform scale-[0.25] origin-top-left"
+                    style={{ width: '400%', height: '400%' }}
                     title={`Preview of ${template.name}`}
                     sandbox="allow-same-origin"
                   />
@@ -187,25 +187,20 @@ export function TemplateGallery({ currentTemplate, onSelectTemplate, userTier, o
                   )}
                 </div>
 
-                {/* Template Info */}
-                <div className="p-4 bg-gradient-to-b from-white to-gray-50">
-                  <h3 className="font-semibold text-sm mb-1">{template.name}</h3>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="capitalize">{template.style}</span>
-                    <span className="flex items-center gap-1">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{
-                          background: template.colorScheme.includes('gradient')
-                            ? template.colorScheme
-                            : `linear-gradient(135deg, ${template.colorScheme}, ${template.colorScheme})`
-                        }}
-                      />
-                      {template.colorScheme.replace(' gradient', '')}
-                    </span>
-                  </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Used {template.usageCount} times
+                {/* Template Info - Compact */}
+                <div className="p-3 bg-gradient-to-b from-white to-gray-50 border-t">
+                  <h3 className="font-semibold text-xs mb-1.5 line-clamp-1">{template.name}</h3>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="capitalize text-muted-foreground">{template.style}</span>
+                    <div
+                      className="w-4 h-4 rounded-full border border-gray-200"
+                      style={{
+                        background: template.colorScheme.includes('gradient')
+                          ? template.colorScheme
+                          : `linear-gradient(135deg, ${template.colorScheme}, ${template.colorScheme})`
+                      }}
+                      title={template.colorScheme}
+                    />
                   </div>
                 </div>
               </motion.div>
