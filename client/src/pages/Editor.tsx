@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'wouter';
-import { ArrowLeft, Download, Target, Briefcase, Palette, Printer } from 'lucide-react';
+import { ArrowLeft, Download, Target, Briefcase, Palette, Printer, Upload, X } from 'lucide-react';
 import { CoverLetterDialog } from '@/components/CoverLetterDialog';
 import { ResumePreviewStyled } from '@/components/ResumePreview';
 import { TemplateGallery } from '@/components/TemplateGallery';
@@ -19,10 +19,12 @@ export default function Editor() {
   const [resume, setResume] = useState<Resume | null>(null);
   const [selectedDesign, setSelectedDesign] = useState<string | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const { showUpgrade, upgradeTrigger, featureName, triggerUpgrade, closeUpgrade } =
     useUpgradePrompt();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -86,6 +88,70 @@ export default function Editor() {
   const isCompleted = resume.status === 'completed';
   const originalText = resume.originalText || '';
   const improvedText = resume.improvedText || (isCompleted ? '' : 'Processing your resume...');
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid File Type',
+        description: 'Please upload an image file (JPG, PNG, etc.)',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File Too Large',
+        description: 'Please upload an image smaller than 5MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target?.result as string;
+      setUploadedImage(base64);
+
+      // Inject image into resume HTML
+      if (resume.improvedHtml) {
+        const updatedHtml = resume.improvedHtml.replace(
+          /<div class="photo-placeholder".*?<\/div>/,
+          `<img src="${base64}" alt="Profile Photo" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid white;" />`
+        );
+        setResume(prev => prev ? { ...prev, improvedHtml: updatedHtml } : null);
+      }
+
+      toast({
+        title: 'Image Uploaded!',
+        description: 'Your photo has been added to the resume',
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setUploadedImage(null);
+
+    if (resume.improvedHtml) {
+      const updatedHtml = resume.improvedHtml.replace(
+        /<img src="data:image.*?" alt="Profile Photo".*?\/>/,
+        '<div class="photo-placeholder" style="width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.3); border: 4px solid white;"></div>'
+      );
+      setResume(prev => prev ? { ...prev, improvedHtml: updatedHtml } : null);
+    }
+
+    toast({
+      title: 'Image Removed',
+      description: 'Photo removed from resume',
+    });
+  };
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
@@ -224,6 +290,71 @@ export default function Editor() {
 
             <div className="p-4 space-y-3">
               <Accordion type="single" collapsible className="w-full">
+                {/* Upload Photo */}
+                {resume.improvedHtml && (
+                  <AccordionItem value="photo" className="border rounded-lg px-4">
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                          <Upload className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-semibold text-sm">Upload Photo</div>
+                          <div className="text-xs text-muted-foreground">Add profile image</div>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-4 pt-2">
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Add a professional photo to your resume (max 5MB)
+                      </p>
+                      {uploadedImage ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={uploadedImage}
+                              alt="Uploaded"
+                              className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                            />
+                            <div className="flex-1">
+                              <p className="text-xs text-green-600 font-medium">Photo uploaded</p>
+                              <p className="text-xs text-muted-foreground">Visible in resume</p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={handleRemoveImage}
+                          >
+                            <X className="w-4 h-4" />
+                            <span>Remove Photo</span>
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <Upload className="w-4 h-4" />
+                            <span>Choose Photo</span>
+                          </Button>
+                        </>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+
                 {/* Regenerate Design */}
                 {resume.improvedHtml && (
                   <AccordionItem value="regenerate" className="border rounded-lg px-4">
@@ -382,30 +513,30 @@ export default function Editor() {
           </aside>
 
           {/* Main Resume Preview */}
-          <main className="flex-1 flex items-center justify-center bg-muted/20 p-3 md:p-8 overflow-hidden">
-            <div className="relative w-full max-w-[95vw] sm:max-w-[90vw] lg:max-w-[700px]" style={{ aspectRatio: '595 / 842' }}>
-              <div
-                className="absolute inset-0 bg-white shadow-2xl border rounded-sm overflow-hidden origin-center"
-                style={{
-                  width: '595px',
-                  height: '842px',
-                  transform: 'scale(calc(min(95vw, 700px) / 595))',
-                  transformOrigin: 'top left'
-                }}
-              >
-                {resume.improvedHtml ? (
-                  <iframe
-                    srcDoc={resume.improvedHtml}
-                    className="w-full h-full border-0"
-                    title="AI-Generated Resume Design - Ready to Print"
-                    sandbox="allow-same-origin"
-                  />
-                ) : (
-                  <div className="w-full h-full overflow-hidden">
-                    <ResumePreviewStyled text={improvedText} />
-                  </div>
-                )}
-              </div>
+          <main className="flex-1 flex items-center justify-center bg-muted/20 p-4 overflow-hidden">
+            <div
+              className="bg-white shadow-2xl border rounded-sm overflow-hidden"
+              style={{
+                width: '595px',
+                height: '842px',
+                maxWidth: '100%',
+                maxHeight: '100%',
+                transform: 'scale(var(--resume-scale))',
+                '--resume-scale': 'min(calc((100vw - 320px - 2rem) / 595), calc(100vh - 4rem - 64px) / 842)' as any
+              }}
+            >
+              {resume.improvedHtml ? (
+                <iframe
+                  srcDoc={resume.improvedHtml}
+                  className="w-full h-full border-0"
+                  title="AI-Generated Resume Design - Ready to Print"
+                  sandbox="allow-same-origin"
+                />
+              ) : (
+                <div className="w-full h-full overflow-hidden">
+                  <ResumePreviewStyled text={improvedText} />
+                </div>
+              )}
             </div>
           </main>
         </div>
