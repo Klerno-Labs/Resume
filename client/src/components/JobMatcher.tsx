@@ -200,7 +200,7 @@ export function JobMatcher({ resumeText, userTier, onUpgradeClick, onMatchComple
                   <ul className="space-y-2">
                     {matchResult.strengths.map((strength, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
                         <span className="text-sm">{strength}</span>
                       </li>
                     ))}
@@ -238,7 +238,7 @@ export function JobMatcher({ resumeText, userTier, onUpgradeClick, onMatchComple
                   <ul className="space-y-3">
                     {matchResult.suggestions.map((suggestion, i) => (
                       <li key={i} className="flex items-start gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                        <span className="shrink-0 w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
                           {i + 1}
                         </span>
                         <span className="text-sm">{suggestion}</span>
