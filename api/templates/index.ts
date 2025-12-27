@@ -2,6 +2,20 @@ import type { Request, Response } from 'express';
 import { getSQL } from '../lib/db.js';
 
 export default async function handler(req: Request, res: Response) {
+  // CORS headers
+  const origin = req.headers.origin || '';
+  const allowedOrigins = ['https://rewriteme.app', 'http://localhost:5174'];
+  const isAllowed = allowedOrigins.includes(origin) || origin.includes('vercel.app');
+
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', isAllowed ? origin : allowedOrigins[0]);
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
