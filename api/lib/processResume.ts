@@ -94,22 +94,23 @@ Return ONLY valid JSON in this exact format:
     const optimization = JSON.parse(optimizationResult.choices[0].message.content || '{}');
     const scores = JSON.parse(scoreResult.choices[0].message.content || '{}');
 
-    // Update resume with text improvements FIRST (fast response)
+    const improvedText = optimization.improvedText || originalText;
+
+    // Update resume with text improvements FIRST (but keep status as processing)
     await sql`
       UPDATE resumes SET
-        improved_text = ${optimization.improvedText || originalText},
+        improved_text = ${improvedText},
         ats_score = ${scores.atsScore || 70},
         keywords_score = ${scores.keywordsScore || 7},
         formatting_score = ${scores.formattingScore || 7},
         issues = ${JSON.stringify(scores.issues || [])},
-        status = 'completed',
         updated_at = NOW()
       WHERE id = ${resumeId}
     `;
 
-    // Generate design in background (don't await to avoid timeout)
-    console.log('[Process] Starting background design generation...');
-    openai.chat.completions.create({
+    // Generate design WITH FULL IMPROVED TEXT (await to ensure completion)
+    console.log('[Process] Generating design with full improved text...');
+    const designResult = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
@@ -121,7 +122,7 @@ Return ONLY valid JSON in this exact format:
             content: `Design a STUNNING professional resume in HTML/CSS using this EXACT design template specification.
 
 Resume content:
-${originalText.substring(0, 1500)}
+${improvedText}
 
 DESIGN TEMPLATE TO USE:
 Template Name: ${template.name}
@@ -196,55 +197,58 @@ Return ONLY valid JSON:
         ],
         response_format: { type: 'json_object' },
         max_tokens: 3000,
-      }).then(async (designResult) => {
-        // Process design result in background
-        const design = JSON.parse(designResult.choices[0].message.content || '{}');
-
-        if (design.html) {
-          console.log('[Process] Design generated, updating resume...');
-          await sql`
-            UPDATE resumes SET
-              improved_html = ${design.html},
-              updated_at = NOW()
-            WHERE id = ${resumeId}
-          `;
-
-          // Save template in background
-          if (design.templateName) {
-            sql`
-              INSERT INTO resume_templates (
-                name,
-                style,
-                color_scheme,
-                html_template,
-                preview_image_url,
-                is_ai_generated,
-                usage_count,
-                created_from_resume_id
-              ) VALUES (
-                ${design.templateName},
-                ${design.style || 'modern'},
-                ${design.colorScheme || 'blue'},
-                ${design.html},
-                ${null},
-                ${true},
-                ${0},
-                ${resumeId}
-              )
-              ON CONFLICT (name) DO UPDATE SET
-                usage_count = resume_templates.usage_count + 1,
-                updated_at = NOW()
-            `.then(() => {
-              console.log(`[Template] Saved new template: ${design.templateName}`);
-            }).catch(err => {
-              console.warn('[Template] Failed to save template:', err);
-            });
-          }
-        }
-      }).catch(err => {
-        console.error('[Process] Background design generation failed:', err);
-        // Design failure doesn't fail the whole resume
       });
+
+    const design = JSON.parse(designResult.choices[0].message.content || '{}');
+
+    if (design.html) {
+      console.log('[Process] Design generated successfully!');
+
+      // Update resume with design AND mark as completed
+      await sql`
+        UPDATE resumes SET
+          improved_html = ${design.html},
+          status = 'completed',
+          updated_at = NOW()
+        WHERE id = ${resumeId}
+      `;
+
+      // Save template in background (don't await)
+      if (design.templateName) {
+        sql`
+          INSERT INTO resume_templates (
+            name,
+            style,
+            color_scheme,
+            html_template,
+            preview_image_url,
+            is_ai_generated,
+            usage_count,
+            created_from_resume_id
+          ) VALUES (
+            ${design.templateName},
+            ${design.style || 'modern'},
+            ${design.colorScheme || 'blue'},
+            ${design.html},
+            ${null},
+            ${true},
+            ${0},
+            ${resumeId}
+          )
+          ON CONFLICT (name) DO UPDATE SET
+            usage_count = resume_templates.usage_count + 1,
+            updated_at = NOW()
+        `.then(() => {
+          console.log(`[Template] Saved new template: ${design.templateName}`);
+        }).catch(err => {
+          console.warn('[Template] Failed to save template:', err);
+        });
+      }
+    } else {
+      console.error('[Process] Design generation returned no HTML');
+      // Still mark as completed even if design fails
+      await sql`UPDATE resumes SET status = 'completed' WHERE id = ${resumeId}`;
+    }
   } catch (error) {
     console.error('[Process] Error optimizing resume:', error);
     const sql = getSQL();
