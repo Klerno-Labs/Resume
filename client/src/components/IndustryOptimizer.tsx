@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Briefcase, Sparkles, Lock, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Briefcase, Sparkles, Lock, Zap, CheckCircle2, TrendingUp, Target, Crown } from 'lucide-react';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Card } from './ui/card';
+import { Badge } from './ui/badge';
 import { toast } from '@/hooks/use-toast';
 
 interface IndustryOptimizerProps {
@@ -86,59 +87,85 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
   const selectedIndustryData = industries.find(i => i.value === selectedIndustry);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Briefcase className="w-6 h-6 text-indigo-500" />
-            Industry-Specific Optimization
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Tailor your resume language and keywords for specific industries
-          </p>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Your tier:</span>
-          <span className={`font-semibold px-3 py-1 rounded-full ${
-            userTier === 'admin' ? 'bg-linear-to-r from-yellow-100 to-orange-100 text-orange-700' :
-            userTier === 'pro' ? 'bg-purple-100 text-purple-700' :
-            userTier === 'premium' ? 'bg-blue-100 text-blue-700' :
-            'bg-gray-100 text-gray-700'
-          }`}>
+    <div className="space-y-4">
+      {/* Enhanced Header */}
+      <div className="bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/20 dark:via-purple-950/20 dark:to-pink-950/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-900">
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-linear-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg">
+              <Briefcase className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Industry Optimizer</h3>
+              <p className="text-xs text-muted-foreground">
+                AI-powered industry-specific optimization
+              </p>
+            </div>
+          </div>
+          <Badge
+            variant="secondary"
+            className={`font-semibold ${
+              userTier === 'admin' ? 'bg-linear-to-r from-yellow-400 to-orange-500 text-white border-0' :
+              userTier === 'pro' ? 'bg-linear-to-r from-purple-500 to-pink-500 text-white border-0' :
+              userTier === 'premium' ? 'bg-linear-to-r from-blue-500 to-cyan-500 text-white border-0' :
+              'bg-slate-100 text-slate-700'
+            }`}
+          >
             {userTier.toUpperCase()}
-          </span>
+          </Badge>
         </div>
       </div>
 
       {/* Feature Gate for Free Users */}
       {!canUseFeature ? (
-        <Card className="p-8 bg-linear-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200">
-          <div className="text-center">
-            <Lock className="w-16 h-16 text-indigo-500 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold mb-2">Premium Feature</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Industry-Specific Optimization uses AI to rewrite your resume with industry-relevant
-              terminology, keywords, and phrasing that resonates with hiring managers in your field.
-            </p>
-            <Button
-              onClick={onUpgradeClick}
-              size="lg"
-              className="bg-linear-to-r from-indigo-500 to-purple-500"
-            >
-              Upgrade to Premium
-            </Button>
-          </div>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <Card className="p-8 bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/20 dark:via-purple-950/20 dark:to-pink-950/20 border-2 border-indigo-200 dark:border-indigo-800">
+            <div className="text-center">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-linear-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                <Lock className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold mb-2 text-slate-900 dark:text-white">Premium Feature</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Industry-Specific Optimization uses AI to rewrite your resume with industry-relevant
+                terminology, keywords, and phrasing that resonates with hiring managers in your field.
+              </p>
+              <div className="flex flex-col gap-2 mb-6">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  Industry-specific terminology optimization
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  AI-powered keyword enhancement
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  10+ industry templates
+                </div>
+              </div>
+              <Button
+                onClick={onUpgradeClick}
+                size="lg"
+                className="bg-linear-to-r from-indigo-500 to-purple-500 text-white border-0 shadow-lg hover:shadow-xl transition-all"
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Upgrade to Premium
+              </Button>
+            </div>
+          </Card>
+        </motion.div>
       ) : (
         <>
           {/* Industry Selector */}
-          <Card className="p-6">
-            <label className="block text-sm font-semibold mb-2">
+          <Card className="p-4 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <label className="block text-sm font-semibold mb-2 text-slate-900 dark:text-white">
               Select Your Target Industry
             </label>
             <Select value={selectedIndustry} onValueChange={setSelectedIndustry}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                 <SelectValue placeholder="Choose an industry..." />
               </SelectTrigger>
               <SelectContent>
@@ -150,36 +177,54 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
               </SelectContent>
             </Select>
 
-            {selectedIndustryData && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4 p-4 bg-indigo-50 rounded-lg"
-              >
-                <p className="text-sm font-semibold text-indigo-900 mb-2">
-                  Key Keywords for {selectedIndustryData.label}:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedIndustryData.keywords.map((keyword, i) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium"
-                    >
-                      {keyword}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+            <AnimatePresence mode="wait">
+              {selectedIndustryData && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mt-4 p-4 bg-indigo-50 dark:bg-indigo-950/20 rounded-lg border border-indigo-200 dark:border-indigo-800"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-100">
+                      Key Keywords for {selectedIndustryData.label}:
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedIndustryData.keywords.map((keyword, i) => (
+                      <motion.span
+                        key={i}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-medium border border-indigo-200 dark:border-indigo-700"
+                      >
+                        {keyword}
+                      </motion.span>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            <div className="flex items-center justify-between mt-6">
+            <div className="flex items-center justify-between mt-4">
               <p className="text-xs text-muted-foreground">
-                AI will rewrite your resume to match {selectedIndustryData?.label || 'your selected industry'}
+                {selectedIndustry ? (
+                  <>
+                    AI will optimize for{' '}
+                    <span className="text-indigo-600 dark:text-indigo-400 font-medium">
+                      {selectedIndustryData?.label}
+                    </span>
+                  </>
+                ) : (
+                  'Select an industry to begin optimization'
+                )}
               </p>
               <Button
                 onClick={() => void optimizeForIndustry()}
                 disabled={isOptimizing || !selectedIndustry}
-                className="bg-linear-to-r from-indigo-500 to-purple-500"
+                className="bg-linear-to-r from-indigo-500 to-purple-500 text-white border-0"
               >
                 {isOptimizing ? (
                   <>
@@ -197,32 +242,62 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
           </Card>
 
           {/* What Will Change */}
-          <Card className="p-6 bg-linear-to-br from-indigo-50 to-purple-50">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-5 h-5 text-indigo-500" />
-              <h3 className="text-lg font-bold">What Will Be Optimized</h3>
+          <Card className="p-4 bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/20 dark:via-purple-950/20 dark:to-pink-950/20 border-2 border-indigo-200 dark:border-indigo-800">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white">What Will Be Optimized</h4>
+                <p className="text-xs text-muted-foreground">AI-powered enhancements</p>
+              </div>
             </div>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-start gap-2">
-                <span className="text-indigo-500 mt-0.5">•</span>
-                <span>Industry-specific terminology and buzzwords</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-indigo-500 mt-0.5">•</span>
-                <span>Action verbs relevant to your field</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-indigo-500 mt-0.5">•</span>
-                <span>Technical skills and tools commonly used</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-indigo-500 mt-0.5">•</span>
-                <span>Metrics and achievements formatted for your industry</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-indigo-500 mt-0.5">•</span>
-                <span>Professional summary tailored to industry expectations</span>
-              </li>
+            <ul className="space-y-2">
+              <motion.li
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.05 }}
+                className="flex items-start gap-3 text-sm"
+              >
+                <CheckCircle2 className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+                <span className="text-slate-700 dark:text-slate-300">Industry-specific terminology and buzzwords</span>
+              </motion.li>
+              <motion.li
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.10 }}
+                className="flex items-start gap-3 text-sm"
+              >
+                <CheckCircle2 className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+                <span className="text-slate-700 dark:text-slate-300">Action verbs relevant to your field</span>
+              </motion.li>
+              <motion.li
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.15 }}
+                className="flex items-start gap-3 text-sm"
+              >
+                <CheckCircle2 className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+                <span className="text-slate-700 dark:text-slate-300">Technical skills and tools commonly used</span>
+              </motion.li>
+              <motion.li
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.20 }}
+                className="flex items-start gap-3 text-sm"
+              >
+                <CheckCircle2 className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+                <span className="text-slate-700 dark:text-slate-300">Metrics and achievements formatted for your industry</span>
+              </motion.li>
+              <motion.li
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.25 }}
+                className="flex items-start gap-3 text-sm"
+              >
+                <CheckCircle2 className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+                <span className="text-slate-700 dark:text-slate-300">Professional summary tailored to industry expectations</span>
+              </motion.li>
             </ul>
           </Card>
         </>
