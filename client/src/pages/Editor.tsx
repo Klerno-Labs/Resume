@@ -533,7 +533,22 @@ export default function Editor() {
             >
               {resume.improvedHtml ? (
                 <iframe
-                  srcDoc={resume.improvedHtml}
+                  srcDoc={`
+                    <style>
+                      html, body {
+                        overflow: hidden !important;
+                        max-height: 842px !important;
+                        height: 842px !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                      }
+                      body > * {
+                        max-height: 842px !important;
+                        overflow: hidden !important;
+                      }
+                    </style>
+                    ${resume.improvedHtml}
+                  `}
                   className="w-full h-full border-0"
                   title="AI-Generated Resume Design - Ready to Print"
                   sandbox="allow-same-origin"
