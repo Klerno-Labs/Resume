@@ -123,9 +123,9 @@ export default function Home() {
                     {user.creditsRemaining} credits
                   </span>
                 </div>
-                <Link href="/editor">
+                <Link href="/dashboard">
                   <button className="text-sm font-medium hover:text-primary transition-colors">
-                    Dashboard
+                    My Resumes
                   </button>
                 </Link>
                 <button

@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth';
 import NotFound from '@/pages/not-found';
 import Home from '@/pages/Home';
 import Editor from '@/pages/Editor';
+import Dashboard from '@/pages/Dashboard';
 import Auth from '@/pages/Auth';
 import PaymentSuccess from '@/pages/PaymentSuccess';
 import Pricing from '@/pages/Pricing';
@@ -36,6 +37,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/ai-resume-builder" component={AiResumeBuilder} />
       <Route path="/resume/software-engineer" component={ResumeSoftwareEngineer} />
       <Route path="/resume/nurse" component={ResumeNurse} />
@@ -43,6 +45,7 @@ function Router() {
       <Route path="/resume/product-manager" component={ResumeProductManager} />
       <Route path="/how-to/optimize-resume-for-ats" component={HowToOptimizeResumeForAts} />
       <Route path="/auth" component={Auth} />
+      <Route path="/editor/:id" component={Editor} />
       <Route path="/editor" component={Editor} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/payment-success" component={PaymentSuccess} />

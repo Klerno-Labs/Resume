@@ -375,6 +375,39 @@ class ApiClient {
     return res.json() as Promise<Resume>;
   }
 
+  async listResumes(): Promise<{
+    resumes: Array<{
+      id: string;
+      fileName: string;
+      atsScore?: number;
+      keywordsScore?: number;
+      formattingScore?: number;
+      status: string;
+      hasDesign: boolean;
+      createdAt: string;
+      updatedAt: string;
+    }>;
+  }> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/resumes/list`);
+    if (!res.ok) {
+      const error = await res.json() as { message?: string };
+      throw new Error(this.toErrorMessage(error, 'Failed to fetch resumes'));
+    }
+    return res.json() as Promise<{
+      resumes: Array<{
+        id: string;
+        fileName: string;
+        atsScore?: number;
+        keywordsScore?: number;
+        formattingScore?: number;
+        status: string;
+        hasDesign: boolean;
+        createdAt: string;
+        updatedAt: string;
+      }>;
+    }>;
+  }
+
   async regenerateDesign(resumeId: string): Promise<{
     success: boolean;
     improvedHtml: string;

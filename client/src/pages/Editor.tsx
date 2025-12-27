@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'wouter';
+import { Link, useLocation, useRoute } from 'wouter';
 import { ArrowLeft, Download, Target, Briefcase, Palette, Printer, Upload, X, ZoomIn } from 'lucide-react';
 import { CoverLetterDialog } from '@/components/CoverLetterDialog';
 import { ResumePreviewStyled } from '@/components/ResumePreview';
@@ -23,14 +23,16 @@ export default function Editor() {
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [, navigate] = useLocation();
+  const [, params] = useRoute('/editor/:id');
   const { user } = useAuth();
   const { showUpgrade, upgradeTrigger, featureName, triggerUpgrade, closeUpgrade } =
     useUpgradePrompt();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const resumeId = params.get('resumeId');
+    // Support both route params (/editor/:id) and query params (?resumeId=xxx)
+    const queryParams = new URLSearchParams(window.location.search);
+    const resumeId = params?.id || queryParams.get('resumeId');
 
     if (!resumeId) {
       navigate('/');
@@ -203,7 +205,7 @@ export default function Editor() {
         {/* Header */}
         <header className="h-14 md:h-16 border-b flex items-center justify-between px-3 md:px-6 bg-white dark:bg-slate-950 z-20 shrink-0">
           <div className="flex items-center gap-2 md:gap-4 min-w-0">
-            <Link href="/">
+            <Link href="/dashboard">
               <button className="p-1.5 md:p-2 hover:bg-secondary rounded-full transition-colors">
                 <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
               </button>
