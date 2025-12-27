@@ -92,9 +92,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const sql = getSQL();
 
     // Get resume
-    const resumes = await sql`SELECT * FROM resumes WHERE id = ${resumeId} AND user_id = ${user.id}`;
+    const resumes = await sql`SELECT * FROM resumes WHERE id = ${resumeId} AND user_id = ${user.id}` as any[];
 
-    if (resumes.length === 0) {
+    if (!resumes || resumes.length === 0) {
       return res.status(404).json({ error: 'Resume not found' });
     }
 
@@ -139,19 +139,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         messages: [
           {
             role: 'system',
-            content: `You are a minimalist resume designer creating expensive-looking resumes for 2025. Your designs are EXTREMELY MINIMAL, clean, and typographically disciplined. Key principles: (1) Maximum white space - nothing cramped, generous margins (0.5-1 inch), consistent vertical rhythm, (2) ONE professional font only (Lato, Calibri, or Georgia) at 10-11pt body, 11-12pt headers, 14-18pt name, (3) ONE subtle accent color for structure only (navy, deep green, or burgundy), (4) Perfect alignment and pixel-precise spacing consistency, (5) NO icons, NO photos, NO graphics, NO decorative elements, (6) Looks like a premium business document first, designed object second. Think: minimalist luxury, Swiss design, NOT Canva templates. Always output valid JSON.`,
+            content: `You are a strict HTML template filler. You ONLY use the EXACT colors provided. You NEVER invent new colors. You create minimal, professional 2025 resumes that look expensive.
+
+STRICT RULES:
+1. Use ONLY the provided accent color - NO random colors, NO pink, NO bright colors
+2. Use ONLY white (#FFFFFF) backgrounds and dark text (#1a1a1a or #2d2d2d)
+3. Font: ${template.fonts[0]} ONLY at 10-11pt body, 12pt headers, 16-18pt name
+4. Margins: 0.75-1 inch on all sides - GENEROUS white space
+5. NO decorative elements, NO icons, NO graphics, NO borders except minimal hairline dividers
+6. Clean, minimal, professional business document style
+
+OUTPUT FORMAT: {"html": "<!DOCTYPE html>...complete HTML..."}`,
           },
           {
             role: 'user',
-            content: `Create an EXTREMELY MINIMAL, CLEAN resume design. Use template: ${template.name} (${template.layout} layout).
+            content: `Create a MINIMAL professional resume using this EXACT template style:
 
-Resume content:
+Layout: ${template.layout}
+Accent Color: ${template.accentColor} (USE THIS COLOR EXACTLY - for section headers and subtle accents ONLY)
+Font: ${template.fonts[0]}
+
+Resume Content:
 ${resume.improved_text || resume.original_text}
 
-Use accent color: ${template.accentColor}
-Use font: ${template.fonts[0]}
-
-CRITICAL: Return ONLY valid JSON with format: {"html": "<!DOCTYPE html>..."}`,
+CRITICAL RULES:
+- Accent color (${template.accentColor}) ONLY for: section headers, thin divider lines, name color
+- Background: white (#FFFFFF) ONLY
+- Body text: dark gray (#2d2d2d)
+- NO other colors allowed
+- Maximum white space, clean minimal layout
+- Return ONLY valid JSON: {"html": "<!DOCTYPE html>..."}`,
           },
         ],
         response_format: { type: 'json_object' },
@@ -174,6 +191,24 @@ CRITICAL: Return ONLY valid JSON with format: {"html": "<!DOCTYPE html>..."}`,
 
       // Validate contrast
       const contrastValidation = validateResumeContrast(design.html);
+
+      // Check if AI used wrong colors (reject if it used colors not in our palette)
+      const allowedColors = [
+        template.accentColor.toLowerCase(),
+        '#ffffff', '#fff',
+        '#1a1a1a', '#2d2d2d', '#333333', '#666666', '#999999', '#cccccc',
+        '#f5f5f5', '#f0f0f0', '#000000', '#000',
+      ];
+
+      const colorRegex = /#([a-f0-9]{6}|[a-f0-9]{3})\b/gi;
+      const foundColors = (design.html.match(colorRegex) || []).map((c: string) => c.toLowerCase());
+      const unauthorizedColors = foundColors.filter((c: string) => !allowedColors.includes(c));
+
+      if (unauthorizedColors.length > 0) {
+        console.warn('[Preview] AI used unauthorized colors:', unauthorizedColors, 'for template:', template.name);
+        console.warn('[Preview] Rejecting this design - will be filtered out');
+        return null; // Reject designs with wrong colors
+      }
 
       return {
         templateName: template.name,
