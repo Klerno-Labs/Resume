@@ -533,6 +533,10 @@ export default function Editor() {
                   className="w-full h-full border-0"
                   title="AI-Generated Resume Design - Ready to Print"
                   sandbox="allow-same-origin"
+                  style={{
+                    overflow: 'hidden',
+                    pointerEvents: 'none'
+                  }}
                 />
               ) : (
                 <div className="w-full h-full overflow-hidden">
