@@ -370,23 +370,29 @@ export default function Editor() {
                   </AccordionItem>
                 )}
 
-                {/* Regenerate Design */}
-                {resume.improvedHtml && (
-                  <AccordionItem value="regenerate" className="border rounded-lg px-4">
+                {/* Generate/Regenerate Design */}
+                {isCompleted && (
+                  <AccordionItem value="design" className="border rounded-lg px-4">
                     <AccordionTrigger className="hover:no-underline py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
                           <Palette className="w-5 h-5 text-purple-600" />
                         </div>
                         <div className="text-left">
-                          <div className="font-semibold text-sm">Regenerate Design</div>
-                          <div className="text-xs text-muted-foreground">Get a new style</div>
+                          <div className="font-semibold text-sm">
+                            {resume.improvedHtml ? 'Regenerate Design' : 'Generate Design'}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {resume.improvedHtml ? 'Get a new style' : 'Create HTML design'}
+                          </div>
                         </div>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="pb-4 pt-2">
                       <p className="text-sm text-muted-foreground mb-3">
-                        Generate a new random professional design while keeping your content
+                        {resume.improvedHtml
+                          ? 'Generate a new random professional design while keeping your content'
+                          : 'Generate a beautiful HTML design for your resume'}
                       </p>
                       <Button
                         variant="outline"
@@ -395,28 +401,41 @@ export default function Editor() {
                         onClick={async () => {
                           try {
                             setIsRegenerating(true);
-                            const result = await api.regenerateDesign(resume.id);
 
-                            setResume(prev => ({
-                              ...prev!,
-                              improvedHtml: result.improvedHtml,
-                            }));
-
-                            toast({
-                              title: 'New Design Generated!',
-                              description: `${result.templateName} - ${result.regenerationsRemaining === Infinity ? 'Unlimited' : result.regenerationsRemaining} regenerations remaining`,
-                            });
+                            if (resume.improvedHtml) {
+                              // Regenerate existing design
+                              const result = await api.regenerateDesign(resume.id);
+                              setResume(prev => ({
+                                ...prev!,
+                                improvedHtml: result.improvedHtml,
+                              }));
+                              toast({
+                                title: 'New Design Generated!',
+                                description: `${result.templateName} - ${result.regenerationsRemaining === Infinity ? 'Unlimited' : result.regenerationsRemaining} regenerations remaining`,
+                              });
+                            } else {
+                              // Generate initial design
+                              const result = await api.generateDesign(resume.id);
+                              setResume(prev => ({
+                                ...prev!,
+                                improvedHtml: result.html,
+                              }));
+                              toast({
+                                title: 'Design Generated!',
+                                description: 'Your beautiful resume design is ready',
+                              });
+                            }
                           } catch (error) {
                             toast({
-                              title: 'Regeneration Failed',
-                              description: error instanceof Error ? error.message : 'Failed to regenerate design',
+                              title: resume.improvedHtml ? 'Regeneration Failed' : 'Generation Failed',
+                              description: error instanceof Error ? error.message : 'Failed to generate design',
                               variant: 'destructive',
                             });
                           } finally {
                             setIsRegenerating(false);
                           }
                         }}
-                        disabled={!isCompleted || isRegenerating}
+                        disabled={isRegenerating}
                       >
                         {isRegenerating ? (
                           <>
@@ -426,7 +445,7 @@ export default function Editor() {
                         ) : (
                           <>
                             <Palette className="w-4 h-4" />
-                            <span>Generate New Design</span>
+                            <span>{resume.improvedHtml ? 'Generate New Design' : 'Generate Design'}</span>
                           </>
                         )}
                       </Button>
