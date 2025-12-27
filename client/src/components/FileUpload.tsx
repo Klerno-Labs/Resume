@@ -222,65 +222,89 @@ export function FileUpload({ onUpload }: FileUploadProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
                 className="flex flex-col items-center"
               >
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Upload className="w-10 h-10 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold text-foreground">Upload Your Resume</h3>
+                <motion.div
+                  className="relative w-24 h-24 mb-6"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                >
+                  <div className="absolute inset-0 rounded-2xl bg-linear-to-br from-blue-500 via-purple-500 to-pink-500 opacity-20 blur-xl"></div>
+                  <div className="relative w-full h-full rounded-2xl bg-linear-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                    <Upload className="w-12 h-12 text-white" />
+                  </div>
+                </motion.div>
+                <h3 className="text-2xl font-bold bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  Upload Your Resume
+                </h3>
                 <p className="text-muted-foreground mt-2 max-w-md text-sm leading-relaxed">
                   Drag and drop your file here, or click to browse
                 </p>
-                <div className="mt-4 flex flex-col gap-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-500" />
-                    <span>PDF, DOCX, DOC, or TXT (max 10MB)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-500" />
-                    <span>Get instant ATS score and AI optimization</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-500" />
-                    <span>100% secure and confidential</span>
-                  </div>
-                </div>
-                <div className="mt-8">
-                  <span className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-primary bg-primary/10 rounded-full hover:bg-primary/20 transition-colors">
+                <motion.div
+                  className="mt-6 flex flex-col gap-3 text-xs"
+                  initial="hidden"
+                  animate="visible"
+                  variants={{
+                    hidden: { opacity: 0 },
+                    visible: {
+                      opacity: 1,
+                      transition: {
+                        staggerChildren: 0.1,
+                      },
+                    },
+                  }}
+                >
+                  {[
+                    'PDF, DOCX, DOC, or TXT (max 10MB)',
+                    'Get instant ATS score and AI optimization',
+                    '100% secure and confidential',
+                  ].map((text, i) => (
+                    <motion.div
+                      key={i}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-linear-to-r from-green-50 to-emerald-50 border border-green-200"
+                      variants={{
+                        hidden: { opacity: 0, x: -10 },
+                        visible: { opacity: 1, x: 0 },
+                      }}
+                    >
+                      <div className="w-5 h-5 rounded-full bg-linear-to-br from-green-500 to-emerald-500 flex items-center justify-center shrink-0">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                      <span className="text-slate-700 font-medium">{text}</span>
+                    </motion.div>
+                  ))}
+                </motion.div>
+                <motion.div
+                  className="mt-8"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span className="inline-flex items-center justify-center px-8 py-3 text-sm font-semibold text-white bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
                     Or browse files
                   </span>
-                </div>
+                </motion.div>
               </motion.div>
             ) : (
               <motion.div
                 key="processing-state"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
                 className="flex flex-col items-center"
               >
-                <div className="relative w-20 h-20 mb-6">
-                  <svg className="animate-spin w-full h-full text-green-500" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
+                <div className="relative w-24 h-24 mb-6">
+                  <div className="absolute inset-0 rounded-full bg-linear-to-br from-green-500 via-emerald-500 to-teal-500 opacity-20 animate-ping"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-green-100"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-linear-to-r from-green-500 via-emerald-500 to-teal-500 border-t-transparent animate-spin"></div>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <FileText className="w-8 h-8 text-green-600" />
+                    <FileText className="w-10 h-10 text-green-600 animate-pulse" />
                   </div>
                 </div>
-                <h3 className="text-xl font-semibold text-green-700">Uploading...</h3>
-                <p className="text-sm text-green-600 mt-2 max-w-xs">{file.name}</p>
+                <h3 className="text-xl font-bold bg-linear-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                  Uploading...
+                </h3>
+                <p className="text-sm text-slate-600 mt-2 max-w-xs font-medium">{file.name}</p>
                 {progress !== null && (
                   <div className="w-full max-w-xs mt-4">
                     <div className="bg-gray-200 rounded-full h-2.5 overflow-hidden">
@@ -330,20 +354,28 @@ export function FileUpload({ onUpload }: FileUploadProps) {
         </div>
       </motion.div>
 
-      <div className="flex justify-center gap-6 mt-8 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <Check className="w-4 h-4 text-green-500" />
-          <span>ATS Friendly</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Check className="w-4 h-4 text-green-500" />
-          <span>Secure & Private</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Check className="w-4 h-4 text-green-500" />
-          <span>Instant Analysis</span>
-        </div>
-      </div>
+      <motion.div
+        className="flex justify-center gap-4 mt-8 text-sm"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.3 }}
+      >
+        {[
+          { label: 'ATS Friendly', color: 'from-blue-500 to-blue-600' },
+          { label: 'Secure & Private', color: 'from-purple-500 to-purple-600' },
+          { label: 'Instant Analysis', color: 'from-pink-500 to-pink-600' },
+        ].map((badge, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border-2 border-slate-200 shadow-sm"
+          >
+            <div className={`w-4 h-4 rounded-full bg-linear-to-br ${badge.color} flex items-center justify-center shrink-0`}>
+              <Check className="w-2.5 h-2.5 text-white" />
+            </div>
+            <span className="font-medium text-slate-700">{badge.label}</span>
+          </div>
+        ))}
+      </motion.div>
     </div>
   );
 }
