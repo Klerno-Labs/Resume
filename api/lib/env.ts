@@ -34,9 +34,6 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 
-  // Sentry Error Tracking
-  SENTRY_DSN: z.string().optional(),
-
   // Admin emails (comma-separated for multiple admins)
   ADMIN_EMAILS: z.string().optional(),
 
@@ -57,10 +54,6 @@ const envSchema = z.object({
 
   // Redis / caching
   REDIS_URL: z.string().optional(),
-
-  // Design integrations
-  FIGMA_TOKEN: z.string().optional(),
-  FIGMA_FILE_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
