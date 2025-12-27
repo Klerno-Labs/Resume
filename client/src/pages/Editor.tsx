@@ -536,22 +536,27 @@ export default function Editor() {
                 }
               >
                 {resume.improvedHtml ? (
-                  <iframe
-                    srcDoc={resume.improvedHtml}
-                    className="w-full h-full border-0"
-                    title="AI-Generated Resume Design - Ready to Print"
-                    sandbox="allow-same-origin"
-                    style={{
-                      overflow: 'hidden',
-                      pointerEvents: 'none'
-                    }}
-                  />
+                  <div className="w-full h-full overflow-hidden relative">
+                    <iframe
+                      srcDoc={resume.improvedHtml}
+                      className="border-0 absolute"
+                      title="AI-Generated Resume Design - Ready to Print"
+                      sandbox="allow-same-origin"
+                      style={{
+                        width: '595px',
+                        height: '1200px',
+                        transform: 'scale(0.7)',
+                        transformOrigin: 'top left',
+                        pointerEvents: 'none'
+                      }}
+                    />
+                  </div>
                 ) : (
                   <div className="w-full h-full overflow-hidden">
                     <ResumePreviewStyled text={improvedText} />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
                   <div className="bg-white/90 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
                     <ZoomIn className="w-4 h-4" />
                     <span className="text-sm font-medium">Click to expand</span>
