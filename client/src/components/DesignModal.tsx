@@ -1,7 +1,27 @@
-import { X, Check, Download, FileCode } from 'lucide-react';
+import { X, Check, Download, FileCode, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
 import { toast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { api } from '@/lib/api';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from './ui/dialog';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 
 interface DesignModalProps {
   isOpen: boolean;
@@ -22,7 +42,52 @@ export function DesignModal({
   userTier = 'free',
   onUpgradeClick
 }: DesignModalProps) {
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateStyle, setTemplateStyle] = useState<'modern' | 'classic' | 'creative' | 'minimal'>('modern');
+  const [templateDescription, setTemplateDescription] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
   if (!isOpen) return null;
+
+  const handleSaveAsTemplate = async () => {
+    if (!templateName.trim() || !templateDescription.trim()) {
+      toast({
+        title: 'Missing information',
+        description: 'Please fill in all fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const result = await api.saveTemplate({
+        name: templateName.trim(),
+        style: templateStyle,
+        description: templateDescription.trim(),
+        htmlContent,
+        isPublic: true,
+      });
+
+      toast({
+        title: 'Template saved!',
+        description: `Your template "${result.template.name}" has been saved successfully. Personal information has been removed for privacy.`,
+      });
+
+      setIsSaveDialogOpen(false);
+      setTemplateName('');
+      setTemplateDescription('');
+    } catch (error) {
+      toast({
+        title: 'Failed to save template',
+        description: error instanceof Error ? error.message : 'Please try again later',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleDownloadHTML = () => {
     if (userTier === 'free') {
@@ -148,6 +213,16 @@ export function DesignModal({
               <div className="flex gap-2">
                 <Button
                   variant="outline"
+                  onClick={() => setIsSaveDialogOpen(true)}
+                  className="flex items-center gap-2 border-purple-200 hover:bg-purple-50"
+                  disabled={userTier === 'free'}
+                  title={userTier === 'free' ? 'Premium feature' : 'Save this design as a reusable template'}
+                >
+                  <Save className="w-4 h-4" />
+                  Save as Template
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={handleDownloadHTML}
                   className="flex items-center gap-2"
                 >
@@ -179,6 +254,82 @@ export function DesignModal({
           </motion.div>
         </div>
       )}
+
+      {/* Save Template Dialog */}
+      <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <Save className="w-4 h-4 text-white" />
+              </div>
+              Save as Template
+            </DialogTitle>
+            <DialogDescription>
+              Save this design as a reusable template. Your personal information will be automatically removed for privacy.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="template-name">Template Name *</Label>
+              <Input
+                id="template-name"
+                placeholder="e.g., Modern Purple Gradient"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                className="border-2"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="template-style">Style *</Label>
+              <Select value={templateStyle} onValueChange={(value) => setTemplateStyle(value as typeof templateStyle)}>
+                <SelectTrigger className="border-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="modern">Modern</SelectItem>
+                  <SelectItem value="classic">Classic</SelectItem>
+                  <SelectItem value="creative">Creative</SelectItem>
+                  <SelectItem value="minimal">Minimal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="template-description">Description *</Label>
+              <Textarea
+                id="template-description"
+                placeholder="Describe this template's unique features..."
+                value={templateDescription}
+                onChange={(e) => setTemplateDescription(e.target.value)}
+                className="h-24 resize-none border-2"
+              />
+            </div>
+
+            <div className="p-3 rounded-lg bg-purple-50 border border-purple-200">
+              <p className="text-xs text-purple-700 flex items-start gap-2">
+                <Save className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>Your resume data will be sanitized automatically. Names, emails, phone numbers, and other personal info will be replaced with placeholder data (John Doe, etc.) to protect your privacy.</span>
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void handleSaveAsTemplate()}
+              disabled={isSaving || !templateName.trim() || !templateDescription.trim()}
+              className="bg-linear-to-r from-purple-500 to-pink-500 hover:opacity-90"
+            >
+              {isSaving ? 'Saving...' : 'Save Template'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AnimatePresence>
   );
 }

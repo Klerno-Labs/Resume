@@ -611,6 +611,35 @@ class ApiClient {
     }
     return res.json();
   }
+
+  async saveTemplate(params: {
+    name: string;
+    style: 'modern' | 'classic' | 'creative' | 'minimal';
+    description: string;
+    htmlContent: string;
+    isPublic?: boolean;
+  }): Promise<{
+    success: boolean;
+    template: {
+      id: string;
+      name: string;
+      style: string;
+      description: string;
+      createdAt: string;
+    };
+    message: string;
+  }> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/templates/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) {
+      const error = await res.json() as { message?: string; error?: string };
+      throw new Error(this.toErrorMessage(error, 'Failed to save template'));
+    }
+    return res.json();
+  }
 }
 
 export const api = new ApiClient();

@@ -119,8 +119,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log('[Regenerate Design] Current usage:', currentUsage, 'Limit:', limit);
 
-    // Generate new design with random template
-    const template = getRandomTemplate();
+    // Generate new design with random template (now async!)
+    const template = await getRandomTemplate();
     const openai = getOpenAI();
 
     console.log('[Regenerate Design] Using template:', template.name);

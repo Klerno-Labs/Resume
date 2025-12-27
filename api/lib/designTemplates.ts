@@ -252,11 +252,81 @@ export const DESIGN_TEMPLATES = [
   }
 ];
 
-export function getRandomTemplate() {
-  const randomIndex = Math.floor(Math.random() * DESIGN_TEMPLATES.length);
-  return DESIGN_TEMPLATES[randomIndex];
+// Database template cache
+let _dbTemplates: typeof DESIGN_TEMPLATES | null = null;
+let _lastFetch: number = 0;
+const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
+
+/**
+ * Fetches user-created templates from database (with caching)
+ */
+export async function fetchDatabaseTemplates(): Promise<typeof DESIGN_TEMPLATES> {
+  const now = Date.now();
+
+  // Return cached if still valid
+  if (_dbTemplates && now - _lastFetch < CACHE_TTL) {
+    return _dbTemplates;
+  }
+
+  try {
+    // Lazy import to avoid circular dependency
+    const { neon } = await import('@neondatabase/serverless');
+
+    if (!process.env.DATABASE_URL) {
+      console.warn('[Templates] DATABASE_URL not set, using hardcoded templates only');
+      return [];
+    }
+
+    const sql = neon(process.env.DATABASE_URL);
+
+    const rows = await sql`
+      SELECT
+        name,
+        style,
+        layout,
+        sidebar,
+        gradient,
+        accent_color as "accentColor",
+        fonts,
+        description
+      FROM resume_templates
+      WHERE is_public = true
+      ORDER BY usage_count DESC, created_at DESC
+      LIMIT 50
+    `;
+
+    _dbTemplates = rows as typeof DESIGN_TEMPLATES;
+    _lastFetch = now;
+
+    console.log(`[Templates] Fetched ${_dbTemplates.length} templates from database`);
+    return _dbTemplates;
+  } catch (error) {
+    console.error('[Templates] Failed to fetch from database:', error);
+    return [];
+  }
 }
 
-export function getTemplateByIndex(index: number) {
-  return DESIGN_TEMPLATES[index % DESIGN_TEMPLATES.length];
+/**
+ * Gets all templates (database + hardcoded fallback)
+ */
+export async function getAllTemplates(): Promise<typeof DESIGN_TEMPLATES> {
+  const dbTemplates = await fetchDatabaseTemplates();
+  return [...dbTemplates, ...DESIGN_TEMPLATES];
+}
+
+/**
+ * Gets a random template (includes database templates)
+ */
+export async function getRandomTemplate() {
+  const allTemplates = await getAllTemplates();
+  const randomIndex = Math.floor(Math.random() * allTemplates.length);
+  return allTemplates[randomIndex];
+}
+
+/**
+ * Gets a template by index (includes database templates)
+ */
+export async function getTemplateByIndex(index: number) {
+  const allTemplates = await getAllTemplates();
+  return allTemplates[index % allTemplates.length];
 }
