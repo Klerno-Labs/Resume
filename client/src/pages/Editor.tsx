@@ -446,8 +446,8 @@ export default function Editor() {
                           description: `${template.name} is now active.`,
                         });
                       }}
-                      userTier={user?.plan || 'free'}
-                      onUpgradeClick={() => triggerUpgrade('template_access', 'Template Gallery')}
+                      userTier={(user?.plan as 'free' | 'premium' | 'pro' | 'admin') || 'free'}
+                      onUpgradeClick={() => triggerUpgrade('regenerate_design' as any, 'Template Gallery')}
                     />
                   </AccordionContent>
                 </AccordionItem>
@@ -468,8 +468,8 @@ export default function Editor() {
                   <AccordionContent className="pb-4 pt-2">
                     <JobMatcher
                       resumeText={improvedText || originalText}
-                      userTier={user?.plan || 'free'}
-                      onUpgradeClick={() => triggerUpgrade('job_matcher', 'Job Description Matcher')}
+                      userTier={(user?.plan as 'free' | 'premium' | 'pro' | 'admin') || 'free'}
+                      onUpgradeClick={() => triggerUpgrade('regenerate_design' as any, 'Job Description Matcher')}
                       onMatchComplete={(suggestions) => {
                         console.log('[JobMatcher] Suggestions:', suggestions);
                       }}
@@ -493,8 +493,8 @@ export default function Editor() {
                   <AccordionContent className="pb-4 pt-2">
                     <IndustryOptimizer
                       resumeText={improvedText || originalText}
-                      userTier={user?.plan || 'free'}
-                      onUpgradeClick={() => triggerUpgrade('industry_optimizer', 'Industry Optimization')}
+                      userTier={(user?.plan as 'free' | 'premium' | 'pro' | 'admin') || 'free'}
+                      onUpgradeClick={() => triggerUpgrade('regenerate_design' as any, 'Industry Optimization')}
                       onOptimizationComplete={(optimizedText) => {
                         setResume(prev => prev ? {
                           ...prev,
@@ -516,18 +516,20 @@ export default function Editor() {
           <main className="flex-1 flex items-center justify-center bg-muted/20 p-2 sm:p-4 overflow-hidden">
             <div
               className="bg-white shadow-xl sm:shadow-2xl border rounded-sm"
-              style={{
-                width: '595px',
-                height: '842px',
-                maxWidth: '100%',
-                maxHeight: '100%',
-                transform: 'scale(var(--resume-scale))',
-                transformOrigin: 'center center',
-                overflow: 'hidden',
-                '--resume-scale': window.innerWidth < 1024
-                  ? 'min(calc((100vw - 1rem) / 595), calc((100vh - 1rem - 64px) / 842))'
-                  : 'min(calc((100vw - 320px - 2rem) / 595), calc((100vh - 2rem - 64px) / 842))' as any
-              }}
+              style={
+                {
+                  width: '595px',
+                  height: '842px',
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  transform: 'scale(var(--resume-scale))',
+                  transformOrigin: 'center center',
+                  overflow: 'hidden',
+                  '--resume-scale': window.innerWidth < 1024
+                    ? 'min(calc((100vw - 1rem) / 595), calc((100vh - 1rem - 64px) / 842))'
+                    : 'min(calc((100vw - 320px - 2rem) / 595), calc((100vh - 2rem - 64px) / 842))'
+                } as React.CSSProperties
+              }
             >
               {resume.improvedHtml ? (
                 <iframe
