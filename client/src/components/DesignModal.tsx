@@ -95,7 +95,7 @@ export function DesignModal({
             className="relative w-[90vw] h-[90vh] max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-purple-50 to-pink-50">
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-linear-to-r from-purple-50 to-pink-50">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
                 <h2 className="text-xl font-bold text-gray-900">AI-Generated Resume Design</h2>
@@ -110,7 +110,7 @@ export function DesignModal({
                 {!isSelected ? (
                   <Button
                     onClick={onChooseDesign}
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                    className="bg-linear-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                   >
                     <Check className="w-4 h-4 mr-2" />
                     Choose This Design
@@ -168,7 +168,7 @@ export function DesignModal({
                 {!isSelected && (
                   <Button
                     onClick={onChooseDesign}
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                    className="bg-linear-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                   >
                     <Check className="w-4 h-4 mr-2" />
                     Choose This Design

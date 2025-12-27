@@ -95,7 +95,7 @@ export function JobMatcher({ resumeText, userTier, onUpgradeClick, onMatchComple
         <div className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">Your tier:</span>
           <span className={`font-semibold px-3 py-1 rounded-full ${
-            userTier === 'admin' ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-700' :
+            userTier === 'admin' ? 'bg-linear-to-r from-yellow-100 to-orange-100 text-orange-700' :
             userTier === 'pro' ? 'bg-purple-100 text-purple-700' :
             userTier === 'premium' ? 'bg-blue-100 text-blue-700' :
             'bg-gray-100 text-gray-700'
@@ -107,7 +107,7 @@ export function JobMatcher({ resumeText, userTier, onUpgradeClick, onMatchComple
 
       {/* Feature Gate for Free Users */}
       {!canUseFeature ? (
-        <Card className="p-8 bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200">
+        <Card className="p-8 bg-linear-to-br from-blue-50 to-purple-50 border-2 border-blue-200">
           <div className="text-center">
             <Lock className="w-16 h-16 text-blue-500 mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-2">Premium Feature</h3>
@@ -118,7 +118,7 @@ export function JobMatcher({ resumeText, userTier, onUpgradeClick, onMatchComple
             <Button
               onClick={onUpgradeClick}
               size="lg"
-              className="bg-gradient-to-r from-blue-500 to-purple-500"
+              className="bg-linear-to-r from-blue-500 to-purple-500"
             >
               Upgrade to Premium
             </Button>
@@ -145,7 +145,7 @@ export function JobMatcher({ resumeText, userTier, onUpgradeClick, onMatchComple
               <Button
                 onClick={() => void analyzeMatch()}
                 disabled={isAnalyzing || !jobDescription.trim()}
-                className="bg-gradient-to-r from-blue-500 to-purple-500"
+                className="bg-linear-to-r from-blue-500 to-purple-500"
               >
                 {isAnalyzing ? (
                   <>
@@ -170,7 +170,7 @@ export function JobMatcher({ resumeText, userTier, onUpgradeClick, onMatchComple
               className="space-y-4"
             >
               {/* Match Score */}
-              <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50">
+              <Card className="p-6 bg-linear-to-r from-blue-50 to-purple-50">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-bold mb-1">Match Score</h3>
@@ -184,7 +184,7 @@ export function JobMatcher({ resumeText, userTier, onUpgradeClick, onMatchComple
                 </div>
                 <div className="mt-4 w-full bg-gray-200 rounded-full h-3">
                   <div
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-1000"
+                    className="bg-linear-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-1000"
                     style={{ width: `${matchResult.score}%` }}
                   />
                 </div>
@@ -230,7 +230,7 @@ export function JobMatcher({ resumeText, userTier, onUpgradeClick, onMatchComple
 
               {/* AI Suggestions */}
               {matchResult.suggestions.length > 0 && (
-                <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200">
+                <Card className="p-6 bg-linear-to-br from-purple-50 to-pink-50 border-2 border-purple-200">
                   <div className="flex items-center gap-2 mb-4">
                     <Sparkles className="w-5 h-5 text-purple-500" />
                     <h3 className="text-lg font-bold">AI Recommendations</h3>

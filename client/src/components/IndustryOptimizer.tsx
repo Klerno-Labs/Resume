@@ -101,7 +101,7 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
         <div className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">Your tier:</span>
           <span className={`font-semibold px-3 py-1 rounded-full ${
-            userTier === 'admin' ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-700' :
+            userTier === 'admin' ? 'bg-linear-to-r from-yellow-100 to-orange-100 text-orange-700' :
             userTier === 'pro' ? 'bg-purple-100 text-purple-700' :
             userTier === 'premium' ? 'bg-blue-100 text-blue-700' :
             'bg-gray-100 text-gray-700'
@@ -113,7 +113,7 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
 
       {/* Feature Gate for Free Users */}
       {!canUseFeature ? (
-        <Card className="p-8 bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200">
+        <Card className="p-8 bg-linear-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200">
           <div className="text-center">
             <Lock className="w-16 h-16 text-indigo-500 mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-2">Premium Feature</h3>
@@ -124,7 +124,7 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
             <Button
               onClick={onUpgradeClick}
               size="lg"
-              className="bg-gradient-to-r from-indigo-500 to-purple-500"
+              className="bg-linear-to-r from-indigo-500 to-purple-500"
             >
               Upgrade to Premium
             </Button>
@@ -179,7 +179,7 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
               <Button
                 onClick={() => void optimizeForIndustry()}
                 disabled={isOptimizing || !selectedIndustry}
-                className="bg-gradient-to-r from-indigo-500 to-purple-500"
+                className="bg-linear-to-r from-indigo-500 to-purple-500"
               >
                 {isOptimizing ? (
                   <>
@@ -197,7 +197,7 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
           </Card>
 
           {/* What Will Change */}
-          <Card className="p-6 bg-gradient-to-br from-indigo-50 to-purple-50">
+          <Card className="p-6 bg-linear-to-br from-indigo-50 to-purple-50">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-5 h-5 text-indigo-500" />
               <h3 className="text-lg font-bold">What Will Be Optimized</h3>

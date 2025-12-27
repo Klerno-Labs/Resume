@@ -285,7 +285,7 @@ export function FileUpload({ onUpload }: FileUploadProps) {
                   <div className="w-full max-w-xs mt-4">
                     <div className="bg-gray-200 rounded-full h-2.5 overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-green-500 to-emerald-500 h-2.5 transition-all duration-300"
+                        className="bg-linear-to-r from-green-500 to-emerald-500 h-2.5 transition-all duration-300"
                         style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
                       />
                     </div>

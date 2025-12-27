@@ -26,7 +26,7 @@ export function BeforeAfter({ resume }: Props) {
   return (
     <div className="mt-8 max-w-5xl mx-auto">
       {/* Success Banner */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-2 border-green-200 dark:border-green-800 rounded-2xl p-6 mb-6">
+      <div className="bg-linear-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-2 border-green-200 dark:border-green-800 rounded-2xl p-6 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
@@ -79,7 +79,7 @@ export function BeforeAfter({ resume }: Props) {
         </div>
 
         {/* View Full Resume CTA */}
-        <div className="bg-gradient-to-r from-primary/5 to-violet-500/5 border-t p-6">
+        <div className="bg-linear-to-r from-primary/5 to-violet-500/5 border-t p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-semibold mb-1">Ready to download your improved resume?</p>

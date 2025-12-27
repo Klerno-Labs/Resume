@@ -88,7 +88,7 @@ export function TemplateGallery({ currentTemplate, onSelectTemplate, userTier, o
         <div className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">Your tier:</span>
           <span className={`font-semibold px-3 py-1 rounded-full ${
-            userTier === 'admin' ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-700' :
+            userTier === 'admin' ? 'bg-linear-to-r from-yellow-100 to-orange-100 text-orange-700' :
             userTier === 'pro' ? 'bg-purple-100 text-purple-700' :
             userTier === 'premium' ? 'bg-blue-100 text-blue-700' :
             'bg-gray-100 text-gray-700'
@@ -166,7 +166,7 @@ export function TemplateGallery({ currentTemplate, onSelectTemplate, userTier, o
                       </p>
                       <Button
                         onClick={onUpgradeClick}
-                        className="mt-4 bg-gradient-to-r from-purple-500 to-pink-500"
+                        className="mt-4 bg-linear-to-r from-purple-500 to-pink-500"
                         size="sm"
                       >
                         Upgrade Now
@@ -188,7 +188,7 @@ export function TemplateGallery({ currentTemplate, onSelectTemplate, userTier, o
                 </div>
 
                 {/* Template Info - Compact */}
-                <div className="p-3 bg-gradient-to-b from-white to-gray-50 border-t">
+                <div className="p-3 bg-linear-to-b from-white to-gray-50 border-t">
                   <h3 className="font-semibold text-xs mb-1.5 line-clamp-1">{template.name}</h3>
                   <div className="flex items-center justify-between text-xs">
                     <span className="capitalize text-muted-foreground">{template.style}</span>
@@ -211,7 +211,7 @@ export function TemplateGallery({ currentTemplate, onSelectTemplate, userTier, o
 
       {/* Tier Upgrade CTA */}
       {userTier !== 'pro' && userTier !== 'admin' && (
-        <div className="mt-6 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
+        <div className="mt-6 p-6 bg-linear-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-lg">
@@ -225,7 +225,7 @@ export function TemplateGallery({ currentTemplate, onSelectTemplate, userTier, o
             </div>
             <Button
               onClick={onUpgradeClick}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+              className="bg-linear-to-r from-purple-500 to-pink-500 text-white"
             >
               {userTier === 'free' ? 'Upgrade to Premium' : 'Upgrade to Pro'}
             </Button>
