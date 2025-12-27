@@ -586,31 +586,66 @@ export default function Editor() {
         </div>
       </div>
 
-      {/* Zoom Modal */}
+      {/* Zoom Modal - Full Screen Resume Preview */}
       <Dialog open={isZoomed} onOpenChange={setIsZoomed}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 overflow-auto">
-          <div className="relative bg-white">
+        <DialogContent className="max-w-[95vw] w-[800px] max-h-[95vh] p-0 overflow-hidden flex flex-col bg-gray-50">
+          {/* Header Bar */}
+          <div className="flex items-center justify-between px-6 py-4 border-b bg-white shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <ZoomIn className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Resume Preview</h3>
+                <p className="text-xs text-muted-foreground">Full size • {resume.fileName}</p>
+              </div>
+            </div>
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-2 right-2 z-10 bg-white/90 hover:bg-white"
+              className="hover:bg-gray-100"
               onClick={() => setIsZoomed(false)}
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </Button>
-            {resume?.improvedHtml ? (
-              <iframe
-                srcDoc={resume.improvedHtml}
-                className="w-full border-0"
-                style={{ height: '1100px', minHeight: '842px' }}
-                title="Full Resume Preview"
-                sandbox="allow-same-origin"
-              />
-            ) : (
-              <div className="p-8">
-                <ResumePreviewStyled text={improvedText} />
-              </div>
-            )}
+          </div>
+
+          {/* Resume Content - Scrollable */}
+          <div className="flex-1 overflow-auto bg-gray-100 p-8">
+            <div className="mx-auto bg-white shadow-2xl" style={{ width: '595px' }}>
+              {resume?.improvedHtml ? (
+                <iframe
+                  srcDoc={resume.improvedHtml}
+                  className="w-full border-0"
+                  style={{
+                    width: '595px',
+                    minHeight: '842px',
+                    height: 'auto',
+                    display: 'block'
+                  }}
+                  title="Full Resume Preview"
+                  sandbox="allow-same-origin"
+                />
+              ) : (
+                <div className="p-12">
+                  <ResumePreviewStyled text={improvedText} />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer Actions */}
+          <div className="flex items-center justify-between px-6 py-3 border-t bg-white shrink-0">
+            <p className="text-xs text-muted-foreground">
+              Scroll to view the complete resume • Use Print or Download buttons in the header
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsZoomed(false)}
+            >
+              Close Preview
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
