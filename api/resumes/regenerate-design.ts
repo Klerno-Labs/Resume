@@ -188,12 +188,20 @@ CRITICAL DESIGN REQUIREMENTS:
    ${template.style === 'creative' ? '- Use bold colors, creative layouts, unique shapes' : ''}
    ${template.style === 'minimal' ? '- Use maximum whitespace, simple lines, restrained design' : ''}
 
-6. PRINT OPTIMIZATION:
-   - Page size: 8.5" × 11" (max-width: 800px)
-   - Margins: 0.5-1 inch
-   - Use @page CSS for print styles
+6. SINGLE-PAGE CONSTRAINT (CRITICAL):
+   - MUST fit ALL content on ONE page (8.5" × 11")
+   - Container: max-width: 800px, height: EXACTLY 1056px (11" at 96dpi)
+   - Use smaller font sizes (body: 9-11px) to fit everything
+   - Condense spacing and margins to fit on single page
+   - If content is too long, prioritize and summarize
 
-7. MUST INCLUDE:
+7. PRINT OPTIMIZATION:
+   - Page size: 8.5" × 11" (max-width: 800px, height: 1056px)
+   - Margins: 0.5 inch
+   - Use @page CSS for print styles
+   - Add: overflow: hidden; to prevent scrolling
+
+8. MUST INCLUDE:
    - Complete <!DOCTYPE html> declaration
    - All CSS inline in <style> tag
    - Semantic HTML

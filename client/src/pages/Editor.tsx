@@ -515,16 +515,18 @@ export default function Editor() {
           {/* Main Resume Preview */}
           <main className="flex-1 flex items-center justify-center bg-muted/20 p-2 sm:p-4 overflow-hidden">
             <div
-              className="bg-white shadow-xl sm:shadow-2xl border rounded-sm overflow-hidden"
+              className="bg-white shadow-xl sm:shadow-2xl border rounded-sm"
               style={{
                 width: '595px',
                 height: '842px',
                 maxWidth: '100%',
                 maxHeight: '100%',
                 transform: 'scale(var(--resume-scale))',
+                transformOrigin: 'center center',
+                overflow: 'hidden',
                 '--resume-scale': window.innerWidth < 1024
-                  ? 'min(calc((100vw - 1rem) / 595), calc(100vh - 1rem - 64px) / 842)'
-                  : 'min(calc((100vw - 320px - 2rem) / 595), calc(100vh - 2rem - 64px) / 842)' as any
+                  ? 'min(calc((100vw - 1rem) / 595), calc((100vh - 1rem - 64px) / 842))'
+                  : 'min(calc((100vw - 320px - 2rem) / 595), calc((100vh - 2rem - 64px) / 842))' as any
               }}
             >
               {resume.improvedHtml ? (
