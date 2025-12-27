@@ -145,11 +145,11 @@ export async function generateResumeDesign(resumeId: string) {
       messages: [
         {
           role: 'system',
-          content: `You are an award-winning resume designer from top design agencies (Pentagram, IDEO, Frog). Your resumes are featured in design galleries and win clients Fortune 500 interviews. Create PROFESSIONAL, POLISHED, EXECUTIVE-LEVEL resume designs that look like they cost $500 from a premium design studio. Use sophisticated typography, perfect spacing, elegant visual hierarchy, and refined color usage. Think: LinkedIn ProFinder top 1%, Canva Pro quality, Behance featured work. Always output valid JSON.`
+          content: `You are a minimalist resume designer creating expensive-looking resumes for 2025. Your designs are EXTREMELY MINIMAL, clean, and typographically disciplined. Key principles: (1) Maximum white space - nothing cramped, generous margins (0.5-1 inch), consistent vertical rhythm, (2) ONE professional font only (Lato, Calibri, or Georgia) at 10-11pt body, 11-12pt headers, 14-18pt name, (3) ONE subtle accent color for structure only (navy, deep green, or burgundy), (4) Perfect alignment and pixel-precise spacing consistency, (5) NO icons, NO photos, NO graphics, NO decorative elements, (6) Looks like a premium business document first, designed object second. Think: minimalist luxury, Swiss design, NOT Canva templates. Always output valid JSON.`
         },
         {
           role: 'user',
-          content: `Create a PROFESSIONAL, POLISHED resume design in HTML/CSS that looks EXPENSIVE and SOPHISTICATED - like it was designed by a top-tier design agency.
+          content: `Create an EXTREMELY MINIMAL, CLEAN resume design in HTML/CSS that looks like an expensive 2025 business document - NOT a Canva template.
 
 Resume content:
 ${improvedText}
@@ -162,7 +162,7 @@ Gradient: ${template.gradient}
 Accent: ${template.accentColor}
 Fonts: ${template.fonts[0]} (headers), ${template.fonts[1]} (body)
 
-🎨 PROFESSIONAL DESIGN REQUIREMENTS (CRITICAL - MAKE IT LOOK EXPENSIVE):
+🎨 MINIMALIST DESIGN REQUIREMENTS (CRITICAL - MAXIMUM WHITE SPACE, ZERO CLUTTER):
 
 1. LAYOUT - ${template.layout.toUpperCase()} STRUCTURE:
 ${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-columns: 280px 1fr; height: 842px;
@@ -201,47 +201,51 @@ ${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-co
    ✓ Banner shadow: box-shadow: 0 4px 12px rgba(0,0,0,0.1) for depth
    ✓ Visual impact: Banner creates strong first impression, content organized beneath` : ''}
 
-2. TYPOGRAPHY - EXECUTIVE-LEVEL REFINEMENT:
-   ✓ Load Google Fonts: <link href="https://fonts.googleapis.com/css2?family=${template.fonts[0].replace(/ /g, '+')}:wght@300;400;600;700&family=${template.fonts[1].replace(/ /g, '+')}:wght@300;400;500;600&display=swap">
-   ✓ Name: 32px, font-weight: 700, ${template.fonts[0]}, white, letter-spacing: 1px, line-height: 1.2
-   ✓ Job Title: 13px, font-weight: 400, ${template.fonts[1]}, white, margin-top: 8px
-   ✓ Section Headers (main): 14px, font-weight: 600, ${template.fonts[0]}, ${template.accentColor}, uppercase, letter-spacing: 2.5px, margin-bottom: 16px, border-bottom: 2px solid ${template.accentColor}, padding-bottom: 8px
-   ✓ Body Text: 10px, font-weight: 400, ${template.fonts[1]}, #2c3e50, line-height: 1.6, perfect kerning
-   ✓ Sidebar Headers: 11px, font-weight: 600, ${template.fonts[0]}, white, uppercase, letter-spacing: 1.5px, margin: 24px 0 12px
-   ✓ Dates/Meta: 9px, font-weight: 500, #64748b, italic, spacing: 4px
+2. TYPOGRAPHY - MINIMAL & DISCIPLINED (USE ONE FONT ONLY):
+   ✓ Load ONE Google Font: <link href="https://fonts.googleapis.com/css2?family=${template.fonts[0].replace(/ /g, '+')}:wght@400;600;700&display=swap">
+   ✓ ALL text uses ${template.fonts[0]} - header AND body (consistency is key to minimalism)
+   ✓ Name: 14-18pt (19-24px), font-weight: 700, ${template.fonts[0]}, black or white, letter-spacing: 0px (no excessive tracking)
+   ✓ Job Title: 11-12pt (15-16px), font-weight: 400, ${template.fonts[0]}, margin-top: 4px
+   ✓ Section Headers: 11-12pt (15-16px), font-weight: 600, ${template.fonts[0]}, ${template.accentColor} OR black, uppercase, letter-spacing: 0.5px MAX, margin-bottom: 12px, simple 1px underline
+   ✓ Body Text: 10-11pt (13-15px), font-weight: 400, ${template.fonts[0]}, #1a1a1a (dark gray, good contrast), line-height: 1.5
+   ✓ Dates/Meta: Same 10-11pt as body, font-weight: 400, #666666 (medium gray), NOT italic (too decorative)
 
-3. COLOR PALETTE - REFINED & COHESIVE:
-   ✓ Sidebar: ${template.gradient} (rich, saturated, professional)
-   ✓ Main Headers: ${template.accentColor} (vibrant but sophisticated)
-   ✓ Body Text: #2c3e50 (deep charcoal, not pure black - easier on eyes)
-   ✓ Secondary Text: #64748b (elegant gray for dates/meta)
-   ✓ Sidebar Text: #ffffff with subtle opacity variations (1.0 for name, 0.95 for details, 0.9 for labels)
-   ✓ Skill Pills: background rgba(255,255,255,0.25), border: 1px solid rgba(255,255,255,0.3), padding: 6px 12px, border-radius: 20px
+3. COLOR PALETTE - EXTREMELY RESTRAINED (ONE ACCENT MAX):
+   ✓ Background: Pure white (#ffffff) - no textures, no gradients in main area
+   ✓ Primary Text: #1a1a1a (near black with good contrast)
+   ✓ Secondary Text: #666666 (medium gray for dates/metadata only)
+   ✓ Accent Color: ${template.accentColor} - use SPARINGLY for section headers or name only
+   ✓ Sidebar (if used): ${template.gradient} OR solid ${template.accentColor} - keep text white with excellent contrast
+   ✓ NO decorative colors, NO multiple accent colors, NO colorful skill badges
+   ✓ Skill Display: Simple text list OR minimal pills with light gray background (#f5f5f5), black text
 
-4. SPACING & WHITESPACE - BREATHING ROOM:
-   ✓ Section Margins: 28px between sections (never cramped!)
-   ✓ Sidebar Padding: 30px all sides (luxurious feel)
-   ✓ Main Content Padding: 40px top, 45px right, 40px bottom, 40px left
-   ✓ Paragraph Spacing: 12px between bullet points, 20px between jobs
-   ✓ Line Height: Body 1.6, Headers 1.3 (perfect readability)
-   ✓ Letter Spacing: Headers +2.5px, Name +1px (premium look)
+4. SPACING & WHITESPACE - MAXIMUM WHITE SPACE (CRITICAL):
+   ✓ Page Margins: 0.5-1 inch (36-72px) on all sides - generous breathing room
+   ✓ Section Spacing: 24-32px between major sections (NEVER cramped, NEVER crowded)
+   ✓ Line Height: 1.5-1.6 for body text (excellent readability)
+   ✓ Paragraph Spacing: 8-12px between bullet points, 16-20px between job entries
+   ✓ Vertical Rhythm: Consistent spacing grid (8px, 12px, 16px, 24px, 32px)
+   ✓ Letter Spacing: 0-0.5px MAX (no excessive tracking - looks amateur)
+   ✓ White space is a FEATURE, not wasted space - embrace emptiness
 
-5. VISUAL POLISH - DETAILS THAT MATTER:
-   ✓ Subtle shadow on container: box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-   ✓ Elegant dividers in sidebar: border-top: 1px solid rgba(255,255,255,0.2), margin: 20px 0
-   ✓ Skill tags: Use CSS pills with hover effect, rounded corners (20px), subtle shadows
-   ✓ Job titles: font-weight: 600, font-size: 11px, color: #1e293b, margin-bottom: 4px
-   ✓ Company names: font-weight: 500, font-size: 10px, color: ${template.accentColor}, margin-bottom: 6px
-   ✓ Bullet points: Custom styled (▸ or elegant • with ${template.accentColor}), proper indentation (20px)
-   ✓ Contact info: Icon-like symbols (📧 ☎ 📍 🌐) or elegant Unicode, spacing: 10px between items
+5. MINIMAL DETAILS - NO DECORATION, ONLY STRUCTURE:
+   ✓ NO shadows, NO gradients (except sidebar background if template requires)
+   ✓ NO icons - text only (email, phone, location written out or simple symbols)
+   ✓ NO emoji - absolutely forbidden (📧 ☎ etc. look unprofessional)
+   ✓ Dividers: Simple 1px lines only, color #e5e5e5 (light gray), used sparingly
+   ✓ Bullet Points: Standard • or – (hyphen), color #1a1a1a, NO custom shapes or colors
+   ✓ Job Titles: font-weight: 600, same size as body text, color: #1a1a1a
+   ✓ Company Names: font-weight: 600 OR 400, color: ${template.accentColor} OR #1a1a1a, margin-bottom: 4px
+   ✓ Contact Info: Plain text separated by | or • separator, NO icons
 
-6. PROFESSIONAL TOUCHES - WHAT SETS IT APART:
-   ✓ Monogram circle: 80px circle at top of sidebar, white border (3px), background rgba(255,255,255,0.15), centered initials (24px, bold)
-   ✓ Subtle texture: Add very subtle pattern/noise to sidebar for depth (optional: repeating-linear-gradient)
+6. WHAT MAKES IT EXPENSIVE - RESTRAINT & PRECISION:
+   ✓ NO monogram circles - minimalism means removing decoration
+   ✓ NO textures, NO patterns - flat design only
    ✓ Print-friendly: All measurements in px, @page { margin: 0; size: letter; }
-   ✓ Modern bullet style: Use elegant shapes (▸ or custom SVG-like), colored with accent
-   ✓ Hierarchy: Clear visual weight - Name > Section Headers > Job Titles > Body
-   ✓ Consistency: All spacing follows 4px grid (4, 8, 12, 16, 20, 24, etc.)
+   ✓ Perfect Alignment: Every element aligns to a strict grid
+   ✓ Hierarchy through SIZE & WEIGHT only: Name (larger, bolder) > Section Headers (medium, semibold) > Body (regular weight)
+   ✓ Pixel-precise consistency: All spacing follows 8px grid (8, 12, 16, 24, 32, etc.)
+   ✓ Quality is in the ABSENCE of decoration, not the presence
 
 7. SINGLE-PAGE CONSTRAINT (CRITICAL):
    ✓ Container: width: 595px, height: 842px (exact US Letter), overflow: hidden
@@ -257,18 +261,18 @@ ${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-co
    ✓ Semantic HTML5: <header>, <section>, <article>, <aside>
    ✓ Print CSS: @page { margin: 0; size: letter; } @media print { .container { box-shadow: none !important; } }
 
-9. EXAMPLES OF PROFESSIONAL POLISH (Study these):
-   ✓ Name Section: Monogram circle (80px) → Name (32px, bold, letter-spacing: 1px) → Title (13px, opacity: 0.95, margin-top: 8px) → Contact (10px icons, spacing: 10px)
-   ✓ Experience Entry: Company (10px, ${template.accentColor}, bold) | Job Title (11px, #1e293b, semibold) | Dates (9px, italic, #64748b) → Bullets with custom ▸ markers
-   ✓ Skills Section: Pill-style tags, each: padding: 6px 12px, border-radius: 20px, background: rgba(255,255,255,0.25), margin: 4px
-   ✓ Section Header: Text (14px, uppercase, letter-spacing: 2.5px, ${template.accentColor}) + 2px bottom border + 16px margin-bottom
+9. EXAMPLES OF MINIMAL STRUCTURE (Study these):
+   ✓ Name Section: Name (18-24px, bold, letter-spacing: 0px) → Title (15px, regular, margin-top: 4px) → Contact (plain text: email | phone | location, 13px)
+   ✓ Experience Entry: Company (13px, ${template.accentColor} OR #1a1a1a, semibold) | Job Title (13px, #1a1a1a, semibold) | Dates (13px, #666666, regular, right-aligned) → Standard • bullets
+   ✓ Skills Section: Simple comma-separated list OR minimal boxes: padding: 4px 8px, background: #f5f5f5, border: none, font-size: 13px, color: #1a1a1a
+   ✓ Section Header: Text (15px, uppercase OR sentence case, letter-spacing: 0px, ${template.accentColor} OR #1a1a1a) + 1px bottom border + 12px margin-bottom
 
-💎 FINAL QUALITY CHECK - DOES IT LOOK LIKE A $500 PREMIUM RESUME?
-   ✓ Typography: Perfect hierarchy, elegant spacing, professional fonts
-   ✓ Color: Cohesive palette, not garish, sophisticated gradients
-   ✓ Whitespace: Generous but efficient, never cramped
-   ✓ Details: Monogram, custom bullets, pill tags, elegant dividers
-   ✓ Overall: Could this be on Behance? Would a Fortune 500 recruiter be impressed?
+💎 FINAL QUALITY CHECK - DOES IT LOOK LIKE AN EXPENSIVE 2025 MINIMAL RESUME?
+   ✓ Typography: ONE font only, perfect hierarchy through size/weight, NO excessive letter-spacing
+   ✓ Color: ONE accent color used sparingly, mostly black/gray text on white
+   ✓ Whitespace: MAXIMUM white space, generous margins (0.5-1 inch), consistent vertical rhythm
+   ✓ Zero Clutter: NO icons, NO photos, NO monograms, NO decorative elements, NO shadows
+   ✓ Overall: Looks like a premium business document, NOT a Canva template. Clean, minimal, expensive.
 
 CRITICAL: You MUST return ONLY a single JSON object. Do NOT include any markdown, explanations, apologies, or extra text.
 Start your response with { and end with }. Nothing else.
