@@ -1,22 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { ArrowLeft, Download, Target, Briefcase, Palette } from 'lucide-react';
+import { ArrowLeft, Download, Target, Briefcase, Palette, Printer } from 'lucide-react';
 import { CoverLetterDialog } from '@/components/CoverLetterDialog';
 import { ResumePreviewStyled } from '@/components/ResumePreview';
 import { TemplateGallery } from '@/components/TemplateGallery';
 import { JobMatcher } from '@/components/JobMatcher';
 import { IndustryOptimizer } from '@/components/IndustryOptimizer';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { api, type Resume } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { exportResumeToPDF } from '@/lib/pdfExport';
 import { useUpgradePrompt } from '@/hooks/useUpgradePrompt';
 import { UpgradeModal } from '@/components/UpgradeModal';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export default function Editor() {
-  const [activeTab, setActiveTab] = useState('preview');
   const [resume, setResume] = useState<Resume | null>(null);
   const [selectedDesign, setSelectedDesign] = useState<string | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -88,6 +87,35 @@ export default function Editor() {
   const originalText = resume.originalText || '';
   const improvedText = resume.improvedText || (isCompleted ? '' : 'Processing your resume...');
 
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow || !resume.improvedHtml) return;
+
+    printWindow.document.write(resume.improvedHtml);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
+
+  const handleDownloadHTML = () => {
+    if (!resume.improvedHtml) return;
+
+    const blob = new Blob([resume.improvedHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${resume.fileName.replace(/\.\w+$/, '')}_resume.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: 'HTML Downloaded!',
+      description: 'You can open this file in any browser or edit it as needed.',
+    });
+  };
+
   return (
     <>
       <div className="h-screen flex flex-col bg-background font-sans overflow-hidden">
@@ -105,7 +133,7 @@ export default function Editor() {
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}
                 ></span>
-                {isCompleted ? 'Optimized' : 'Processing...'}
+                {isCompleted ? 'Ready to Print' : 'Processing...'}
               </span>
             </div>
           </div>
@@ -114,6 +142,30 @@ export default function Editor() {
             <div className="hidden sm:block">
               <CoverLetterDialog resumeId={resume.id} />
             </div>
+            {resume.improvedHtml && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1 md:gap-2 text-xs md:text-sm hidden md:flex"
+                  onClick={handleDownloadHTML}
+                  disabled={!isCompleted}
+                >
+                  <Download className="w-3 h-3 md:w-4 md:h-4" />
+                  <span>HTML</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1 md:gap-2 text-xs md:text-sm"
+                  onClick={handlePrint}
+                  disabled={!isCompleted}
+                >
+                  <Printer className="w-3 h-3 md:w-4 md:h-4" />
+                  <span className="hidden xs:inline">Print</span>
+                </Button>
+              </>
+            )}
             <Button
               size="sm"
               className="gap-1 md:gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 text-xs md:text-sm"
@@ -151,340 +203,209 @@ export default function Editor() {
               disabled={!isCompleted}
             >
               <Download className="w-3 h-3 md:w-4 md:h-4" />
-              <span className="hidden xs:inline">Export</span>
+              <span className="hidden xs:inline">PDF</span>
             </Button>
           </div>
         </header>
 
-        {/* Main Layout */}
+        {/* Single-Page Layout: Sidebar + Resume Preview */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Editor Area */}
-          <main className="flex-1 flex flex-col bg-muted/20 relative">
-            <div className="p-2 md:p-3 border-b bg-white dark:bg-slate-950">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2 h-10 md:h-12">
-                  <TabsTrigger value="preview" className="text-xs md:text-base" title="Preview and download your improved resume">
-                    <span className="hidden sm:inline">👁️ Preview & Download</span>
-                    <span className="sm:hidden">👁️ Preview</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="advanced" className="text-xs md:text-base" title="Templates, job matching, and industry optimization">
-                    <span className="hidden sm:inline">🛠️ Advanced Tools</span>
-                    <span className="sm:hidden">🛠️ Tools</span>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+          {/* Left Sidebar - Editing Tools */}
+          <aside className="hidden lg:flex lg:w-80 border-r bg-secondary/10 flex-col overflow-y-auto">
+            <div className="p-4 border-b bg-white dark:bg-slate-950">
+              <h2 className="font-semibold text-sm flex items-center gap-2">
+                <span className="text-lg">🛠️</span>
+                Editing Tools
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Customize and optimize your resume
+              </p>
             </div>
 
-            <div className="flex-1 p-3 md:p-8 overflow-hidden">
-              <Tabs value={activeTab} className="h-full">
-                <TabsContent
-                  value="preview"
-                  className="h-full mt-0 flex items-center justify-center overflow-hidden"
-                >
-                  <div className="flex flex-col items-center gap-3 md:gap-4 w-full h-full justify-center">
-                    {/* Download Action Bar */}
-                    <div className="w-full max-w-4xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-lg p-3 md:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:justify-between">
-                      <div>
-                        <h3 className="text-base md:text-lg font-semibold mb-1">Your Improved Resume is Ready!</h3>
-                        <p className="text-xs md:text-sm text-muted-foreground">
-                          Download your ATS-optimized resume
-                        </p>
+            <div className="p-4 space-y-3">
+              <Accordion type="single" collapsible className="w-full">
+                {/* Regenerate Design */}
+                {resume.improvedHtml && (
+                  <AccordionItem value="regenerate" className="border rounded-lg px-4">
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
+                          <Palette className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-semibold text-sm">Regenerate Design</div>
+                          <div className="text-xs text-muted-foreground">Get a new style</div>
+                        </div>
                       </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-4 pt-2">
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Generate a new random professional design while keeping your content
+                      </p>
                       <Button
-                        size="default"
-                        className="w-full sm:w-auto"
-                        onClick={() => {
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={async () => {
                           try {
-                            exportResumeToPDF({
-                              originalText,
-                              improvedText,
-                              atsScore: resume.atsScore,
-                              watermarkText:
-                                (user?.plan === 'free') ? 'Resume Repairer • Free Plan' : undefined,
-                            });
+                            setIsRegenerating(true);
+                            const result = await api.regenerateDesign(resume.id);
+
+                            setResume(prev => ({
+                              ...prev!,
+                              improvedHtml: result.improvedHtml,
+                            }));
 
                             toast({
-                              title: 'Success!',
-                              description: 'Your resume has been downloaded.',
+                              title: 'New Design Generated!',
+                              description: `${result.templateName} - ${result.regenerationsRemaining === Infinity ? 'Unlimited' : result.regenerationsRemaining} regenerations remaining`,
                             });
-                          } catch {
+                          } catch (error) {
                             toast({
-                              title: 'Export Failed',
-                              description: 'Failed to export PDF. Please try again.',
+                              title: 'Regeneration Failed',
+                              description: error instanceof Error ? error.message : 'Failed to regenerate design',
                               variant: 'destructive',
                             });
+                          } finally {
+                            setIsRegenerating(false);
                           }
                         }}
-                        disabled={!isCompleted}
+                        disabled={!isCompleted || isRegenerating}
                       >
-                        <Download className="w-4 h-4 md:w-5 md:h-5" />
-                        <span className="hidden xs:inline">Download Resume</span>
-                        <span className="xs:hidden">Download</span>
+                        {isRegenerating ? (
+                          <>
+                            <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            <span>Generating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Palette className="w-4 h-4" />
+                            <span>Generate New Design</span>
+                          </>
+                        )}
                       </Button>
-                    </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
 
-                    {/* Regenerate Design Button (only for AI designs) */}
-                    {resume.improvedHtml && (
-                      <div className="flex justify-center w-full max-w-4xl">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full sm:w-auto"
-                          onClick={async () => {
-                            try {
-                              setIsRegenerating(true);
-                              const result = await api.regenerateDesign(resume.id);
-
-                              // Update resume with new design
-                              setResume(prev => ({
-                                ...prev,
-                                improvedHtml: result.improvedHtml,
-                              }));
-
-                              toast({
-                                title: 'New Design Generated!',
-                                description: `${result.templateName} - ${result.regenerationsRemaining === Infinity ? 'Unlimited' : result.regenerationsRemaining} regenerations remaining`,
-                              });
-                            } catch (error) {
-                              toast({
-                                title: 'Regeneration Failed',
-                                description: error instanceof Error ? error.message : 'Failed to regenerate design',
-                                variant: 'destructive',
-                              });
-                            } finally {
-                              setIsRegenerating(false);
-                            }
-                          }}
-                          disabled={!isCompleted || isRegenerating}
-                        >
-                          {isRegenerating ? (
-                            <>
-                              <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                              <span className="text-xs md:text-sm">Generating...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Palette className="w-3 h-3 md:w-4 md:h-4" />
-                              <span className="text-xs md:text-sm">Regenerate Design</span>
-                            </>
-                          )}
-                        </Button>
+                {/* Templates */}
+                <AccordionItem value="templates" className="border rounded-lg px-4">
+                  <AccordionTrigger className="hover:no-underline py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
+                        <Palette className="w-5 h-5 text-purple-600" />
                       </div>
-                    )}
-
-                    {/* Preview - Responsive, Fits on Screen */}
-                    <div className="flex-1 flex justify-center items-center w-full overflow-hidden px-2 md:px-0">
-                      <div className="relative w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[595px]" style={{ aspectRatio: '595 / 842' }}>
-                        <div
-                          className="absolute inset-0 bg-white shadow-lg md:shadow-2xl border rounded-sm overflow-hidden origin-center"
-                          style={{
-                            width: '595px',
-                            height: '842px',
-                            transform: 'scale(calc(min(95vw, 100%) / 595))',
-                            transformOrigin: 'top left'
-                          }}
-                        >
-                          {resume.improvedHtml ? (
-                            <iframe
-                              srcDoc={resume.improvedHtml}
-                              className="w-full h-full border-0"
-                              title="AI-Generated Resume Design"
-                              sandbox="allow-same-origin"
-                            />
-                          ) : (
-                            <div className="w-full h-full overflow-hidden">
-                              <ResumePreviewStyled text={improvedText} />
-                            </div>
-                          )}
-                        </div>
+                      <div className="text-left">
+                        <div className="font-semibold text-sm">Templates</div>
+                        <div className="text-xs text-muted-foreground">21 professional designs</div>
                       </div>
                     </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4 pt-2">
+                    <TemplateGallery
+                      currentTemplate={selectedDesign || undefined}
+                      onSelectTemplate={(template) => {
+                        setSelectedDesign(template.id);
+                        setResume(prev => prev ? {
+                          ...prev,
+                          improvedHtml: template.htmlTemplate
+                        } : null);
+                        toast({
+                          title: "Template Applied!",
+                          description: `${template.name} is now active.`,
+                        });
+                      }}
+                      userTier={user?.plan || 'free'}
+                      onUpgradeClick={() => triggerUpgrade('template_access', 'Template Gallery')}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Job Matcher */}
+                <AccordionItem value="jobmatcher" className="border rounded-lg px-4">
+                  <AccordionTrigger className="hover:no-underline py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                        <Target className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-semibold text-sm">Job Matcher</div>
+                        <div className="text-xs text-muted-foreground">AI-powered analysis</div>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4 pt-2">
+                    <JobMatcher
+                      resumeText={improvedText || originalText}
+                      userTier={user?.plan || 'free'}
+                      onUpgradeClick={() => triggerUpgrade('job_matcher', 'Job Description Matcher')}
+                      onMatchComplete={(suggestions) => {
+                        console.log('[JobMatcher] Suggestions:', suggestions);
+                      }}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Industry Optimizer */}
+                <AccordionItem value="industry" className="border rounded-lg px-4">
+                  <AccordionTrigger className="hover:no-underline py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center shrink-0">
+                        <Briefcase className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-semibold text-sm">Industry Optimizer</div>
+                        <div className="text-xs text-muted-foreground">10 industries</div>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4 pt-2">
+                    <IndustryOptimizer
+                      resumeText={improvedText || originalText}
+                      userTier={user?.plan || 'free'}
+                      onUpgradeClick={() => triggerUpgrade('industry_optimizer', 'Industry Optimization')}
+                      onOptimizationComplete={(optimizedText) => {
+                        setResume(prev => prev ? {
+                          ...prev,
+                          improvedText: optimizedText
+                        } : null);
+                        toast({
+                          title: "Optimization Applied!",
+                          description: "Your resume has been updated.",
+                        });
+                      }}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </aside>
+
+          {/* Main Resume Preview */}
+          <main className="flex-1 flex items-center justify-center bg-muted/20 p-3 md:p-8 overflow-hidden">
+            <div className="relative w-full max-w-[95vw] sm:max-w-[90vw] lg:max-w-[700px]" style={{ aspectRatio: '595 / 842' }}>
+              <div
+                className="absolute inset-0 bg-white shadow-2xl border rounded-sm overflow-hidden origin-center"
+                style={{
+                  width: '595px',
+                  height: '842px',
+                  transform: 'scale(calc(min(95vw, 700px) / 595))',
+                  transformOrigin: 'top left'
+                }}
+              >
+                {resume.improvedHtml ? (
+                  <iframe
+                    srcDoc={resume.improvedHtml}
+                    className="w-full h-full border-0"
+                    title="AI-Generated Resume Design - Ready to Print"
+                    sandbox="allow-same-origin"
+                  />
+                ) : (
+                  <div className="w-full h-full overflow-hidden">
+                    <ResumePreviewStyled text={improvedText} />
                   </div>
-                </TabsContent>
-                <TabsContent value="advanced" className="h-full mt-0 overflow-auto">
-                  <div className="max-w-6xl mx-auto space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      {/* Templates Card */}
-                      <div className="bg-white dark:bg-slate-950 border rounded-lg p-6 flex flex-col">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
-                            <Palette className="w-6 h-6 text-purple-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold">Resume Templates</h3>
-                            <p className="text-xs text-muted-foreground">21 professional designs</p>
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-4 flex-1">
-                          Choose from modern, classic, creative, or minimal templates
-                        </p>
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => {
-                            const modal = document.getElementById('templates-modal');
-                            if (modal) modal.classList.remove('hidden');
-                          }}
-                        >
-                          Browse Templates
-                        </Button>
-                      </div>
-
-                      {/* Job Matcher Card */}
-                      <div className="bg-white dark:bg-slate-950 border rounded-lg p-6 flex flex-col">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                            <Target className="w-6 h-6 text-blue-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold">Job Matcher</h3>
-                            <p className="text-xs text-muted-foreground">AI-powered analysis</p>
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-4 flex-1">
-                          See how well your resume matches specific job postings
-                        </p>
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => {
-                            const modal = document.getElementById('jobmatcher-modal');
-                            if (modal) modal.classList.remove('hidden');
-                          }}
-                        >
-                          Analyze Job Match
-                        </Button>
-                      </div>
-
-                      {/* Industry Optimizer Card */}
-                      <div className="bg-white dark:bg-slate-950 border rounded-lg p-6 flex flex-col">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-                            <Briefcase className="w-6 h-6 text-green-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold">Industry Optimizer</h3>
-                            <p className="text-xs text-muted-foreground">10 specialized industries</p>
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-4 flex-1">
-                          Optimize your resume for tech, finance, healthcare, and more
-                        </p>
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => {
-                            const modal = document.getElementById('industry-modal');
-                            if (modal) modal.classList.remove('hidden');
-                          }}
-                        >
-                          Optimize by Industry
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Modals/Expandable Sections */}
-                    <div id="templates-modal" className="hidden">
-                      <div className="bg-white dark:bg-slate-950 border rounded-lg p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold">Resume Templates</h3>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              const modal = document.getElementById('templates-modal');
-                              if (modal) modal.classList.add('hidden');
-                            }}
-                          >
-                            Close
-                          </Button>
-                        </div>
-                        <TemplateGallery
-                          currentTemplate={selectedDesign || undefined}
-                          onSelectTemplate={(template) => {
-                            setSelectedDesign(template.id);
-                            setResume(prev => prev ? {
-                              ...prev,
-                              improvedHtml: template.htmlTemplate
-                            } : null);
-                            toast({
-                              title: "Template Applied!",
-                              description: `${template.name} is now active. Check the Preview tab to see it.`,
-                            });
-                            const modal = document.getElementById('templates-modal');
-                            if (modal) modal.classList.add('hidden');
-                            setActiveTab('preview');
-                          }}
-                          userTier={user?.plan || 'free'}
-                          onUpgradeClick={() => triggerUpgrade('template_access', 'Template Gallery')}
-                        />
-                      </div>
-                    </div>
-
-                    <div id="jobmatcher-modal" className="hidden">
-                      <div className="bg-white dark:bg-slate-950 border rounded-lg p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold">Job Description Matcher</h3>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              const modal = document.getElementById('jobmatcher-modal');
-                              if (modal) modal.classList.add('hidden');
-                            }}
-                          >
-                            Close
-                          </Button>
-                        </div>
-                        <JobMatcher
-                          resumeText={improvedText || originalText}
-                          userTier={user?.plan || 'free'}
-                          onUpgradeClick={() => triggerUpgrade('job_matcher', 'Job Description Matcher')}
-                          onMatchComplete={(suggestions) => {
-                            console.log('[JobMatcher] Suggestions:', suggestions);
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div id="industry-modal" className="hidden">
-                      <div className="bg-white dark:bg-slate-950 border rounded-lg p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold">Industry Optimization</h3>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              const modal = document.getElementById('industry-modal');
-                              if (modal) modal.classList.add('hidden');
-                            }}
-                          >
-                            Close
-                          </Button>
-                        </div>
-                        <IndustryOptimizer
-                          resumeText={improvedText || originalText}
-                          userTier={user?.plan || 'free'}
-                          onUpgradeClick={() => triggerUpgrade('industry_optimizer', 'Industry Optimization')}
-                          onOptimizationComplete={(optimizedText) => {
-                            setResume(prev => prev ? {
-                              ...prev,
-                              improvedText: optimizedText
-                            } : null);
-                            toast({
-                              title: "Optimization Applied!",
-                              description: "Your resume has been updated. Check the Resume tab to see changes.",
-                            });
-                            const modal = document.getElementById('industry-modal');
-                            if (modal) modal.classList.add('hidden');
-                            setActiveTab('resume');
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
+                )}
+              </div>
             </div>
           </main>
         </div>
