@@ -142,19 +142,49 @@ ${resume.improved_text || resume.original_text}
 TEMPLATE SPECIFICATION:
 Name: ${template.name}
 Style: ${template.style}
+Layout Type: ${template.layout}
 Gradient: ${template.gradient}
 Accent: ${template.accentColor}
 Fonts: ${template.fonts[0]} (headers), ${template.fonts[1]} (body)
 
 🎨 PROFESSIONAL DESIGN REQUIREMENTS (CRITICAL - MAKE IT LOOK EXPENSIVE):
 
-1. LAYOUT - SOPHISTICATED 2-COLUMN DESIGN:
-   ✓ Grid: display: grid; grid-template-columns: 280px 1fr; height: 842px;
+1. LAYOUT - ${template.layout.toUpperCase()} STRUCTURE:
+${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-columns: 280px 1fr; height: 842px;
    ✓ SIDEBAR (280px): Gradient background ${template.gradient}, full height, elegant padding (30px)
    ✓ MAIN (remaining): Pure white (#ffffff), generous margins (40px), professional spacing
    ✓ Name at TOP of sidebar: Large (32px), bold (700), ${template.fonts[0]}, white, letter-spacing: 1px
    ✓ Job title below name: 13px, ${template.fonts[1]}, white, opacity: 0.95, elegant spacing
-   ✓ NO photo - use elegant monogram circle instead: 80px circle with initials, subtle border
+   ✓ NO photo - use elegant monogram circle instead: 80px circle with initials, subtle border` : ''}${template.layout === 'single-column' ? `   ✓ Container: max-width: 500px, centered, height: 842px
+   ✓ Name: Large (36px), bold, ${template.fonts[0]}, color: ${template.accentColor}, centered, letter-spacing: 1px
+   ✓ Job title: 16px, ${template.fonts[1]}, centered below name, margin: 8px 0
+   ✓ Contact info: Horizontal row beneath title, 10px, separated by bullets (•)
+   ✓ Sections: Full-width blocks with generous spacing (32px between), left-aligned content
+   ✓ Headers: Centered or left-aligned, 16px, uppercase, ${template.accentColor}, underline or bottom border` : ''}${template.layout === 'timeline' ? `   ✓ Container: max-width: 550px, centered, height: 842px
+   ✓ Header: Name (36px), title (14px), contact - all centered at top
+   ✓ Timeline: Vertical line on left (3px solid ${template.accentColor}), connecting experience items
+   ✓ Timeline dots: 16px circles on the line at each job, filled with ${template.accentColor}
+   ✓ Experience cards: Offset from timeline (margin-left: 40px), with date badges
+   ✓ Dates: Small badges (10px) positioned on timeline, background ${template.accentColor}, white text
+   ✓ Visual flow: Connecting lines between timeline dots create career progression visualization` : ''}${template.layout === 'skills-first' ? `   ✓ Container: max-width: 595px, height: 842px
+   ✓ Header: Name (34px) and title (14px) at top, ${template.accentColor}
+   ✓ Skills Section: Immediately below header, prominent placement (top 25% of page)
+   ✓ Skills Display: Grid of pills (3-4 columns), padding: 8px 16px, background: ${template.accentColor}15, border: 1px solid ${template.accentColor}50
+   ✓ OR Skill bars: Horizontal bars showing proficiency, filled portion ${template.accentColor}
+   ✓ Experience: Standard format below skills, condensed to fit remaining space
+   ✓ Visual hierarchy: Skills visually dominant, larger and more colorful than experience` : ''}${template.layout === 'split-column' ? `   ✓ Grid: display: grid; grid-template-columns: 1fr 1fr; gap: 30px; height: 842px
+   ✓ Header: Spans both columns, name (32px) and title (13px), ${template.accentColor}
+   ✓ Left column: Experience (chronological work history)
+   ✓ Right column: Skills, Education, Certifications
+   ✓ Equal weight: Both columns same width (50/50), balanced visual importance
+   ✓ Divider: Optional subtle vertical line between columns (1px, #e5e7eb)
+   ✓ Symmetry: Matching spacing and alignment in both columns` : ''}${template.layout === 'header-banner' ? `   ✓ Banner: Full-width header (height: 180px), gradient ${template.gradient}, contains name and contact
+   ✓ Name in banner: 36px, bold, white, ${template.fonts[0]}, centered or left-aligned with padding
+   ✓ Title in banner: 14px, white, opacity 0.95, below name
+   ✓ Contact in banner: Horizontal row, white icons/text, 11px
+   ✓ Content below: 2-3 column grid (grid-template-columns: 1fr 2fr or three columns)
+   ✓ Banner shadow: box-shadow: 0 4px 12px rgba(0,0,0,0.1) for depth
+   ✓ Visual impact: Banner creates strong first impression, content organized beneath` : ''}
 
 2. TYPOGRAPHY - EXECUTIVE-LEVEL REFINEMENT:
    ✓ Load Google Fonts: <link href="https://fonts.googleapis.com/css2?family=${template.fonts[0].replace(/ /g, '+')}:wght@300;400;600;700&family=${template.fonts[1].replace(/ /g, '+')}:wght@300;400;500;600&display=swap">

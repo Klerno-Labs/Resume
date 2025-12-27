@@ -1,5 +1,137 @@
-// 25 unique resume design templates with diverse styles
+// 40+ unique resume design templates with DIVERSE LAYOUTS and styles
+// Now includes: single-column, timeline, skills-first, split-column, header-banner, and sidebar layouts
 export const DESIGN_TEMPLATES = [
+  // SINGLE-COLUMN CENTERED LAYOUTS (Classic Executive Style)
+  {
+    name: 'Executive Centered',
+    style: 'classic',
+    layout: 'single-column',
+    sidebar: 'none',
+    gradient: 'none',
+    accentColor: '#1e40af',
+    fonts: ['Crimson Text', 'Lato'],
+    description: 'Traditional single-column centered layout with elegant serif headers'
+  },
+  {
+    name: 'Minimalist Pure',
+    style: 'minimal',
+    layout: 'single-column',
+    sidebar: 'none',
+    gradient: 'none',
+    accentColor: '#475569',
+    fonts: ['Inter', 'Inter'],
+    description: 'Clean single-column with maximum whitespace and monochrome palette'
+  },
+  {
+    name: 'Modern Mono',
+    style: 'modern',
+    layout: 'single-column',
+    sidebar: 'none',
+    gradient: 'none',
+    accentColor: '#0891b2',
+    fonts: ['Space Grotesk', 'DM Sans'],
+    description: 'Contemporary single-column with bold typography and cyan accents'
+  },
+
+  // TIMELINE LAYOUTS (Chronological with Visual Timeline)
+  {
+    name: 'Career Timeline Blue',
+    style: 'modern',
+    layout: 'timeline',
+    sidebar: 'none',
+    gradient: 'none',
+    accentColor: '#2563eb',
+    fonts: ['Outfit', 'Inter'],
+    description: 'Vertical timeline with connecting lines and date markers'
+  },
+  {
+    name: 'Journey Map',
+    style: 'creative',
+    layout: 'timeline',
+    sidebar: 'none',
+    gradient: 'none',
+    accentColor: '#7c3aed',
+    fonts: ['Sora', 'Plus Jakarta Sans'],
+    description: 'Creative timeline with milestone dots and flowing design'
+  },
+
+  // SKILLS-FIRST LAYOUTS (Skills Prominently Featured)
+  {
+    name: 'Skills Spotlight',
+    style: 'modern',
+    layout: 'skills-first',
+    sidebar: 'none',
+    gradient: 'linear-gradient(to right, #f0f9ff 0%, #ffffff 100%)',
+    accentColor: '#0284c7',
+    fonts: ['Barlow', 'Rubik'],
+    description: 'Skills section at top with visual proficiency bars'
+  },
+  {
+    name: 'Tech Stack Focus',
+    style: 'modern',
+    layout: 'skills-first',
+    sidebar: 'none',
+    gradient: 'none',
+    accentColor: '#059669',
+    fonts: ['IBM Plex Sans', 'IBM Plex Sans'],
+    description: 'Technical skills grid at top, clean experience below'
+  },
+
+  // SPLIT-COLUMN LAYOUTS (Balanced 50/50, Not Sidebar-Based)
+  {
+    name: 'Balanced Split',
+    style: 'modern',
+    layout: 'split-column',
+    sidebar: 'none',
+    gradient: 'none',
+    accentColor: '#dc2626',
+    fonts: ['Archivo', 'Hind'],
+    description: 'Equal 50/50 column split with alternating content sections'
+  },
+  {
+    name: 'Dual Track',
+    style: 'creative',
+    layout: 'split-column',
+    sidebar: 'none',
+    gradient: 'none',
+    accentColor: '#c026d3',
+    fonts: ['Epilogue', 'Albert Sans'],
+    description: 'Symmetrical two-column design with mirrored layouts'
+  },
+
+  // HEADER-BANNER LAYOUTS (Full-Width Header + Columns Below)
+  {
+    name: 'Banner Professional',
+    style: 'modern',
+    layout: 'header-banner',
+    sidebar: 'none',
+    gradient: 'linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)',
+    accentColor: '#3b82f6',
+    fonts: ['Playfair Display', 'Lato'],
+    description: 'Full-width gradient header banner with multi-column content below'
+  },
+  {
+    name: 'Crown Header',
+    style: 'classic',
+    layout: 'header-banner',
+    sidebar: 'none',
+    gradient: 'linear-gradient(135deg, #065f46 0%, #064e3b 100%)',
+    accentColor: '#10b981',
+    fonts: ['Merriweather', 'Open Sans'],
+    description: 'Elegant banner header with traditional column layout beneath'
+  },
+  {
+    name: 'Bold Statement',
+    style: 'creative',
+    layout: 'header-banner',
+    sidebar: 'none',
+    gradient: 'linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%)',
+    accentColor: '#ef4444',
+    fonts: ['Montserrat', 'Raleway'],
+    description: 'Eye-catching banner with creative typography and asymmetric layout'
+  },
+
+  // SIDEBAR LAYOUTS (Original Style - Now Mixed with Other Layouts)
   {
     name: 'Midnight Professional',
     style: 'modern',
