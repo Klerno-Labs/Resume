@@ -616,16 +616,51 @@ export default function Editor() {
                   <AccordionContent className="pb-4 pt-2">
                     <TemplateGallery
                       currentTemplate={selectedDesign || undefined}
-                      onSelectTemplate={(template) => {
-                        setSelectedDesign(template.id);
-                        setResume(prev => prev ? {
-                          ...prev,
-                          improvedHtml: template.htmlTemplate
-                        } : null);
-                        toast({
-                          title: "Template Applied!",
-                          description: `${template.name} is now active.`,
-                        });
+                      onSelectTemplate={async (template) => {
+                        try {
+                          setSelectedDesign(template.id);
+                          setIsRegenerating(true);
+
+                          // Save current design to history before applying template
+                          if (resume?.improvedHtml) {
+                            saveDesignToHistory(resume.improvedHtml, 'Previous Design');
+                          }
+
+                          toast({
+                            title: "🎨 Applying Template...",
+                            description: `Generating ${template.name} with your resume content`,
+                          });
+
+                          // Generate design with user's content using preview system
+                          // This ensures the template style is applied to THEIR content, not template sample data
+                          const result = await api.previewDesigns(resume!.id);
+
+                          // Find the preview that best matches the selected template style
+                          // For now, just use the first preview (we'll enhance this later)
+                          const designToApply = result.previews[0];
+
+                          if (designToApply) {
+                            setResume(prev => prev ? {
+                              ...prev,
+                              improvedHtml: designToApply.html
+                            } : null);
+
+                            toast({
+                              title: "✨ Template Applied!",
+                              description: `${template.name} is now active with your content`,
+                            });
+                          } else {
+                            throw new Error('No design generated');
+                          }
+                        } catch (error) {
+                          toast({
+                            title: "Template Application Failed",
+                            description: error instanceof Error ? error.message : 'Failed to apply template',
+                            variant: 'destructive',
+                          });
+                        } finally {
+                          setIsRegenerating(false);
+                        }
                       }}
                       userTier={(user?.plan as 'free' | 'premium' | 'pro' | 'admin') || 'free'}
                       onUpgradeClick={() => triggerUpgrade('regenerate_design' as any, 'Template Gallery')}

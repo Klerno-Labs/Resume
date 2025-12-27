@@ -148,17 +148,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 STRICT RULES:
 1. Use ONLY the provided accent color - NO random colors, NO pink, NO bright colors
 2. Use ONLY white (#FFFFFF) backgrounds and dark text (#1a1a1a or #2d2d2d)
-3. Font: ${template.fonts[0]} ONLY at 10-11pt body, 12pt headers, 16-18pt name
-4. Margins: 0.5 inch on all sides - balance white space with content
+3. Font: ${template.fonts[0]} ONLY at 9-10pt body, 11pt headers, 14-16pt name
+4. Margins: 0.4 inch on all sides - tight, efficient spacing
 5. NO decorative elements, NO icons, NO graphics, NO borders except minimal hairline dividers
 6. Clean, minimal, professional business document style
-7. CRITICAL: Include ALL resume content - NEVER truncate or omit sections
+7. CRITICAL: MUST fit on ONE PAGE (8.5" x 11" = 595px x 842px) - use tight spacing, smaller fonts, compact layout
+8. CRITICAL: Include ALL resume content - condense but NEVER truncate or omit sections
 
 OUTPUT FORMAT: {"html": "<!DOCTYPE html>...complete HTML..."}`,
             },
             {
               role: 'user',
-              content: `Create a MINIMAL professional resume using this EXACT template style:
+              content: `Create a MINIMAL professional ONE-PAGE resume using this EXACT template style:
 
 Layout: ${template.layout}
 Accent Color: ${template.accentColor} (USE THIS COLOR EXACTLY - for section headers and subtle accents ONLY)
@@ -172,8 +173,9 @@ CRITICAL RULES:
 - Background: white (#FFFFFF) ONLY
 - Body text: dark gray (#2d2d2d)
 - NO other colors allowed
-- Balanced white space, clean minimal layout
-- MUST include ALL content from the resume - do NOT cut off or truncate any sections
+- MUST FIT ON ONE PAGE (595px x 842px) - use 9-10pt fonts, 0.4" margins, tight line-height (1.3-1.4)
+- MUST include ALL content from the resume - condense spacing but do NOT cut off or truncate any sections
+- Use compact formatting: reduce margins, smaller fonts, tighter spacing to fit everything
 - Return ONLY valid JSON: {"html": "<!DOCTYPE html>..."}`,
             },
           ],
