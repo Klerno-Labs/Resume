@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, Check, AlertCircle } from 'lucide-react';
 
@@ -39,10 +39,10 @@ export function DesignPreviewModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b bg-white shrink-0">
           <div>
-            <h3 className="font-semibold text-xl">Choose Your Design</h3>
-            <p className="text-sm text-muted-foreground">
+            <DialogTitle className="font-semibold text-xl">Choose Your Design</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
               Select from 3 unique professional designs
-            </p>
+            </DialogDescription>
           </div>
           <Button
             variant="ghost"
