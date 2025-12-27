@@ -255,7 +255,10 @@ ${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-co
    ✓ Details: Monogram, custom bullets, pill tags, elegant dividers
    ✓ Overall: Could this be on Behance? Would a Fortune 500 recruiter be impressed?
 
-Return ONLY valid JSON (no markdown, no explanations):
+CRITICAL: You MUST return ONLY a single JSON object. Do NOT include any markdown, explanations, apologies, or extra text.
+Start your response with { and end with }. Nothing else.
+
+Expected JSON format:
 {
   "html": "<!DOCTYPE html><html>...complete polished HTML...</html>",
   "templateName": "${template.name}",
@@ -265,10 +268,18 @@ Return ONLY valid JSON (no markdown, no explanations):
         },
       ],
       response_format: { type: 'json_object' },
-      max_tokens: 3000,
+      max_tokens: 4000,
     });
 
-    const design = JSON.parse(designResult.choices[0].message.content || '{}');
+    let design;
+    try {
+      const content = designResult.choices[0].message.content || '{}';
+      design = JSON.parse(content);
+    } catch (parseError) {
+      console.error('[Regenerate] JSON parse error:', parseError);
+      console.error('[Regenerate] Raw content:', designResult.choices[0].message.content?.substring(0, 500));
+      return res.status(500).json({ error: 'AI generated invalid JSON format' });
+    }
 
     if (!design.html) {
       return res.status(500).json({ error: 'Failed to generate design' });
