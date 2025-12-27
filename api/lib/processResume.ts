@@ -135,8 +135,8 @@ export async function generateResumeDesign(resumeId: string) {
     const resume = resumes[0];
     const improvedText = resume.improved_text || resume.original_text;
 
-    // Get a random unique design template
-    const template = getRandomTemplate();
+    // Get a random unique design template (now async!)
+    const template = await getRandomTemplate();
 
     console.log(`[Design] Starting design generation for resume ${resumeId}`);
 
@@ -145,90 +145,104 @@ export async function generateResumeDesign(resumeId: string) {
       messages: [
         {
           role: 'system',
-          content: `You are an elite resume designer with expertise in modern web design, typography, and professional branding. Create stunning, magazine-quality resume designs that stand out while maintaining ATS compatibility. Use contemporary design trends: geometric shapes, gradients, whitespace mastery, and sophisticated color palettes. Think Behance, Dribbble quality. Always output valid JSON.`
+          content: `You are an award-winning resume designer from top design agencies (Pentagram, IDEO, Frog). Your resumes are featured in design galleries and win clients Fortune 500 interviews. Create PROFESSIONAL, POLISHED, EXECUTIVE-LEVEL resume designs that look like they cost $500 from a premium design studio. Use sophisticated typography, perfect spacing, elegant visual hierarchy, and refined color usage. Think: LinkedIn ProFinder top 1%, Canva Pro quality, Behance featured work. Always output valid JSON.`
         },
         {
           role: 'user',
-          content: `Design a STUNNING professional resume in HTML/CSS using this EXACT design template specification.
+          content: `Create a PROFESSIONAL, POLISHED resume design in HTML/CSS that looks EXPENSIVE and SOPHISTICATED - like it was designed by a top-tier design agency.
 
 Resume content:
 ${improvedText}
 
-DESIGN TEMPLATE TO USE:
-Template Name: ${template.name}
+TEMPLATE SPECIFICATION:
+Name: ${template.name}
 Style: ${template.style}
 Gradient: ${template.gradient}
-Accent Color: ${template.accentColor}
+Accent: ${template.accentColor}
 Fonts: ${template.fonts[0]} (headers), ${template.fonts[1]} (body)
-Description: ${template.description}
 
-CRITICAL DESIGN REQUIREMENTS:
+🎨 PROFESSIONAL DESIGN REQUIREMENTS (CRITICAL - MAKE IT LOOK EXPENSIVE):
 
-1. LAYOUT & STRUCTURE (MUST USE 2-COLUMN):
-   - MUST use 2-column layout: colored sidebar (35%) + main content (65%)
-   - CSS Grid: display: grid; grid-template-columns: 280px 1fr;
-   - SIDEBAR (left): Use gradient "${template.gradient}"
-   - MAIN (right): White background, contains summary and experience
-   - Sidebar text: white (#ffffff)
-   - Photo circle at top of sidebar: 120px, white border
-   - Full-height sidebar with gradient background
+1. LAYOUT - SOPHISTICATED 2-COLUMN DESIGN:
+   ✓ Grid: display: grid; grid-template-columns: 280px 1fr; height: 842px;
+   ✓ SIDEBAR (280px): Gradient background ${template.gradient}, full height, elegant padding (30px)
+   ✓ MAIN (remaining): Pure white (#ffffff), generous margins (40px), professional spacing
+   ✓ Name at TOP of sidebar: Large (32px), bold (700), ${template.fonts[0]}, white, letter-spacing: 1px
+   ✓ Job title below name: 13px, ${template.fonts[1]}, white, opacity: 0.95, elegant spacing
+   ✓ NO photo - use elegant monogram circle instead: 80px circle with initials, subtle border
 
-2. TYPOGRAPHY (EXACT FONTS):
-   - Google Fonts CDN: "${template.fonts[0]}" and "${template.fonts[1]}"
-   - Name: 28-36px, font-weight: 700, font-family: '${template.fonts[0]}', in sidebar (white)
-   - Job title: 14-16px, font-family: '${template.fonts[1]}', in sidebar below name
-   - Section headers: 18-22px, uppercase, letter-spacing: 2px, font-family: '${template.fonts[0]}'
-   - Body text: 11px, line-height: 1.7, font-family: '${template.fonts[1]}'
-   - Sidebar section headers: smaller, white, uppercase, font-family: '${template.fonts[0]}'
+2. TYPOGRAPHY - EXECUTIVE-LEVEL REFINEMENT:
+   ✓ Load Google Fonts: <link href="https://fonts.googleapis.com/css2?family=${template.fonts[0].replace(/ /g, '+')}:wght@300;400;600;700&family=${template.fonts[1].replace(/ /g, '+')}:wght@300;400;500;600&display=swap">
+   ✓ Name: 32px, font-weight: 700, ${template.fonts[0]}, white, letter-spacing: 1px, line-height: 1.2
+   ✓ Job Title: 13px, font-weight: 400, ${template.fonts[1]}, white, margin-top: 8px
+   ✓ Section Headers (main): 14px, font-weight: 600, ${template.fonts[0]}, ${template.accentColor}, uppercase, letter-spacing: 2.5px, margin-bottom: 16px, border-bottom: 2px solid ${template.accentColor}, padding-bottom: 8px
+   ✓ Body Text: 10px, font-weight: 400, ${template.fonts[1]}, #2c3e50, line-height: 1.6, perfect kerning
+   ✓ Sidebar Headers: 11px, font-weight: 600, ${template.fonts[0]}, white, uppercase, letter-spacing: 1.5px, margin: 24px 0 12px
+   ✓ Dates/Meta: 9px, font-weight: 500, #64748b, italic, spacing: 4px
 
-3. COLOR & VISUAL DESIGN (USE EXACT COLORS):
-   - Sidebar background: ${template.gradient}
-   - Accent color for headers in main area: ${template.accentColor}
-   - Sidebar ALL text: white (#ffffff)
-   - Main area: white background (#ffffff), dark text (#2c3e50)
-   - Section headers in main: ${template.accentColor}
-   - Links and highlights: ${template.accentColor}
+3. COLOR PALETTE - REFINED & COHESIVE:
+   ✓ Sidebar: ${template.gradient} (rich, saturated, professional)
+   ✓ Main Headers: ${template.accentColor} (vibrant but sophisticated)
+   ✓ Body Text: #2c3e50 (deep charcoal, not pure black - easier on eyes)
+   ✓ Secondary Text: #64748b (elegant gray for dates/meta)
+   ✓ Sidebar Text: #ffffff with subtle opacity variations (1.0 for name, 0.95 for details, 0.9 for labels)
+   ✓ Skill Pills: background rgba(255,255,255,0.25), border: 1px solid rgba(255,255,255,0.3), padding: 6px 12px, border-radius: 20px
 
-4. VISUAL ELEMENTS (MAKE IT UNIQUE):
-   - NO photo placeholder - leave space or use decorative element instead
-   - Contact icons: Email, Phone, Location, Website (use simple white icons or text in sidebar)
-   - Skill tags: white pills with background: rgba(255,255,255,0.2) in sidebar
-   - Divider lines in sidebar: 1px solid rgba(255,255,255,0.3)
-   - Box-shadow on container: 0 10px 30px rgba(0,0,0,0.15)
-   - Add unique decorative elements based on style: ${template.style}
+4. SPACING & WHITESPACE - BREATHING ROOM:
+   ✓ Section Margins: 28px between sections (never cramped!)
+   ✓ Sidebar Padding: 30px all sides (luxurious feel)
+   ✓ Main Content Padding: 40px top, 45px right, 40px bottom, 40px left
+   ✓ Paragraph Spacing: 12px between bullet points, 20px between jobs
+   ✓ Line Height: Body 1.6, Headers 1.3 (perfect readability)
+   ✓ Letter Spacing: Headers +2.5px, Name +1px (premium look)
 
-5. STYLE-SPECIFIC VARIATIONS:
-   ${template.style === 'modern' ? '- Use clean lines, bold typography, geometric shapes' : ''}
-   ${template.style === 'classic' ? '- Use serif fonts, traditional spacing, elegant borders' : ''}
-   ${template.style === 'creative' ? '- Use bold colors, creative layouts, unique shapes' : ''}
-   ${template.style === 'minimal' ? '- Use maximum whitespace, simple lines, restrained design' : ''}
+5. VISUAL POLISH - DETAILS THAT MATTER:
+   ✓ Subtle shadow on container: box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+   ✓ Elegant dividers in sidebar: border-top: 1px solid rgba(255,255,255,0.2), margin: 20px 0
+   ✓ Skill tags: Use CSS pills with hover effect, rounded corners (20px), subtle shadows
+   ✓ Job titles: font-weight: 600, font-size: 11px, color: #1e293b, margin-bottom: 4px
+   ✓ Company names: font-weight: 500, font-size: 10px, color: ${template.accentColor}, margin-bottom: 6px
+   ✓ Bullet points: Custom styled (▸ or elegant • with ${template.accentColor}), proper indentation (20px)
+   ✓ Contact info: Icon-like symbols (📧 ☎ 📍 🌐) or elegant Unicode, spacing: 10px between items
 
-6. SINGLE-PAGE CONSTRAINT (CRITICAL):
-   - MUST fit ALL content on ONE page (8.5" × 11" = 595px × 842px at 72dpi)
-   - Container: max-width: 595px, height: EXACTLY 842px
-   - Add to body/html: overflow: hidden !important; max-height: 842px !important;
-   - Use smaller font sizes (body: 8-10px) to fit everything
-   - Reduce all padding and margins (use px values like 4px, 8px max)
-   - Condense line-height (1.2-1.4) and spacing
-   - If content is too long, prioritize and summarize - NO SCROLLING ALLOWED
+6. PROFESSIONAL TOUCHES - WHAT SETS IT APART:
+   ✓ Monogram circle: 80px circle at top of sidebar, white border (3px), background rgba(255,255,255,0.15), centered initials (24px, bold)
+   ✓ Subtle texture: Add very subtle pattern/noise to sidebar for depth (optional: repeating-linear-gradient)
+   ✓ Print-friendly: All measurements in px, @page { margin: 0; size: letter; }
+   ✓ Modern bullet style: Use elegant shapes (▸ or custom SVG-like), colored with accent
+   ✓ Hierarchy: Clear visual weight - Name > Section Headers > Job Titles > Body
+   ✓ Consistency: All spacing follows 4px grid (4, 8, 12, 16, 20, 24, etc.)
 
-7. PRINT OPTIMIZATION:
-   - Page size: 8.5" × 11" (595px × 842px)
-   - Add CSS: html, body { overflow: hidden !important; height: 842px !important; max-height: 842px !important; }
-   - Use @page CSS for print styles
-   - Ensure main container has: height: 842px; overflow: hidden;
+7. SINGLE-PAGE CONSTRAINT (CRITICAL):
+   ✓ Container: width: 595px, height: 842px (exact US Letter), overflow: hidden
+   ✓ Font sizes: Precisely calculated - Name 32px, Headers 14px, Body 10px, Meta 9px
+   ✓ Strategic spacing: Use all sizing values given above - they're calculated to fit perfectly
+   ✓ If too long: Reduce bullet points to 2-3 per job, shorten summary, prioritize recent experience
+   ✓ CSS: html, body { overflow: hidden !important; height: 842px !important; margin: 0; }
 
-8. MUST INCLUDE:
-   - Complete <!DOCTYPE html> declaration
-   - All CSS inline in <style> tag
-   - Semantic HTML
-   - Google Fonts link for: ${template.fonts.join(' and ')}
+8. CODE STRUCTURE - CLEAN & SEMANTIC:
+   ✓ DOCTYPE: <!DOCTYPE html>
+   ✓ Full Google Fonts link with multiple weights
+   ✓ ALL CSS in <style> tag (no external files)
+   ✓ Semantic HTML5: <header>, <section>, <article>, <aside>
+   ✓ Print CSS: @page { margin: 0; size: letter; } @media print { .container { box-shadow: none !important; } }
 
-Make this design UNIQUE from other resumes. Use the specified gradient and fonts to create a distinct visual identity.
+9. EXAMPLES OF PROFESSIONAL POLISH (Study these):
+   ✓ Name Section: Monogram circle (80px) → Name (32px, bold, letter-spacing: 1px) → Title (13px, opacity: 0.95, margin-top: 8px) → Contact (10px icons, spacing: 10px)
+   ✓ Experience Entry: Company (10px, ${template.accentColor}, bold) | Job Title (11px, #1e293b, semibold) | Dates (9px, italic, #64748b) → Bullets with custom ▸ markers
+   ✓ Skills Section: Pill-style tags, each: padding: 6px 12px, border-radius: 20px, background: rgba(255,255,255,0.25), margin: 4px
+   ✓ Section Header: Text (14px, uppercase, letter-spacing: 2.5px, ${template.accentColor}) + 2px bottom border + 16px margin-bottom
 
-Return ONLY valid JSON:
+💎 FINAL QUALITY CHECK - DOES IT LOOK LIKE A $500 PREMIUM RESUME?
+   ✓ Typography: Perfect hierarchy, elegant spacing, professional fonts
+   ✓ Color: Cohesive palette, not garish, sophisticated gradients
+   ✓ Whitespace: Generous but efficient, never cramped
+   ✓ Details: Monogram, custom bullets, pill tags, elegant dividers
+   ✓ Overall: Could this be on Behance? Would a Fortune 500 recruiter be impressed?
+
+Return ONLY valid JSON (no markdown, no explanations):
 {
-  "html": "<!DOCTYPE html><html>...complete HTML with inline CSS...</html>",
+  "html": "<!DOCTYPE html><html>...complete polished HTML...</html>",
   "templateName": "${template.name}",
   "style": "${template.style}",
   "colorScheme": "${template.accentColor}"
