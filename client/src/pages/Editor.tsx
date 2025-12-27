@@ -48,7 +48,8 @@ export default function Editor() {
         setResume(data);
         retryCount = 0; // Reset retry count on success
 
-        if (data.status === 'processing') {
+        // Keep polling if still processing OR if completed but no HTML yet (design generating in background)
+        if (data.status === 'processing' || (data.status === 'completed' && !data.improvedHtml)) {
           setTimeout(fetchResume, 2000); // Poll every 2 seconds
         }
       } catch (error) {

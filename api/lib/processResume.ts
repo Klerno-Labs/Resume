@@ -111,17 +111,23 @@ Return ONLY valid JSON in this exact format:
     `;
 
     // Generate design in background (don't await to avoid timeout)
-    console.log('[Process] Starting background design generation...');
-    openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an elite resume designer with expertise in modern web design, typography, and professional branding. Create stunning, magazine-quality resume designs that stand out while maintaining ATS compatibility. Use contemporary design trends: geometric shapes, gradients, whitespace mastery, and sophisticated color palettes. Think Behance, Dribbble quality. Always output valid JSON.`
-          },
-          {
-            role: 'user',
-            content: `Design a STUNNING professional resume in HTML/CSS using this EXACT design template specification.
+    console.log(`[Process] Starting background design generation for resume ${resumeId}`);
+
+    // Use setImmediate to ensure this runs after the response is sent
+    setImmediate(async () => {
+      try {
+        console.log(`[Process] Background task started for resume ${resumeId}`);
+
+        const designResult = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an elite resume designer with expertise in modern web design, typography, and professional branding. Create stunning, magazine-quality resume designs that stand out while maintaining ATS compatibility. Use contemporary design trends: geometric shapes, gradients, whitespace mastery, and sophisticated color palettes. Think Behance, Dribbble quality. Always output valid JSON.`
+            },
+            {
+              role: 'user',
+              content: `Design a STUNNING professional resume in HTML/CSS using this EXACT design template specification.
 
 Resume content:
 ${improvedText}
@@ -205,15 +211,18 @@ Return ONLY valid JSON:
   "style": "${template.style}",
   "colorScheme": "${template.accentColor}"
 }`,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens: 3000,
-      }).then(async (designResult) => {
+            },
+          ],
+          response_format: { type: 'json_object' },
+          max_tokens: 3000,
+        });
+
+        console.log(`[Process] OpenAI design API call completed for resume ${resumeId}`);
+
         const design = JSON.parse(designResult.choices[0].message.content || '{}');
 
         if (design.html) {
-          console.log('[Process] Design generated successfully in background!');
+          console.log(`[Process] Design HTML generated successfully for resume ${resumeId}`);
 
           // Update resume with design
           await sql`
@@ -223,43 +232,50 @@ Return ONLY valid JSON:
             WHERE id = ${resumeId}
           `;
 
-          // Save template in background (don't await)
+          console.log(`[Process] Resume ${resumeId} updated with HTML design`);
+
+          // Save template to database with proper error handling
           if (design.templateName) {
-            sql`
-              INSERT INTO resume_templates (
-                name,
-                style,
-                color_scheme,
-                html_template,
-                preview_image_url,
-                is_ai_generated,
-                usage_count,
-                created_from_resume_id
-              ) VALUES (
-                ${design.templateName},
-                ${design.style || 'modern'},
-                ${design.colorScheme || 'blue'},
-                ${design.html},
-                ${null},
-                ${true},
-                ${0},
-                ${resumeId}
-              )
-              ON CONFLICT (name) DO UPDATE SET
-                usage_count = resume_templates.usage_count + 1,
-                updated_at = NOW()
-            `.then(() => {
-              console.log(`[Template] Saved new template: ${design.templateName}`);
-            }).catch(err => {
-              console.warn('[Template] Failed to save template:', err);
-            });
+            try {
+              await sql`
+                INSERT INTO resume_templates (
+                  name,
+                  style,
+                  color_scheme,
+                  html_template,
+                  preview_image_url,
+                  is_ai_generated,
+                  usage_count,
+                  created_from_resume_id
+                ) VALUES (
+                  ${design.templateName},
+                  ${design.style || 'modern'},
+                  ${design.colorScheme || 'blue'},
+                  ${design.html},
+                  ${null},
+                  ${true},
+                  ${0},
+                  ${resumeId}
+                )
+                ON CONFLICT (name) DO UPDATE SET
+                  html_template = ${design.html},
+                  usage_count = resume_templates.usage_count + 1,
+                  updated_at = NOW()
+              `;
+              console.log(`[Template] Successfully saved template: ${design.templateName}`);
+            } catch (templateErr) {
+              console.error(`[Template] Failed to save template ${design.templateName}:`, templateErr);
+            }
+          } else {
+            console.warn(`[Template] No templateName in design response for resume ${resumeId}`);
           }
         } else {
-          console.error('[Process] Design generation returned no HTML');
+          console.error(`[Process] Design generation returned no HTML for resume ${resumeId}`);
         }
-      }).catch(err => {
-        console.error('[Process] Background design generation failed:', err);
-      });
+      } catch (err) {
+        console.error(`[Process] Background design generation failed for resume ${resumeId}:`, err);
+      }
+    });
   } catch (error) {
     console.error('[Process] Error optimizing resume:', error);
     const sql = getSQL();
