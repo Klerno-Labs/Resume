@@ -450,6 +450,51 @@ class ApiClient {
     return res.json() as Promise<{ success: boolean; html: string }>;
   }
 
+  async previewDesigns(resumeId: string): Promise<{
+    success: boolean;
+    previews: Array<{
+      templateName: string;
+      templateStyle: string;
+      layout: string;
+      accentColor: string;
+      html: string;
+      contrastPassed: boolean;
+      contrastSummary: {
+        totalChecks: number;
+        passedAA: number;
+        passedAAA: number;
+        failedAA: number;
+      };
+    }>;
+  }> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/resumes/preview-designs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resumeId }),
+    });
+    if (!res.ok) {
+      const error = await res.json() as { message?: string; error?: string };
+      throw new Error(error.message || error.error || 'Failed to generate design previews');
+    }
+    return res.json() as Promise<{
+      success: boolean;
+      previews: Array<{
+        templateName: string;
+        templateStyle: string;
+        layout: string;
+        accentColor: string;
+        html: string;
+        contrastPassed: boolean;
+        contrastSummary: {
+          totalChecks: number;
+          passedAA: number;
+          passedAAA: number;
+          failedAA: number;
+        };
+      }>;
+    }>;
+  }
+
   async getUserResumes(userId: string): Promise<Resume[]> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/users/${userId}/resumes`);
     if (!res.ok) {

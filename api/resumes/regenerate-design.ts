@@ -4,6 +4,7 @@ import { parse } from 'cookie';
 import { neon } from '@neondatabase/serverless';
 import OpenAI from 'openai';
 import { getRandomTemplate } from '../lib/designTemplates.js';
+import { validateResumeContrast } from '../lib/contrastValidator.js';
 
 // Lazy database connection
 let _sql: ReturnType<typeof neon> | null = null;
@@ -289,6 +290,27 @@ Expected JSON format:
       return res.status(500).json({ error: 'Failed to generate design' });
     }
 
+    // Validate contrast ratios (WCAG AA compliance)
+    console.log('[Regenerate Design] Validating contrast ratios...');
+    const contrastValidation = validateResumeContrast(design.html);
+
+    if (!contrastValidation.passed) {
+      console.warn('[Regenerate Design] Contrast validation failed:', contrastValidation.summary);
+      console.warn('[Regenerate Design] Failed checks:', contrastValidation.results.filter(r => !r.meetsAA));
+
+      // Log which colors failed
+      const failedChecks = contrastValidation.results.filter(r => !r.meetsAA);
+      failedChecks.forEach(check => {
+        console.warn(`  - ${check.context}: ${check.contrastRatio.toFixed(2)}:1 (needs 4.5:1)`);
+      });
+
+      // For now, we'll accept the design but log the warning
+      // In the future, we could regenerate automatically
+      console.warn('[Regenerate Design] Design has poor contrast but proceeding anyway');
+    } else {
+      console.log('[Regenerate Design] ✓ Contrast validation passed!', contrastValidation.summary);
+    }
+
     // Update resume with new design and increment counter
     await sql`
       UPDATE resumes SET
@@ -308,6 +330,10 @@ Expected JSON format:
       regenerationsUsed: currentUsage + 1,
       regenerationsLimit: limit,
       regenerationsRemaining: limit === Infinity ? Infinity : limit - (currentUsage + 1),
+      contrastValidation: {
+        passed: contrastValidation.passed,
+        ...contrastValidation.summary,
+      },
     });
   } catch (error) {
     console.error('[Regenerate Design] Error:', error);

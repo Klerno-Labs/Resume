@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useRoute } from 'wouter';
-import { ArrowLeft, Download, Target, Briefcase, Palette, Printer, Upload, X, ZoomIn } from 'lucide-react';
+import { ArrowLeft, Download, Target, Briefcase, Palette, Printer, Upload, X, ZoomIn, RotateCcw, Menu } from 'lucide-react';
 import { CoverLetterDialog } from '@/components/CoverLetterDialog';
 import { ResumePreviewStyled } from '@/components/ResumePreview';
 import { TemplateGallery } from '@/components/TemplateGallery';
 import { JobMatcher } from '@/components/JobMatcher';
 import { IndustryOptimizer } from '@/components/IndustryOptimizer';
+import { DesignPreviewModal } from '@/components/DesignPreviewModal';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
@@ -22,12 +23,33 @@ export default function Editor() {
   const [isZoomed, setIsZoomed] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [designPreviews, setDesignPreviews] = useState<any[]>([]);
+  const [designHistory, setDesignHistory] = useState<Array<{ html: string; templateName: string; timestamp: number }>>([]);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [, navigate] = useLocation();
   const [, params] = useRoute('/editor/:id');
   const { user } = useAuth();
   const { showUpgrade, upgradeTrigger, featureName, triggerUpgrade, closeUpgrade } =
     useUpgradePrompt();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load design history from localStorage
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const resumeId = params?.id || queryParams.get('resumeId');
+
+    if (resumeId) {
+      const savedHistory = localStorage.getItem(`design-history-${resumeId}`);
+      if (savedHistory) {
+        try {
+          setDesignHistory(JSON.parse(savedHistory));
+        } catch (e) {
+          console.error('[Editor] Failed to parse design history:', e);
+        }
+      }
+    }
+  }, [params?.id]);
 
   useEffect(() => {
     // Support both route params (/editor/:id) and query params (?resumeId=xxx)
@@ -199,12 +221,63 @@ export default function Editor() {
     });
   };
 
+  const saveDesignToHistory = (html: string, templateName: string) => {
+    if (!resume) return;
+
+    const newEntry = {
+      html,
+      templateName,
+      timestamp: Date.now(),
+    };
+
+    const updatedHistory = [newEntry, ...designHistory].slice(0, 10); // Keep last 10
+    setDesignHistory(updatedHistory);
+
+    // Save to localStorage
+    localStorage.setItem(`design-history-${resume.id}`, JSON.stringify(updatedHistory));
+  };
+
+  const handleUndoDesign = () => {
+    if (designHistory.length === 0) {
+      toast({
+        title: 'No History',
+        description: 'No previous designs to restore',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const previousDesign = designHistory[0];
+    setResume(prev => ({
+      ...prev!,
+      improvedHtml: previousDesign.html,
+    }));
+
+    // Remove from history
+    const updatedHistory = designHistory.slice(1);
+    setDesignHistory(updatedHistory);
+    localStorage.setItem(`design-history-${resume!.id}`, JSON.stringify(updatedHistory));
+
+    toast({
+      title: 'Design Restored!',
+      description: `Reverted to ${previousDesign.templateName}`,
+    });
+  };
+
   return (
     <>
       <div className="h-screen flex flex-col bg-background font-sans overflow-hidden">
         {/* Header */}
         <header className="h-14 md:h-16 border-b flex items-center justify-between px-3 md:px-6 bg-white dark:bg-slate-950 z-20 shrink-0">
           <div className="flex items-center gap-2 md:gap-4 min-w-0">
+            {/* Mobile Menu Button */}
+            <button
+              className="lg:hidden p-1.5 md:p-2 hover:bg-secondary rounded-full transition-colors"
+              onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+            >
+              <Menu className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+            </button>
+
             <Link href="/dashboard">
               <button className="p-1.5 md:p-2 hover:bg-secondary rounded-full transition-colors">
                 <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
@@ -292,9 +365,29 @@ export default function Editor() {
         </header>
 
         {/* Single-Page Layout: Sidebar + Resume Preview */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden relative">
+          {/* Mobile Sidebar Overlay */}
+          {isMobileSidebarOpen && (
+            <div
+              className="lg:hidden fixed inset-0 bg-black/50 z-30"
+              onClick={() => setIsMobileSidebarOpen(false)}
+            />
+          )}
+
           {/* Left Sidebar - Editing Tools */}
-          <aside className="hidden lg:flex lg:w-80 border-r bg-linear-to-b from-white to-gray-50 dark:from-slate-950 dark:to-slate-900 flex-col overflow-y-auto">
+          <aside className={`
+            ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            lg:translate-x-0
+            fixed lg:relative
+            left-0 top-14 md:top-16
+            h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] lg:h-auto
+            w-80
+            border-r bg-linear-to-b from-white to-gray-50 dark:from-slate-950 dark:to-slate-900
+            flex flex-col overflow-y-auto
+            z-40 lg:z-auto
+            transition-transform duration-300
+            lg:flex
+          `}>
             {/* Enhanced Header */}
             <div className="p-6 border-b bg-white dark:bg-slate-950">
               <div className="flex items-center gap-3 mb-2">
@@ -450,33 +543,19 @@ export default function Editor() {
                           try {
                             setIsRegenerating(true);
 
-                            if (resume.improvedHtml) {
-                              // Regenerate existing design
-                              const result = await api.regenerateDesign(resume.id);
-                              setResume(prev => ({
-                                ...prev!,
-                                improvedHtml: result.improvedHtml,
-                              }));
-                              toast({
-                                title: '✨ New Design Generated!',
-                                description: `${result.templateName} - ${result.regenerationsRemaining === Infinity ? 'Unlimited' : result.regenerationsRemaining} regenerations remaining`,
-                              });
-                            } else {
-                              // Generate initial design
-                              const result = await api.generateDesign(resume.id);
-                              setResume(prev => ({
-                                ...prev!,
-                                improvedHtml: result.html,
-                              }));
-                              toast({
-                                title: '🎨 Design Generated!',
-                                description: 'Your beautiful resume design is ready',
-                              });
-                            }
+                            // Generate 3 preview options
+                            const result = await api.previewDesigns(resume.id);
+                            setDesignPreviews(result.previews);
+                            setShowPreviewModal(true);
+
+                            toast({
+                              title: '🎨 3 Designs Generated!',
+                              description: 'Choose your favorite design',
+                            });
                           } catch (error) {
                             toast({
-                              title: resume.improvedHtml ? 'Regeneration Failed' : 'Generation Failed',
-                              description: error instanceof Error ? error.message : 'Failed to generate design',
+                              title: 'Preview Generation Failed',
+                              description: error instanceof Error ? error.message : 'Failed to generate design previews',
                               variant: 'destructive',
                             });
                           } finally {
@@ -493,7 +572,7 @@ export default function Editor() {
                         ) : (
                           <>
                             <Palette className="w-4 h-4" />
-                            <span>{resume.improvedHtml ? 'Generate New Design' : 'Generate Design'}</span>
+                            <span>{resume.improvedHtml ? 'Preview New Designs' : 'Preview Designs'}</span>
                           </>
                         )}
                       </Button>
@@ -503,6 +582,19 @@ export default function Editor() {
                         <p className="text-[10px] text-center text-muted-foreground mt-2">
                           💡 Click above to create your first design
                         </p>
+                      )}
+
+                      {/* Undo Button */}
+                      {resume.improvedHtml && designHistory.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full mt-2 text-xs"
+                          onClick={handleUndoDesign}
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Undo to Previous Design ({designHistory.length})</span>
+                        </Button>
                       )}
                     </AccordionContent>
                   </AccordionItem>
@@ -704,6 +796,27 @@ export default function Editor() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <DesignPreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        previews={designPreviews}
+        onSelectDesign={(html, templateName) => {
+          // Save current design to history before applying new one
+          if (resume?.improvedHtml) {
+            saveDesignToHistory(resume.improvedHtml, 'Previous Design');
+          }
+
+          setResume(prev => ({
+            ...prev!,
+            improvedHtml: html,
+          }));
+          toast({
+            title: '✨ Design Applied!',
+            description: `${templateName} is now active`,
+          });
+        }}
+      />
 
       <UpgradeModal
         isOpen={showUpgrade}

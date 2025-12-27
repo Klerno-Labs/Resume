@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { getSQL } from './db.js';
 import { getRandomTemplate } from './designTemplates.js';
+import { validateResumeContrast } from './contrastValidator.js';
 
 let _openai: OpenAI | null = null;
 
@@ -305,6 +306,21 @@ Expected JSON format:
 
     if (!designHtml) {
       throw new Error('No HTML generated');
+    }
+
+    // Validate contrast ratios (WCAG AA compliance)
+    console.log('[Design] Validating contrast ratios...');
+    const contrastValidation = validateResumeContrast(designHtml);
+
+    if (!contrastValidation.passed) {
+      console.warn('[Design] Contrast validation failed:', contrastValidation.summary);
+      const failedChecks = contrastValidation.results.filter(r => !r.meetsAA);
+      failedChecks.forEach(check => {
+        console.warn(`  - ${check.context}: ${check.contrastRatio.toFixed(2)}:1 (needs 4.5:1)`);
+      });
+      console.warn('[Design] Design has poor contrast but proceeding anyway');
+    } else {
+      console.log('[Design] ✓ Contrast validation passed!', contrastValidation.summary);
     }
 
     // Update resume with design
