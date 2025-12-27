@@ -237,6 +237,9 @@ Return ONLY valid JSON:
           // Save template to database with proper error handling
           if (design.templateName) {
             try {
+              // Make template name unique by appending resume ID (first 8 chars)
+              const uniqueTemplateName = `${design.templateName} (${resumeId.substring(0, 8)})`;
+
               await sql`
                 INSERT INTO resume_templates (
                   name,
@@ -248,7 +251,7 @@ Return ONLY valid JSON:
                   usage_count,
                   created_from_resume_id
                 ) VALUES (
-                  ${design.templateName},
+                  ${uniqueTemplateName},
                   ${design.style || 'modern'},
                   ${design.colorScheme || 'blue'},
                   ${design.html},
@@ -257,12 +260,9 @@ Return ONLY valid JSON:
                   ${0},
                   ${resumeId}
                 )
-                ON CONFLICT (name) DO UPDATE SET
-                  html_template = ${design.html},
-                  usage_count = resume_templates.usage_count + 1,
-                  updated_at = NOW()
+                ON CONFLICT (name) DO NOTHING
               `;
-              console.log(`[Template] Successfully saved template: ${design.templateName}`);
+              console.log(`[Template] Successfully saved template: ${uniqueTemplateName}`);
             } catch (templateErr) {
               console.error(`[Template] Failed to save template ${design.templateName}:`, templateErr);
             }

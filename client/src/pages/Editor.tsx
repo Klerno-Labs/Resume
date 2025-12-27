@@ -516,44 +516,29 @@ export default function Editor() {
           </aside>
 
           {/* Main Resume Preview */}
-          <main className="flex-1 flex flex-col items-center justify-center bg-muted/20 p-2 sm:p-4 overflow-hidden">
-            <div className="relative group">
+          <main className="flex-1 flex flex-col items-center bg-muted/20 p-2 sm:p-4 overflow-auto">
+            <div className="relative group w-full max-w-[595px]">
               <div
-                className="bg-white shadow-xl sm:shadow-2xl border rounded-sm cursor-pointer hover:shadow-2xl transition-shadow relative"
+                className="bg-white shadow-xl sm:shadow-2xl border rounded-sm cursor-pointer hover:shadow-2xl transition-shadow relative w-full"
                 onClick={() => setIsZoomed(true)}
-                style={
-                  {
-                    width: '595px',
-                    height: '842px',
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    transform: 'scale(var(--resume-scale))',
-                    transformOrigin: 'center center',
-                    overflow: 'hidden',
-                    '--resume-scale': window.innerWidth < 1024
-                      ? 'min(calc((100vw - 1rem) / 595), calc((100vh - 1rem - 64px - 40px) / 842))'
-                      : 'min(calc((100vw - 320px - 2rem) / 595), calc((100vh - 2rem - 64px - 40px) / 842))'
-                  } as React.CSSProperties
-                }
               >
                 {resume.improvedHtml ? (
-                  <div className="w-full h-full overflow-hidden relative">
+                  <div className="w-full overflow-auto" style={{ maxHeight: '90vh' }}>
                     <iframe
                       srcDoc={resume.improvedHtml}
-                      className="border-0 absolute"
+                      className="border-0 w-full"
                       title="AI-Generated Resume Design - Ready to Print"
                       sandbox="allow-same-origin"
                       style={{
                         width: '595px',
-                        height: '1200px',
-                        transform: 'scale(0.7)',
-                        transformOrigin: 'top left',
+                        minHeight: '842px',
+                        height: 'auto',
                         pointerEvents: 'none'
                       }}
                     />
                   </div>
                 ) : (
-                  <div className="w-full h-full overflow-hidden">
+                  <div className="w-full overflow-auto p-8" style={{ maxHeight: '90vh' }}>
                     <ResumePreviewStyled text={improvedText} />
                   </div>
                 )}
@@ -564,7 +549,7 @@ export default function Editor() {
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground text-center mt-2">Click resume to view full size</p>
+              <p className="text-xs text-muted-foreground text-center mt-2">Click resume to view full size • Scroll to see complete content</p>
             </div>
           </main>
         </div>
