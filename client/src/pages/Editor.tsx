@@ -292,30 +292,52 @@ export default function Editor() {
         {/* Single-Page Layout: Sidebar + Resume Preview */}
         <div className="flex-1 flex overflow-hidden">
           {/* Left Sidebar - Editing Tools */}
-          <aside className="hidden lg:flex lg:w-80 border-r bg-secondary/10 flex-col overflow-y-auto">
-            <div className="p-4 border-b bg-white dark:bg-slate-950">
-              <h2 className="font-semibold text-sm flex items-center gap-2">
-                <span className="text-lg">🛠️</span>
-                Editing Tools
-              </h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                Customize and optimize your resume
-              </p>
+          <aside className="hidden lg:flex lg:w-80 border-r bg-linear-to-b from-white to-gray-50 dark:from-slate-950 dark:to-slate-900 flex-col overflow-y-auto">
+            {/* Enhanced Header */}
+            <div className="p-6 border-b bg-white dark:bg-slate-950">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
+                  <span className="text-white text-lg">✨</span>
+                </div>
+                <div>
+                  <h2 className="font-bold text-base">Editing Tools</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Enhance your resume
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Indicator */}
+              <div className="mt-3 px-3 py-2 rounded-lg bg-linear-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  <p className="text-xs font-medium text-green-700 dark:text-green-300">
+                    {resume.improvedHtml ? 'Design Ready' : isCompleted ? 'Ready for Design' : 'Processing...'}
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="p-4 space-y-3">
               <Accordion type="single" collapsible className="w-full">
                 {/* Upload Photo */}
                 {resume.improvedHtml && (
-                  <AccordionItem value="photo" className="border rounded-lg px-4">
+                  <AccordionItem value="photo" className="border rounded-lg px-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                     <AccordionTrigger className="hover:no-underline py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
-                          <Upload className="w-5 h-5 text-blue-600" />
+                        <div className="w-10 h-10 rounded-xl bg-linear-to-br from-orange-500 to-amber-600 flex items-center justify-center shrink-0 shadow-md">
+                          <Upload className="w-5 h-5 text-white" />
                         </div>
-                        <div className="text-left">
-                          <div className="font-semibold text-sm">Upload Photo</div>
-                          <div className="text-xs text-muted-foreground">Add profile image</div>
+                        <div className="text-left flex-1">
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            Upload Photo
+                            {uploadedImage && (
+                              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {uploadedImage ? 'Photo added' : 'Add profile image'}
+                          </div>
                         </div>
                       </div>
                     </AccordionTrigger>
@@ -372,15 +394,20 @@ export default function Editor() {
 
                 {/* Generate/Regenerate Design */}
                 {isCompleted && (
-                  <AccordionItem value="design" className="border rounded-lg px-4">
+                  <AccordionItem value="design" className="border rounded-lg px-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                     <AccordionTrigger className="hover:no-underline py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
-                          <Palette className="w-5 h-5 text-purple-600" />
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="w-10 h-10 rounded-xl bg-linear-to-br from-purple-500 to-purple-600 flex items-center justify-center shrink-0 shadow-md">
+                          <Palette className="w-5 h-5 text-white" />
                         </div>
-                        <div className="text-left">
-                          <div className="font-semibold text-sm">
+                        <div className="text-left flex-1">
+                          <div className="font-semibold text-sm flex items-center gap-2">
                             {resume.improvedHtml ? 'Regenerate Design' : 'Generate Design'}
+                            {!resume.improvedHtml && (
+                              <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-100 text-purple-700 rounded-full">
+                                NEW
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {resume.improvedHtml ? 'Get a new style' : 'Create HTML design'}
@@ -392,12 +419,31 @@ export default function Editor() {
                       <p className="text-sm text-muted-foreground mb-3">
                         {resume.improvedHtml
                           ? 'Generate a new random professional design while keeping your content'
-                          : 'Generate a beautiful HTML design for your resume'}
+                          : 'Transform your resume into a beautiful, professionally designed HTML document'}
                       </p>
+
+                      {/* Progress indicator when generating */}
+                      {isRegenerating && (
+                        <div className="mb-3 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-xs font-medium text-purple-700 dark:text-purple-300">
+                              Generating design...
+                            </p>
+                          </div>
+                          <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-1.5 overflow-hidden">
+                            <div className="bg-purple-600 h-full rounded-full animate-pulse" style={{ width: '60%' }}></div>
+                          </div>
+                          <p className="text-[10px] text-purple-600 dark:text-purple-400 mt-1">
+                            This may take 30-40 seconds
+                          </p>
+                        </div>
+                      )}
+
                       <Button
                         variant="outline"
                         size="sm"
-                        className="w-full"
+                        className="w-full border-purple-200 hover:bg-purple-50 hover:border-purple-300 transition-all"
                         onClick={async () => {
                           try {
                             setIsRegenerating(true);
@@ -410,7 +456,7 @@ export default function Editor() {
                                 improvedHtml: result.improvedHtml,
                               }));
                               toast({
-                                title: 'New Design Generated!',
+                                title: '✨ New Design Generated!',
                                 description: `${result.templateName} - ${result.regenerationsRemaining === Infinity ? 'Unlimited' : result.regenerationsRemaining} regenerations remaining`,
                               });
                             } else {
@@ -421,7 +467,7 @@ export default function Editor() {
                                 improvedHtml: result.html,
                               }));
                               toast({
-                                title: 'Design Generated!',
+                                title: '🎨 Design Generated!',
                                 description: 'Your beautiful resume design is ready',
                               });
                             }
@@ -449,20 +495,27 @@ export default function Editor() {
                           </>
                         )}
                       </Button>
+
+                      {/* Helper text */}
+                      {!resume.improvedHtml && (
+                        <p className="text-[10px] text-center text-muted-foreground mt-2">
+                          💡 Click above to create your first design
+                        </p>
+                      )}
                     </AccordionContent>
                   </AccordionItem>
                 )}
 
                 {/* Templates */}
-                <AccordionItem value="templates" className="border rounded-lg px-4">
+                <AccordionItem value="templates" className="border rounded-lg px-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                   <AccordionTrigger className="hover:no-underline py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
-                        <Palette className="w-5 h-5 text-purple-600" />
+                      <div className="w-10 h-10 rounded-xl bg-linear-to-br from-pink-500 to-rose-600 flex items-center justify-center shrink-0 shadow-md">
+                        <Palette className="w-5 h-5 text-white" />
                       </div>
-                      <div className="text-left">
+                      <div className="text-left flex-1">
                         <div className="font-semibold text-sm">Templates</div>
-                        <div className="text-xs text-muted-foreground">21 professional designs</div>
+                        <div className="text-xs text-muted-foreground">Browse 20+ designs</div>
                       </div>
                     </div>
                   </AccordionTrigger>
@@ -487,13 +540,13 @@ export default function Editor() {
                 </AccordionItem>
 
                 {/* Job Matcher */}
-                <AccordionItem value="jobmatcher" className="border rounded-lg px-4">
+                <AccordionItem value="jobmatcher" className="border rounded-lg px-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                   <AccordionTrigger className="hover:no-underline py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
-                        <Target className="w-5 h-5 text-blue-600" />
+                      <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-cyan-600 flex items-center justify-center shrink-0 shadow-md">
+                        <Target className="w-5 h-5 text-white" />
                       </div>
-                      <div className="text-left">
+                      <div className="text-left flex-1">
                         <div className="font-semibold text-sm">Job Matcher</div>
                         <div className="text-xs text-muted-foreground">AI-powered analysis</div>
                       </div>
@@ -512,15 +565,15 @@ export default function Editor() {
                 </AccordionItem>
 
                 {/* Industry Optimizer */}
-                <AccordionItem value="industry" className="border rounded-lg px-4">
+                <AccordionItem value="industry" className="border rounded-lg px-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                   <AccordionTrigger className="hover:no-underline py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center shrink-0">
-                        <Briefcase className="w-5 h-5 text-green-600" />
+                      <div className="w-10 h-10 rounded-xl bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center shrink-0 shadow-md">
+                        <Briefcase className="w-5 h-5 text-white" />
                       </div>
-                      <div className="text-left">
+                      <div className="text-left flex-1">
                         <div className="font-semibold text-sm">Industry Optimizer</div>
-                        <div className="text-xs text-muted-foreground">10 industries</div>
+                        <div className="text-xs text-muted-foreground">10 industries available</div>
                       </div>
                     </div>
                   </AccordionTrigger>
