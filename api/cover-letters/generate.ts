@@ -21,7 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Fetch resume
     const resume = await db
       .selectFrom('resumes')
-      .select(['id', 'userId', 'improvedText', 'originalText'])
+      .select(['id', 'user_id', 'improved_text', 'original_text'])
       .where('id', '=', body.resumeId)
       .executeTakeFirst();
 
@@ -30,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Use improved text if available, otherwise use original
-    const resumeText = resume.improvedText || resume.originalText;
+    const resumeText = resume.improved_text || resume.original_text;
 
     if (!resumeText) {
       return res.status(400).json({ error: 'Resume has no text content' });
@@ -46,14 +46,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Save to database
     const coverLetter = await db
-      .insertInto('coverLetters')
+      .insertInto('cover_letters')
       .values({
-        userId: resume.userId,
-        resumeId: body.resumeId,
-        jobDescription: body.jobDescription,
+        user_id: resume.user_id,
+        resume_id: body.resumeId,
+        job_description: body.jobDescription,
         tone: body.tone,
         content: coverLetterContent,
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       })
       .returningAll()
       .executeTakeFirstOrThrow();
@@ -62,7 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       id: coverLetter.id,
       content: coverLetter.content,
       tone: coverLetter.tone,
-      createdAt: coverLetter.createdAt,
+      createdAt: coverLetter.created_at,
     });
   } catch (error) {
     console.error('[cover-letters/generate] Error:', error);
