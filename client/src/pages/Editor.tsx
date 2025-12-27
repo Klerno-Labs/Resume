@@ -40,6 +40,7 @@ export default function Editor() {
     // Add initial delay to account for database replication lag
     let retryCount = 0;
     const maxRetries = 10;
+    let designGenerationStarted = false;
 
     // Poll for resume updates with retry logic
     const fetchResume = async () => {
@@ -48,7 +49,18 @@ export default function Editor() {
         setResume(data);
         retryCount = 0; // Reset retry count on success
 
-        // Keep polling if still processing OR if completed but no HTML yet (design generating in background)
+        // If resume is completed but has no HTML, trigger design generation
+        if (data.status === 'completed' && !data.improvedHtml && !designGenerationStarted) {
+          designGenerationStarted = true;
+          console.log('[Editor] Triggering design generation for resume', resumeId);
+
+          // Trigger design generation (don't await - let it run in background)
+          api.generateDesign(resumeId).catch((err) => {
+            console.error('[Editor] Design generation failed:', err);
+          });
+        }
+
+        // Keep polling if still processing OR if completed but no HTML yet
         if (data.status === 'processing' || (data.status === 'completed' && !data.improvedHtml)) {
           setTimeout(fetchResume, 2000); // Poll every 2 seconds
         }

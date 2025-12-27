@@ -404,6 +404,19 @@ class ApiClient {
     }>;
   }
 
+  async generateDesign(resumeId: string): Promise<{ success: boolean; html: string }> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/resumes/generate-design`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resumeId }),
+    });
+    if (!res.ok) {
+      const error = await res.json() as { message?: string; error?: string };
+      throw new Error(error.message || error.error || 'Failed to generate design');
+    }
+    return res.json() as Promise<{ success: boolean; html: string }>;
+  }
+
   async getUserResumes(userId: string): Promise<Resume[]> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/users/${userId}/resumes`);
     if (!res.ok) {
