@@ -30,6 +30,7 @@ const industries = [
 export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier, onUpgradeClick }: IndustryOptimizerProps) {
   const [selectedIndustry, setSelectedIndustry] = useState<string>('');
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizedResult, setOptimizedResult] = useState<string | null>(null);
 
   const canUseFeature = userTier === 'premium' || userTier === 'pro' || userTier === 'admin';
 
@@ -64,14 +65,13 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
 
       const result = await response.json() as { optimizedText?: string };
 
-      if (onOptimizationComplete && result.optimizedText) {
-        onOptimizationComplete(result.optimizedText);
+      if (result.optimizedText) {
+        setOptimizedResult(result.optimizedText);
+        toast({
+          title: "✨ Preview Ready!",
+          description: `Review the changes below and click "Apply" when ready.`
+        });
       }
-
-      toast({
-        title: "Optimization Complete!",
-        description: `Your resume has been optimized for ${industries.find(i => i.value === selectedIndustry)?.label}.`
-      });
     } catch (error) {
       console.error('Industry optimization failed:', error);
       toast({
@@ -300,6 +300,69 @@ export function IndustryOptimizer({ resumeText, onOptimizationComplete, userTier
               </motion.li>
             </ul>
           </Card>
+
+          {/* Optimization Preview & Apply */}
+          <AnimatePresence mode="wait">
+            {optimizedResult && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <Card className="p-4 bg-linear-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-950/20 dark:via-emerald-950/20 dark:to-teal-950/20 border-2 border-green-200 dark:border-green-800">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-linear-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                      <CheckCircle2 className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Optimization Ready</h4>
+                      <p className="text-xs text-green-600 dark:text-green-400">
+                        {industries.find(i => i.value === selectedIndustry)?.label} version
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mb-3 p-3 rounded-lg bg-white dark:bg-slate-900 border border-green-200 dark:border-green-700 max-h-48 overflow-y-auto">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap line-clamp-6">
+                      {optimizedResult.slice(0, 400)}...
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setOptimizedResult(null);
+                        toast({
+                          title: "Preview Dismissed",
+                          description: "Optimization not applied",
+                        });
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-linear-to-r from-green-500 to-emerald-500 text-white border-0 hover:from-green-600 hover:to-emerald-600"
+                      onClick={() => {
+                        if (onOptimizationComplete && optimizedResult) {
+                          onOptimizationComplete(optimizedResult);
+                          setOptimizedResult(null);
+                          toast({
+                            title: "✨ Optimization Applied!",
+                            description: `Your resume has been optimized for ${industries.find(i => i.value === selectedIndustry)?.label}.`
+                          });
+                        }
+                      }}
+                    >
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Apply to Resume
+                    </Button>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
     </div>
