@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'wouter';
-import { ArrowLeft, Download, Target, Briefcase, Palette, Printer, Upload, X } from 'lucide-react';
+import { ArrowLeft, Download, Target, Briefcase, Palette, Printer, Upload, X, ZoomIn } from 'lucide-react';
 import { CoverLetterDialog } from '@/components/CoverLetterDialog';
 import { ResumePreviewStyled } from '@/components/ResumePreview';
 import { TemplateGallery } from '@/components/TemplateGallery';
 import { JobMatcher } from '@/components/JobMatcher';
 import { IndustryOptimizer } from '@/components/IndustryOptimizer';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { api, type Resume } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -18,6 +19,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 export default function Editor() {
   const [resume, setResume] = useState<Resume | null>(null);
   const [selectedDesign, setSelectedDesign] = useState<string | null>(null);
+  const [isZoomed, setIsZoomed] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [, navigate] = useLocation();
@@ -513,59 +515,84 @@ export default function Editor() {
           </aside>
 
           {/* Main Resume Preview */}
-          <main className="flex-1 flex items-center justify-center bg-muted/20 p-2 sm:p-4 overflow-hidden">
-            <div
-              className="bg-white shadow-xl sm:shadow-2xl border rounded-sm"
-              style={
-                {
-                  width: '595px',
-                  height: '842px',
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                  transform: 'scale(var(--resume-scale))',
-                  transformOrigin: 'center center',
-                  overflow: 'hidden',
-                  '--resume-scale': window.innerWidth < 1024
-                    ? 'min(calc((100vw - 1rem) / 595), calc((100vh - 1rem - 64px) / 842))'
-                    : 'min(calc((100vw - 320px - 2rem) / 595), calc((100vh - 2rem - 64px) / 842))'
-                } as React.CSSProperties
-              }
-            >
-              {resume.improvedHtml ? (
-                <iframe
-                  srcDoc={`
-                    <style>
-                      html, body {
-                        overflow: hidden !important;
-                        max-height: 842px !important;
-                        height: 842px !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                      }
-                      body > * {
-                        max-height: 842px !important;
-                        overflow: hidden !important;
-                      }
-                    </style>
-                    ${resume.improvedHtml}
-                  `}
-                  className="w-full h-full border-0"
-                  title="AI-Generated Resume Design - Ready to Print"
-                  sandbox="allow-same-origin"
-                  style={{
+          <main className="flex-1 flex flex-col items-center justify-center bg-muted/20 p-2 sm:p-4 overflow-hidden">
+            <div className="relative group">
+              <div
+                className="bg-white shadow-xl sm:shadow-2xl border rounded-sm cursor-pointer hover:shadow-2xl transition-shadow relative"
+                onClick={() => setIsZoomed(true)}
+                style={
+                  {
+                    width: '595px',
+                    height: '842px',
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    transform: 'scale(var(--resume-scale))',
+                    transformOrigin: 'center center',
                     overflow: 'hidden',
-                    pointerEvents: 'none'
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full overflow-hidden">
-                  <ResumePreviewStyled text={improvedText} />
+                    '--resume-scale': window.innerWidth < 1024
+                      ? 'min(calc((100vw - 1rem) / 595), calc((100vh - 1rem - 64px - 40px) / 842))'
+                      : 'min(calc((100vw - 320px - 2rem) / 595), calc((100vh - 2rem - 64px - 40px) / 842))'
+                  } as React.CSSProperties
+                }
+              >
+                {resume.improvedHtml ? (
+                  <iframe
+                    srcDoc={resume.improvedHtml}
+                    className="w-full h-full border-0"
+                    title="AI-Generated Resume Design - Ready to Print"
+                    sandbox="allow-same-origin"
+                    style={{
+                      overflow: 'hidden',
+                      pointerEvents: 'none'
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full overflow-hidden">
+                    <ResumePreviewStyled text={improvedText} />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <div className="bg-white/90 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+                    <ZoomIn className="w-4 h-4" />
+                    <span className="text-sm font-medium">Click to expand</span>
+                  </div>
                 </div>
-              )}
+              </div>
+              <p className="text-xs text-muted-foreground text-center mt-2">Click resume to view full size</p>
             </div>
           </main>
         </div>
       </div>
+
+      {/* Zoom Modal */}
+      <Dialog open={isZoomed} onOpenChange={setIsZoomed}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 overflow-auto">
+          <div className="relative bg-white">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 z-10 bg-white/90 hover:bg-white"
+              onClick={() => setIsZoomed(false)}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+            {resume?.improvedHtml ? (
+              <iframe
+                srcDoc={resume.improvedHtml}
+                className="w-full border-0"
+                style={{ height: '1100px', minHeight: '842px' }}
+                title="Full Resume Preview"
+                sandbox="allow-same-origin"
+              />
+            ) : (
+              <div className="p-8">
+                <ResumePreviewStyled text={improvedText} />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <UpgradeModal
         isOpen={showUpgrade}
         onClose={closeUpgrade}
