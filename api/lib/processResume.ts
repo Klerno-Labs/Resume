@@ -174,17 +174,19 @@ CRITICAL DESIGN REQUIREMENTS:
    ${template.style === 'minimal' ? '- Use maximum whitespace, simple lines, restrained design' : ''}
 
 6. SINGLE-PAGE CONSTRAINT (CRITICAL):
-   - MUST fit ALL content on ONE page (8.5" × 11")
-   - Container: max-width: 800px, height: EXACTLY 1056px (11" at 96dpi)
-   - Use smaller font sizes (body: 9-11px) to fit everything
-   - Condense spacing and margins to fit on single page
-   - If content is too long, prioritize and summarize
+   - MUST fit ALL content on ONE page (8.5" × 11" = 595px × 842px at 72dpi)
+   - Container: max-width: 595px, height: EXACTLY 842px
+   - Add to body/html: overflow: hidden !important; max-height: 842px !important;
+   - Use smaller font sizes (body: 8-10px) to fit everything
+   - Reduce all padding and margins (use px values like 4px, 8px max)
+   - Condense line-height (1.2-1.4) and spacing
+   - If content is too long, prioritize and summarize - NO SCROLLING ALLOWED
 
 7. PRINT OPTIMIZATION:
-   - Page size: 8.5" × 11" (max-width: 800px, height: 1056px)
-   - Margins: 0.5 inch
+   - Page size: 8.5" × 11" (595px × 842px)
+   - Add CSS: html, body { overflow: hidden !important; height: 842px !important; max-height: 842px !important; }
    - Use @page CSS for print styles
-   - Add: overflow: hidden; to prevent scrolling
+   - Ensure main container has: height: 842px; overflow: hidden;
 
 8. MUST INCLUDE:
    - Complete <!DOCTYPE html> declaration
