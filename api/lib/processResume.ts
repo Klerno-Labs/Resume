@@ -96,29 +96,10 @@ Return ONLY valid JSON in this exact format:
 
     const improvedText = optimization.improvedText || originalText;
 
-    // Update resume with text improvements and mark as completed
-    // Design will be generated in background
-    await sql`
-      UPDATE resumes SET
-        improved_text = ${improvedText},
-        ats_score = ${scores.atsScore || 70},
-        keywords_score = ${scores.keywordsScore || 7},
-        formatting_score = ${scores.formattingScore || 7},
-        issues = ${JSON.stringify(scores.issues || [])},
-        status = 'completed',
-        updated_at = NOW()
-      WHERE id = ${resumeId}
-    `;
+    // Generate design synchronously (optimized for speed)
+    console.log(`[Process] Starting design generation for resume ${resumeId}`);
 
-    // Generate design in background (don't await to avoid timeout)
-    console.log(`[Process] Starting background design generation for resume ${resumeId}`);
-
-    // Use setImmediate to ensure this runs after the response is sent
-    setImmediate(async () => {
-      try {
-        console.log(`[Process] Background task started for resume ${resumeId}`);
-
-        const designResult = await openai.chat.completions.create({
+    const designResult = await openai.chat.completions.create({
           model: 'gpt-4o-mini',
           messages: [
             {
@@ -214,68 +195,65 @@ Return ONLY valid JSON:
             },
           ],
           response_format: { type: 'json_object' },
-          max_tokens: 3000,
-        });
-
-        console.log(`[Process] OpenAI design API call completed for resume ${resumeId}`);
-
-        const design = JSON.parse(designResult.choices[0].message.content || '{}');
-
-        if (design.html) {
-          console.log(`[Process] Design HTML generated successfully for resume ${resumeId}`);
-
-          // Update resume with design
-          await sql`
-            UPDATE resumes SET
-              improved_html = ${design.html},
-              updated_at = NOW()
-            WHERE id = ${resumeId}
-          `;
-
-          console.log(`[Process] Resume ${resumeId} updated with HTML design`);
-
-          // Save template to database with proper error handling
-          if (design.templateName) {
-            try {
-              // Make template name unique by appending resume ID (first 8 chars)
-              const uniqueTemplateName = `${design.templateName} (${resumeId.substring(0, 8)})`;
-
-              await sql`
-                INSERT INTO resume_templates (
-                  name,
-                  style,
-                  color_scheme,
-                  html_template,
-                  preview_image_url,
-                  is_ai_generated,
-                  usage_count,
-                  created_from_resume_id
-                ) VALUES (
-                  ${uniqueTemplateName},
-                  ${design.style || 'modern'},
-                  ${design.colorScheme || 'blue'},
-                  ${design.html},
-                  ${null},
-                  ${true},
-                  ${0},
-                  ${resumeId}
-                )
-                ON CONFLICT (name) DO NOTHING
-              `;
-              console.log(`[Template] Successfully saved template: ${uniqueTemplateName}`);
-            } catch (templateErr) {
-              console.error(`[Template] Failed to save template ${design.templateName}:`, templateErr);
-            }
-          } else {
-            console.warn(`[Template] No templateName in design response for resume ${resumeId}`);
-          }
-        } else {
-          console.error(`[Process] Design generation returned no HTML for resume ${resumeId}`);
-        }
-      } catch (err) {
-        console.error(`[Process] Background design generation failed for resume ${resumeId}:`, err);
-      }
+          max_tokens: 2500,  // Reduced to speed up generation
     });
+
+    console.log(`[Process] OpenAI design API call completed for resume ${resumeId}`);
+
+    const design = JSON.parse(designResult.choices[0].message.content || '{}');
+    const designHtml = design.html || null;
+
+    // Update resume with ALL data in one query
+    await sql`
+      UPDATE resumes SET
+        improved_text = ${improvedText},
+        improved_html = ${designHtml},
+        ats_score = ${scores.atsScore || 70},
+        keywords_score = ${scores.keywordsScore || 7},
+        formatting_score = ${scores.formattingScore || 7},
+        issues = ${JSON.stringify(scores.issues || [])},
+        status = 'completed',
+        updated_at = NOW()
+      WHERE id = ${resumeId}
+    `;
+
+    console.log(`[Process] Resume ${resumeId} updated with text and HTML design`);
+
+    // Save template to database if design was generated
+    if (design.templateName && designHtml) {
+      try {
+        // Make template name unique by appending resume ID (first 8 chars)
+        const uniqueTemplateName = `${design.templateName} (${resumeId.substring(0, 8)})`;
+
+        await sql`
+          INSERT INTO resume_templates (
+            name,
+            style,
+            color_scheme,
+            html_template,
+            preview_image_url,
+            is_ai_generated,
+            usage_count,
+            created_from_resume_id
+          ) VALUES (
+            ${uniqueTemplateName},
+            ${design.style || 'modern'},
+            ${design.colorScheme || 'blue'},
+            ${designHtml},
+            ${null},
+            ${true},
+            ${0},
+            ${resumeId}
+          )
+          ON CONFLICT (name) DO NOTHING
+        `;
+        console.log(`[Template] Successfully saved template: ${uniqueTemplateName}`);
+      } catch (templateErr) {
+        console.error(`[Template] Failed to save template:`, templateErr);
+      }
+    } else {
+      console.warn(`[Template] No design generated for resume ${resumeId}`);
+    }
   } catch (error) {
     console.error('[Process] Error optimizing resume:', error);
     const sql = getSQL();
