@@ -10,6 +10,7 @@ import NotFound from '@/pages/not-found';
 import Home from '@/pages/Home';
 import Editor from '@/pages/Editor';
 import Dashboard from '@/pages/Dashboard';
+import CreateResume from '@/pages/CreateResume';
 import Auth from '@/pages/Auth';
 import PaymentSuccess from '@/pages/PaymentSuccess';
 import Pricing from '@/pages/Pricing';
@@ -38,6 +39,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/create-resume" component={CreateResume} />
       <Route path="/ai-resume-builder" component={AiResumeBuilder} />
       <Route path="/resume/software-engineer" component={ResumeSoftwareEngineer} />
       <Route path="/resume/nurse" component={ResumeNurse} />

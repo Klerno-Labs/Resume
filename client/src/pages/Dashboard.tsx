@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
-import { FileText, Clock, CheckCircle2, XCircle, Sparkles, Eye, Calendar, TrendingUp } from 'lucide-react';
+import { FileText, Clock, CheckCircle2, XCircle, Sparkles, Eye, Calendar, TrendingUp, Upload, Edit } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { api } from '../lib/api';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../lib/auth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 
 interface ResumeListItem {
   id: string;
@@ -127,10 +133,30 @@ export function Dashboard() {
                 Manage and view all your optimized resumes
               </p>
             </div>
-            <Button onClick={() => navigate('/')} size="lg" className="gap-2">
-              <Sparkles className="w-5 h-5" />
-              Create New Resume
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="lg" className="gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Create New Resume
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuItem onClick={() => navigate('/create-resume')} className="cursor-pointer py-3">
+                  <Edit className="w-4 h-4 mr-3 text-blue-600" />
+                  <div>
+                    <div className="font-medium">Fill Out Form</div>
+                    <div className="text-xs text-muted-foreground">Enter your info manually</div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/')} className="cursor-pointer py-3">
+                  <Upload className="w-4 h-4 mr-3 text-purple-600" />
+                  <div>
+                    <div className="font-medium">Upload Existing Resume</div>
+                    <div className="text-xs text-muted-foreground">Import from PDF or DOCX</div>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Stats Cards */}
@@ -187,12 +213,18 @@ export function Dashboard() {
               No resumes yet
             </h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Get started by creating your first AI-optimized resume. Upload your current resume and let our AI transform it into an ATS-friendly, professionally designed document.
+              Get started by creating your first AI-optimized resume. Fill out a form or upload your current resume and let our AI transform it into an ATS-friendly, professionally designed document.
             </p>
-            <Button onClick={() => navigate('/')} size="lg" className="gap-2">
-              <Sparkles className="w-5 h-5" />
-              Create Your First Resume
-            </Button>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => navigate('/create-resume')} size="lg" variant="outline" className="gap-2">
+                <Edit className="w-5 h-5" />
+                Fill Out Form
+              </Button>
+              <Button onClick={() => navigate('/')} size="lg" className="gap-2">
+                <Upload className="w-5 h-5" />
+                Upload Resume
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="bg-white dark:bg-slate-800 rounded-lg border shadow-sm overflow-hidden">
