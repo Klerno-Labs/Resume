@@ -728,32 +728,27 @@ export default function Editor() {
             </div>
           </aside>
 
-          {/* Main Resume Preview - 2 Pages Side by Side */}
-          <main className="flex-1 flex flex-col items-center justify-center bg-muted/20 p-2 sm:p-4 overflow-hidden">
-            <div className="relative group w-full max-w-[1240px]">
+          {/* Main Resume Preview - Simple Scrollable View */}
+          <main className="flex-1 flex flex-col items-center bg-muted/20 p-4 overflow-auto">
+            <div className="relative group w-full max-w-[650px]">
               <div
-                className="bg-white shadow-xl sm:shadow-2xl border rounded-sm cursor-pointer hover:shadow-2xl transition-shadow relative w-full"
+                className="bg-white shadow-2xl border cursor-pointer hover:shadow-xl transition-shadow"
                 onClick={() => setIsZoomed(true)}
               >
                 {resume.improvedHtml ? (
-                  <div className="w-full flex items-center justify-center overflow-hidden">
-                    <iframe
-                      srcDoc={resume.improvedHtml}
-                      className="border-0"
-                      title="AI-Generated Resume Design - 2 Pages Side by Side"
-                      sandbox="allow-same-origin"
-                      style={{
-                        width: '1210px',
-                        height: '842px',
-                        pointerEvents: 'none',
-                        overflow: 'hidden',
-                        transform: 'scale(0.95)',
-                        transformOrigin: 'center center'
-                      }}
-                    />
-                  </div>
+                  <iframe
+                    srcDoc={resume.improvedHtml}
+                    className="w-full border-0"
+                    style={{
+                      width: '100%',
+                      minHeight: '1684px',
+                      height: 'auto'
+                    }}
+                    title="AI-Generated Resume Design"
+                    sandbox="allow-same-origin"
+                  />
                 ) : (
-                  <div className="w-full overflow-auto p-8" style={{ maxHeight: '90vh' }}>
+                  <div className="p-8">
                     <ResumePreviewStyled text={improvedText} />
                   </div>
                 )}
@@ -794,20 +789,20 @@ export default function Editor() {
             </Button>
           </div>
 
-          {/* Resume Content - Side-by-Side 2-Page View (NO SCROLLING) */}
-          <div className="flex-1 flex items-center justify-center bg-gray-100 p-8 overflow-hidden">
-            <div className="mx-auto" style={{ width: '1210px', height: '842px' }}>
+          {/* Resume Content - Scrollable Full View */}
+          <div className="flex-1 flex items-start justify-center bg-gray-100 p-8 overflow-auto">
+            <div className="mx-auto max-w-[650px] w-full bg-white shadow-2xl">
               {resume?.improvedHtml ? (
                 <iframe
                   srcDoc={resume.improvedHtml}
                   className="w-full border-0"
                   style={{
-                    width: '1210px',
-                    height: '842px',
-                    display: 'block',
-                    overflow: 'hidden'
+                    width: '100%',
+                    minHeight: '1684px',
+                    height: 'auto',
+                    display: 'block'
                   }}
-                  title="Full Resume Preview - 2 Pages Side by Side"
+                  title="Full Resume Preview"
                   sandbox="allow-same-origin"
                 />
               ) : (

@@ -106,17 +106,17 @@ export function DesignPreviewModal({
                   )}
                 </div>
 
-                {/* Preview Iframe - 2 Pages Side by Side */}
+                {/* Preview Iframe */}
                 <div className="p-4 bg-gray-100">
-                  <div className="bg-white shadow-md overflow-hidden">
+                  <div className="bg-white shadow-md overflow-hidden" style={{ height: '400px' }}>
                     <iframe
                       srcDoc={preview.html}
                       className="w-full border-0"
                       style={{
-                        transform: 'scale(0.28)',
+                        transform: 'scale(0.22)',
                         transformOrigin: 'top left',
-                        width: '357%',
-                        height: '600px',
+                        width: '454%',
+                        height: '1818px',
                       }}
                       title={`Preview: ${preview.templateName}`}
                       sandbox="allow-same-origin"
