@@ -148,18 +148,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 STRICT RULES:
 1. Use ONLY the provided accent color - NO random colors, NO pink, NO bright colors
 2. Use ONLY white (#FFFFFF) backgrounds and dark text (#1a1a1a or #2d2d2d)
-3. Font: ${template.fonts[0]} ONLY at 9-10pt body, 11pt headers, 14-16pt name
-4. Margins: 0.4 inch on all sides - tight, efficient spacing
+3. Font: ${template.fonts[0]} ONLY at 10-11pt body, 12-13pt headers, 18-20pt name
+4. Margins: 0.6-0.75 inch on all sides - professional spacing
 5. NO decorative elements, NO icons, NO graphics, NO borders except minimal hairline dividers
 6. Clean, minimal, professional business document style
-7. CRITICAL: MUST fit on ONE PAGE (8.5" x 11" = 595px x 842px) - use tight spacing, smaller fonts, compact layout
-8. CRITICAL: Include ALL resume content - condense but NEVER truncate or omit sections
+7. CRITICAL: Format as TWO PAGES side-by-side (1190px x 842px total: two 595px x 842px pages)
+8. CRITICAL: Include ALL resume content with proper spacing - NO truncation
+
+HTML STRUCTURE REQUIRED:
+- Container: 1190px width x 842px height (two pages side-by-side)
+- Display: flex with two 595px x 842px columns (page 1 and page 2)
+- Each page: separate div, white background, shadow for separation
+- NO scrolling - content distributed across both pages
 
 OUTPUT FORMAT: {"html": "<!DOCTYPE html>...complete HTML..."}`,
             },
             {
               role: 'user',
-              content: `Create a MINIMAL professional ONE-PAGE resume using this EXACT template style:
+              content: `Create a MINIMAL professional TWO-PAGE resume using this EXACT template style:
 
 Layout: ${template.layout}
 Accent Color: ${template.accentColor} (USE THIS COLOR EXACTLY - for section headers and subtle accents ONLY)
@@ -173,14 +179,26 @@ CRITICAL RULES:
 - Background: white (#FFFFFF) ONLY
 - Body text: dark gray (#2d2d2d)
 - NO other colors allowed
-- MUST FIT ON ONE PAGE (595px x 842px) - use 9-10pt fonts, 0.4" margins, tight line-height (1.3-1.4)
-- MUST include ALL content from the resume - condense spacing but do NOT cut off or truncate any sections
-- Use compact formatting: reduce margins, smaller fonts, tighter spacing to fit everything
-- Return ONLY valid JSON: {"html": "<!DOCTYPE html>..."}`,
+- TWO PAGES SIDE-BY-SIDE: Container 1190px x 842px with flex layout
+- Page 1 (left): 595px x 842px, Page 2 (right): 595px x 842px
+- NO SCROLLING - distribute content naturally across both pages
+- Use 10-11pt fonts, 0.6-0.75" margins, comfortable line-height (1.5-1.6)
+- MUST include ALL content from the resume with proper spacing
+- Return ONLY valid JSON: {"html": "<!DOCTYPE html>..."}
+
+EXAMPLE STRUCTURE:
+<div style="display: flex; gap: 20px; width: 1190px; height: 842px;">
+  <div style="width: 595px; height: 842px; background: white; padding: 0.75in; overflow: hidden;">
+    <!-- Page 1 content: Header, Summary, first half of experience -->
+  </div>
+  <div style="width: 595px; height: 842px; background: white; padding: 0.75in; overflow: hidden;">
+    <!-- Page 2 content: Rest of experience, education, skills -->
+  </div>
+</div>`,
             },
           ],
           response_format: { type: 'json_object' },
-          max_tokens: 6000,
+          max_tokens: 8000,
         });
 
         let design;

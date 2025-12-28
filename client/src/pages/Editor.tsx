@@ -736,17 +736,17 @@ export default function Editor() {
                 onClick={() => setIsZoomed(true)}
               >
                 {resume.improvedHtml ? (
-                  <div className="w-full overflow-auto" style={{ maxHeight: '90vh' }}>
+                  <div className="w-full flex items-center justify-center" style={{ height: '90vh', overflow: 'hidden' }}>
                     <iframe
                       srcDoc={resume.improvedHtml}
-                      className="border-0 w-full"
-                      title="AI-Generated Resume Design - Ready to Print"
+                      className="border-0"
+                      title="AI-Generated Resume Design - 2 Pages Side by Side"
                       sandbox="allow-same-origin"
                       style={{
-                        width: '595px',
-                        minHeight: '842px',
-                        height: 'auto',
-                        pointerEvents: 'none'
+                        width: '1210px',
+                        height: '842px',
+                        pointerEvents: 'none',
+                        overflow: 'hidden'
                       }}
                     />
                   </div>
@@ -792,20 +792,20 @@ export default function Editor() {
             </Button>
           </div>
 
-          {/* Resume Content - Scrollable */}
-          <div className="flex-1 overflow-auto bg-gray-100 p-8">
-            <div className="mx-auto bg-white shadow-2xl" style={{ width: '595px' }}>
+          {/* Resume Content - Side-by-Side 2-Page View (NO SCROLLING) */}
+          <div className="flex-1 flex items-center justify-center bg-gray-100 p-8 overflow-hidden">
+            <div className="mx-auto" style={{ width: '1210px', height: '842px' }}>
               {resume?.improvedHtml ? (
                 <iframe
                   srcDoc={resume.improvedHtml}
                   className="w-full border-0"
                   style={{
-                    width: '595px',
-                    minHeight: '842px',
-                    height: 'auto',
-                    display: 'block'
+                    width: '1210px',
+                    height: '842px',
+                    display: 'block',
+                    overflow: 'hidden'
                   }}
-                  title="Full Resume Preview"
+                  title="Full Resume Preview - 2 Pages Side by Side"
                   sandbox="allow-same-origin"
                 />
               ) : (
