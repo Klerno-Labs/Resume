@@ -162,14 +162,14 @@ STRUCTURE:
 - Single column layout (NO sidebars, NO colored left/right sections)
 - Standard margins: 0.75 inch all sides
 - Font: ${template.fonts[0]} at 10-11pt body, 12pt headers, 18pt name
-- Two pages stacked vertically
-- Total height: auto (content flows naturally)
+- Height: ONLY as tall as content needs (NO fixed height, NO extra white space)
+- Container should fit content exactly with NO trailing white space
 
 CONTENT REQUIREMENTS:
-- Page 1: Name, contact, summary, start of experience
-- Page 2: Rest of experience, education, skills, certifications
-- Include EVERY section from the resume
+- Include ALL sections: experience, education, skills, certifications
 - DO NOT truncate or cut off content
+- DO NOT add extra padding or height after last section
+- End the page immediately after the last content
 
 OUTPUT: {"html": "<!DOCTYPE html>..."}`,
             },
@@ -185,7 +185,8 @@ CRITICAL:
 - ${template.accentColor} ONLY for name and section underlines
 - Single column (NOT two-column layout)
 - Include ALL sections: experience, education, skills, certifications, etc.
-- Two pages stacked vertically
+- Height should fit content EXACTLY - NO extra white space below last section
+- Set body/html height to auto, not fixed pixels
 
 Return JSON: {"html": "<!DOCTYPE html>..."}`,
             },
