@@ -139,7 +139,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log(`[Preview Designs] Attempt ${attempt}/${maxRetries} for template:`, template.name);
 
         const designResult = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4o',
           messages: [
             {
               role: 'system',
