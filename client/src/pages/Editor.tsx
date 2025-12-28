@@ -732,17 +732,17 @@ export default function Editor() {
           <main className="flex-1 flex flex-col items-center bg-muted/20 p-4 overflow-auto">
             <div className="relative group w-full max-w-[650px]">
               <div
-                className="bg-white shadow-2xl border cursor-pointer hover:shadow-xl transition-shadow"
+                className="bg-white shadow-2xl border cursor-pointer hover:shadow-xl transition-shadow overflow-auto"
+                style={{ maxHeight: 'calc(100vh - 160px)' }}
                 onClick={() => setIsZoomed(true)}
               >
                 {resume.improvedHtml ? (
                   <iframe
                     srcDoc={resume.improvedHtml}
-                    className="w-full border-0"
+                    className="w-full border-0 block"
                     style={{
                       width: '100%',
-                      minHeight: '1684px',
-                      height: 'auto'
+                      height: '1684px'
                     }}
                     title="AI-Generated Resume Design"
                     sandbox="allow-same-origin"
@@ -795,12 +795,10 @@ export default function Editor() {
               {resume?.improvedHtml ? (
                 <iframe
                   srcDoc={resume.improvedHtml}
-                  className="w-full border-0"
+                  className="w-full border-0 block"
                   style={{
                     width: '100%',
-                    minHeight: '1684px',
-                    height: 'auto',
-                    display: 'block'
+                    height: '1684px'
                   }}
                   title="Full Resume Preview"
                   sandbox="allow-same-origin"
