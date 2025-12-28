@@ -728,15 +728,15 @@ export default function Editor() {
             </div>
           </aside>
 
-          {/* Main Resume Preview */}
-          <main className="flex-1 flex flex-col items-center bg-muted/20 p-2 sm:p-4 overflow-auto">
-            <div className="relative group w-full max-w-[595px]">
+          {/* Main Resume Preview - 2 Pages Side by Side */}
+          <main className="flex-1 flex flex-col items-center justify-center bg-muted/20 p-2 sm:p-4 overflow-hidden">
+            <div className="relative group w-full max-w-[1240px]">
               <div
                 className="bg-white shadow-xl sm:shadow-2xl border rounded-sm cursor-pointer hover:shadow-2xl transition-shadow relative w-full"
                 onClick={() => setIsZoomed(true)}
               >
                 {resume.improvedHtml ? (
-                  <div className="w-full flex items-center justify-center" style={{ height: '90vh', overflow: 'hidden' }}>
+                  <div className="w-full flex items-center justify-center overflow-hidden">
                     <iframe
                       srcDoc={resume.improvedHtml}
                       className="border-0"
@@ -746,7 +746,9 @@ export default function Editor() {
                         width: '1210px',
                         height: '842px',
                         pointerEvents: 'none',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        transform: 'scale(0.95)',
+                        transformOrigin: 'center center'
                       }}
                     />
                   </div>
