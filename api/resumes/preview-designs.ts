@@ -143,43 +143,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           messages: [
             {
               role: 'system',
-              content: `You are a professional resume designer. Create clean, minimal, ATS-friendly 2-page resumes.
+              content: `You are a professional resume designer. Create SIMPLE, MINIMAL resumes.
 
-STRICT COLOR RULES:
-1. Background: ONLY white (#FFFFFF)
-2. Main text: ONLY dark gray (#2d2d2d) or black (#000000)
-3. Accent color: Use ${template.accentColor} SPARINGLY - only for name and thin section dividers
-4. NO other colors, NO backgrounds, NO decorations
+ABSOLUTELY NO:
+- NO colored backgrounds or blocks
+- NO sidebars with background colors
+- NO decorative elements
+- NO icons or graphics
+- NO boxes with colored backgrounds
 
-FORMATTING:
-- Standard US Letter: 8.5" x 11" (595px x 842px per page)
-- Two pages stacked vertically (page 1 on top, page 2 below)
-- Total height: auto (let content flow naturally)
-- Margins: 0.75 inch all sides
-- Fonts: ${template.fonts[0]} at 10-11pt body, 12pt headers, 18pt name
-- Line height: 1.5 for readability
+COLORS ALLOWED:
+1. Page background: ONLY white (#FFFFFF)
+2. ALL text: ONLY black (#000000) or dark gray (#2d2d2d)
+3. Accent color ${template.accentColor}: ONLY for the name text and 1px underlines under section headers
+4. That's it. Nothing else.
 
-CONTENT:
-- Include ALL resume content across both pages
-- Distribute naturally: don't force page breaks mid-section
-- Page 1: Header, Summary, Start of Experience
-- Page 2: Rest of Experience, Education, Skills
+STRUCTURE:
+- Single column layout (NO sidebars, NO colored left/right sections)
+- Standard margins: 0.75 inch all sides
+- Font: ${template.fonts[0]} at 10-11pt body, 12pt headers, 18pt name
+- Two pages stacked vertically
+- Total height: auto (content flows naturally)
+
+CONTENT REQUIREMENTS:
+- Page 1: Name, contact, summary, start of experience
+- Page 2: Rest of experience, education, skills, certifications
+- Include EVERY section from the resume
+- DO NOT truncate or cut off content
 
 OUTPUT: {"html": "<!DOCTYPE html>..."}`,
             },
             {
               role: 'user',
-              content: `Create a simple 2-page resume with this content:
+              content: `Create a MINIMAL single-column resume (NO sidebars, NO colored blocks) with this content:
 
 ${resume.improved_text || resume.original_text}
 
-RULES:
-- White background only
-- ${template.accentColor} for name and thin lines ONLY
-- Black/dark gray text only
+CRITICAL:
+- White background ONLY - no colored sections
+- Black text ONLY
+- ${template.accentColor} ONLY for name and section underlines
+- Single column (NOT two-column layout)
+- Include ALL sections: experience, education, skills, certifications, etc.
 - Two pages stacked vertically
-- Clean, minimal, professional
-- Include ALL content
 
 Return JSON: {"html": "<!DOCTYPE html>..."}`,
             },
@@ -202,6 +208,19 @@ Return JSON: {"html": "<!DOCTYPE html>..."}`,
           console.error(`[Preview] Attempt ${attempt}: No HTML generated for template:`, template.name);
           if (attempt === maxRetries) return null;
           continue; // Retry if no HTML
+        }
+
+        // Check for colored backgrounds/sidebars (reject if found)
+        const hasColoredBackground = design.html.toLowerCase().includes('background:') &&
+          !design.html.toLowerCase().match(/background:\s*(white|#fff|#ffffff)/gi);
+
+        if (hasColoredBackground) {
+          console.warn(`[Preview] Attempt ${attempt}: Colored background detected, rejecting for template:`, template.name);
+          if (attempt === maxRetries) {
+            console.warn('[Preview] Max retries reached, rejecting design for:', template.name);
+            return null;
+          }
+          continue; // Retry if colored backgrounds found
         }
 
         // Check if AI used wrong colors (reject if it used colors not in our palette)
