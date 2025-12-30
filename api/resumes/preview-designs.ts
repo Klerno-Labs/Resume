@@ -144,50 +144,71 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           messages: [
             {
               role: 'system',
-              content: `You are a professional resume designer. Create SIMPLE, MINIMAL resumes.
+              content: `You are an ELITE resume designer creating PREMIUM, VISUALLY STUNNING resumes for executives.
 
-ABSOLUTELY NO:
-- NO colored backgrounds or blocks
-- NO sidebars with background colors
-- NO decorative elements
-- NO icons or graphics
-- NO boxes with colored backgrounds
+TEMPLATE: "${template.name}" - ${template.style} style, ${template.layout} layout
 
-COLORS ALLOWED:
-1. Page background: ONLY white (#FFFFFF)
-2. ALL text: ONLY black (#000000) or dark gray (#2d2d2d)
-3. Accent color ${template.accentColor}: ONLY for the name text and 1px underlines under section headers
-4. That's it. Nothing else.
+DESIGN SPECIFICATIONS:
+${template.sidebar !== 'none' ? `
+SIDEBAR DESIGN:
+- ${template.sidebar === 'left' ? 'Left' : 'Right'} sidebar: 35% width with gradient background: ${template.gradient}
+- Sidebar text: WHITE (#FFFFFF) on gradient background
+- Sidebar contains: Contact info, Skills with visual bars, Education
+- Main content: 65% width, white background, contains Experience
+` : template.layout === 'header-banner' ? `
+HEADER BANNER:
+- Full-width banner with gradient: ${template.gradient}
+- Banner height: 180px, contains Name (32pt white) and Title/Contact
+- Below banner: Two columns - left 60% (Experience), right 40% (Skills, Education)
+` : template.layout === '2-column' ? `
+TWO-COLUMN LAYOUT:
+- Left column 50%, right column 50%
+- Section headers with gradient underline using: ${template.gradient}
+- Alternating content placement for visual interest
+` : `
+SINGLE-COLUMN PREMIUM:
+- Full-width header with subtle background tint
+- Section dividers with accent color
+- Clean spacing with premium typography
+`}
 
-STRUCTURE:
-- Single column layout (NO sidebars, NO colored left/right sections)
-- Standard margins: 0.75 inch all sides
-- Font: ${template.fonts[0]} at 10-11pt body, 12pt headers, 18pt name
-- Height: ONLY as tall as content needs (NO fixed height, NO extra white space)
-- Container should fit content exactly with NO trailing white space
+COLORS & STYLING:
+- Accent color: ${template.accentColor} (use for headers, borders, highlights)
+- Primary font: ${template.fonts[0]} for headers (16-24pt)
+- Body font: ${template.fonts[1]} for content (10-11pt)
+${template.gradient !== 'none' ? `- Gradient: ${template.gradient} (use generously for visual impact)` : ''}
+- Add subtle shadows, borders, and spacing for depth
+- Use icons for contact info (email, phone, location symbols)
 
-CONTENT REQUIREMENTS:
-- Include ALL sections: experience, education, skills, certifications
-- DO NOT truncate or cut off content
-- DO NOT add extra padding or height after last section
-- End the page immediately after the last content
+PREMIUM ELEMENTS:
+✨ Visual skill bars with percentages
+✨ Timeline dots and lines for experience
+✨ Section icons and decorative headers
+✨ Gradient backgrounds and colored sections
+✨ Professional spacing and whitespace
+✨ Modern card-style sections with subtle shadows
+
+CRITICAL:
+- Make it VISUALLY STUNNING - this is a PREMIUM paid feature
+- Apply the template's gradient and colors BOLDLY
+- Include ALL content sections from the resume
+- Page height: auto-fit content (no fixed height)
 
 OUTPUT: {"html": "<!DOCTYPE html>..."}`,
             },
             {
               role: 'user',
-              content: `Create a MINIMAL single-column resume (NO sidebars, NO colored blocks) with this content:
+              content: `Create a PREMIUM, VISUALLY STUNNING "${template.name}" resume with this content:
 
 ${resume.improved_text || resume.original_text}
 
-CRITICAL:
-- White background ONLY - no colored sections
-- Black text ONLY
-- ${template.accentColor} ONLY for name and section underlines
-- Single column (NOT two-column layout)
-- Include ALL sections: experience, education, skills, certifications, etc.
-- Height should fit content EXACTLY - NO extra white space below last section
-- Set body/html height to auto, not fixed pixels
+APPLY THE TEMPLATE DESIGN:
+- Use gradient background: ${template.gradient}
+- Use accent color ${template.accentColor} prominently
+- Use fonts: ${template.fonts.join(', ')}
+- Layout: ${template.layout}${template.sidebar !== 'none' ? ` with ${template.sidebar} sidebar` : ''}
+
+Make it look EXPENSIVE and PROFESSIONAL - this is a premium paid feature!
 
 Return JSON: {"html": "<!DOCTYPE html>..."}`,
             },
@@ -212,13 +233,16 @@ Return JSON: {"html": "<!DOCTYPE html>..."}`,
           continue; // Retry if no HTML
         }
 
-        // Check for colored backgrounds/sidebars (reject if found)
-        const hasColoredBackground = design.html.toLowerCase().includes('background:') &&
-          !design.html.toLowerCase().match(/background:\s*(white|#fff|#ffffff)/gi);
+        // PREMIUM DESIGNS: We WANT colored backgrounds and gradients!
+        // Just validate that HTML exists and is complete
+        console.log(`[Preview] SUCCESS: Generated premium design for template:`, template.name);
 
-        if (hasColoredBackground) {
-          console.warn(`[Preview] Attempt ${attempt}: Colored background detected, rejecting for template:`, template.name);
-          if (attempt === maxRetries) {
+        // Skip the colored background check - we want premium visual designs
+        if (false) { // Disabled - we want colored backgrounds for premium designs
+          const hasColoredBackground = design.html.toLowerCase().includes('background:') &&
+            !design.html.toLowerCase().match(/background:\s*(white|#fff|#ffffff)/gi);
+
+          if (hasColoredBackground) {
             console.warn('[Preview] Max retries reached, rejecting design for:', template.name);
             return null;
           }
