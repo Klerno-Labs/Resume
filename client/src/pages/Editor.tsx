@@ -724,6 +724,12 @@ export default function Editor() {
                         size="sm"
                         className="w-full border-purple-200 hover:bg-purple-50 hover:border-purple-300 transition-all"
                         onClick={async () => {
+                          // PREMIUM-ONLY FEATURE: Check if user has premium access
+                          if (!user || !['premium', 'pro', 'admin'].includes(user.plan)) {
+                            triggerUpgrade('feature', 'Premium Designs');
+                            return;
+                          }
+
                           try {
                             setIsRegenerating(true);
 
@@ -757,6 +763,11 @@ export default function Editor() {
                           <>
                             <Palette className="w-4 h-4" />
                             <span>{resume.improvedHtml ? 'Preview New Designs' : 'Preview Designs'}</span>
+                            {user && !['premium', 'pro', 'admin'].includes(user.plan) && (
+                              <span className="ml-1 text-[10px] bg-gradient-to-r from-purple-500 to-pink-500 text-white px-1.5 py-0.5 rounded font-semibold">
+                                PREMIUM
+                              </span>
+                            )}
                           </>
                         )}
                       </Button>
@@ -764,7 +775,11 @@ export default function Editor() {
                       {/* Helper text */}
                       {!resume.improvedHtml && (
                         <p className="text-[10px] text-center text-muted-foreground mt-2">
-                          💡 Click above to create your first design
+                          {user && !['premium', 'pro', 'admin'].includes(user.plan) ? (
+                            <>🔒 Premium feature - Upgrade to access beautiful designs</>
+                          ) : (
+                            <>💡 Click above to create your first design</>
+                          )}
                         </p>
                       )}
 

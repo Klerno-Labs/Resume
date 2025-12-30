@@ -87,6 +87,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    // PREMIUM-ONLY FEATURE: Only premium+ users can regenerate designs
+    if (!['premium', 'pro', 'admin'].includes(user.plan)) {
+      console.log('[Regenerate Design] Non-premium user attempted access:', user.id, 'plan:', user.plan);
+      return res.status(403).json({
+        error: 'Premium feature',
+        message: 'Design regeneration is only available for Premium, Pro, and Admin users. Upgrade your plan to access this feature.',
+        requiresUpgrade: true,
+        requiredPlan: 'premium',
+      });
+    }
+
     // Get resume ID from request body
     const { resumeId } = req.body as { resumeId?: string };
     if (!resumeId) {

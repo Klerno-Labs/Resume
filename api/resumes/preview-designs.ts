@@ -83,6 +83,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    // PREMIUM-ONLY FEATURE: Only premium+ users can access design previews
+    if (!['premium', 'pro', 'admin'].includes(user.plan)) {
+      console.log('[Preview Designs] Non-premium user attempted access:', user.id, 'plan:', user.plan);
+      return res.status(403).json({
+        error: 'Premium feature',
+        message: 'Design previews are only available for Premium, Pro, and Admin users. Upgrade your plan to access this feature.',
+        requiresUpgrade: true,
+        requiredPlan: 'premium',
+      });
+    }
+
     const { resumeId } = req.body;
 
     if (!resumeId) {
