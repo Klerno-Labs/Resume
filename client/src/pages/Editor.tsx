@@ -64,28 +64,22 @@ export default function Editor() {
     // Add initial delay to account for database replication lag
     let retryCount = 0;
     const maxRetries = 10;
-    let designGenerationStarted = false;
 
     // Poll for resume updates with retry logic
     const fetchResume = async () => {
       try {
         const data = await api.getResume(resumeId);
+
+        // FORCE remove any existing improvedHtml - we only want to show regular text resume
+        console.log('[Editor v2.0 - BUILD 1767059282015] Resume fetched, improvedHtml before nullify:', !!data.improvedHtml);
+        data.improvedHtml = undefined;
+        console.log('[Editor v2.0 - BUILD 1767059282015] improvedHtml FORCED TO UNDEFINED - Design will NEVER auto-appear');
+
         setResume(data);
         retryCount = 0; // Reset retry count on success
 
-        // If resume is completed but has no HTML, trigger design generation
-        if (data.status === 'completed' && !data.improvedHtml && !designGenerationStarted) {
-          designGenerationStarted = true;
-          console.log('[Editor] Triggering design generation for resume', resumeId);
-
-          // Trigger design generation (don't await - let it run in background)
-          api.generateDesign(resumeId).catch((err) => {
-            console.error('[Editor] Design generation failed:', err);
-          });
-        }
-
-        // Keep polling if still processing OR if completed but no HTML yet
-        if (data.status === 'processing' || (data.status === 'completed' && !data.improvedHtml)) {
+        // Keep polling if still processing
+        if (data.status === 'processing') {
           setTimeout(fetchResume, 2000); // Poll every 2 seconds
         }
       } catch (error) {
@@ -194,18 +188,208 @@ export default function Editor() {
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
-    if (!printWindow || !resume.improvedHtml) return;
+    if (!printWindow) return;
 
-    printWindow.document.write(resume.improvedHtml);
+    // Create a clean HTML document with the regular resume text
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${resume.fileName || 'Resume'}</title>
+          <style>
+            @page {
+              margin: 0.5in;
+              size: letter;
+            }
+
+            @media print {
+              html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+              }
+            }
+
+            body {
+              font-family: Georgia, 'Times New Roman', serif;
+              color: #1e293b;
+              line-height: 1.6;
+              padding: 0.5in;
+              max-width: 8.5in;
+              margin: 0 auto;
+            }
+
+            h1 {
+              font-size: 24px;
+              font-weight: normal;
+              text-align: center;
+              text-transform: uppercase;
+              letter-spacing: 0.15em;
+              margin: 0 0 8px 0;
+              color: #0f172a;
+            }
+
+            h2 {
+              font-size: 12px;
+              font-weight: bold;
+              text-transform: uppercase;
+              letter-spacing: 0.2em;
+              color: #475569;
+              border-bottom: 1px solid #cbd5e1;
+              padding-bottom: 4px;
+              margin: 20px 0 12px 0;
+            }
+
+            p {
+              font-size: 11px;
+              margin: 4px 0;
+            }
+
+            .subtitle {
+              text-align: center;
+              font-size: 13px;
+              color: #64748b;
+              letter-spacing: 0.1em;
+              margin: 4px 0 12px 0;
+            }
+
+            .contact {
+              text-align: center;
+              font-size: 10px;
+              color: #94a3b8;
+              letter-spacing: 0.05em;
+              margin: 12px 0 20px 0;
+            }
+
+            ul {
+              margin: 8px 0;
+              padding-left: 24px;
+            }
+
+            li {
+              font-size: 11px;
+              margin: 2px 0;
+            }
+          </style>
+        </head>
+        <body>
+          ${improvedText.split('\n').map(line => {
+            const trimmed = line.trim();
+            if (!trimmed) return '<p>&nbsp;</p>';
+
+            // Check if it's a section header (all caps or common keywords)
+            const isHeader = trimmed === trimmed.toUpperCase() && trimmed.length < 40;
+            const isFirstLine = improvedText.split('\n').findIndex(l => l.trim()) === improvedText.split('\n').indexOf(line);
+
+            if (isFirstLine) {
+              return `<h1>${trimmed}</h1>`;
+            }
+
+            if (isHeader) {
+              return `<h2>${trimmed}</h2>`;
+            }
+
+            if (trimmed.startsWith('-') || trimmed.startsWith('•') || trimmed.startsWith('*')) {
+              return `<li>${trimmed.replace(/^[-•*]\s*/, '')}</li>`;
+            }
+
+            return `<p>${trimmed}</p>`;
+          }).join('\n')}
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
     printWindow.document.close();
     printWindow.focus();
-    printWindow.print();
+
+    // Small delay to ensure content is rendered before printing
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
   };
 
   const handleDownloadHTML = () => {
-    if (!resume.improvedHtml) return;
+    // Create clean HTML from the improved text
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${resume.fileName || 'Resume'}</title>
+          <style>
+            @page {
+              margin: 0.5in;
+              size: letter;
+            }
 
-    const blob = new Blob([resume.improvedHtml], { type: 'text/html' });
+            body {
+              font-family: Georgia, 'Times New Roman', serif;
+              color: #1e293b;
+              line-height: 1.6;
+              padding: 0.5in;
+              max-width: 8.5in;
+              margin: 0 auto;
+            }
+
+            h1 {
+              font-size: 24px;
+              font-weight: normal;
+              text-align: center;
+              text-transform: uppercase;
+              letter-spacing: 0.15em;
+              margin: 0 0 8px 0;
+              color: #0f172a;
+            }
+
+            h2 {
+              font-size: 12px;
+              font-weight: bold;
+              text-transform: uppercase;
+              letter-spacing: 0.2em;
+              color: #475569;
+              border-bottom: 1px solid #cbd5e1;
+              padding-bottom: 4px;
+              margin: 20px 0 12px 0;
+            }
+
+            p {
+              font-size: 11px;
+              margin: 4px 0;
+            }
+
+            ul {
+              margin: 8px 0;
+              padding-left: 24px;
+            }
+
+            li {
+              font-size: 11px;
+              margin: 2px 0;
+            }
+          </style>
+        </head>
+        <body>
+          ${improvedText.split('\n').map(line => {
+            const trimmed = line.trim();
+            if (!trimmed) return '<p>&nbsp;</p>';
+
+            const isHeader = trimmed === trimmed.toUpperCase() && trimmed.length < 40;
+            const isFirstLine = improvedText.split('\n').findIndex(l => l.trim()) === improvedText.split('\n').indexOf(line);
+
+            if (isFirstLine) return `<h1>${trimmed}</h1>`;
+            if (isHeader) return `<h2>${trimmed}</h2>`;
+            if (trimmed.startsWith('-') || trimmed.startsWith('•') || trimmed.startsWith('*')) {
+              return `<li>${trimmed.replace(/^[-•*]\s*/, '')}</li>`;
+            }
+            return `<p>${trimmed}</p>`;
+          }).join('\n')}
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -736,22 +920,9 @@ export default function Editor() {
                 style={{ maxHeight: 'calc(100vh - 160px)' }}
                 onClick={() => setIsZoomed(true)}
               >
-                {resume.improvedHtml ? (
-                  <iframe
-                    srcDoc={resume.improvedHtml}
-                    className="w-full border-0 block"
-                    style={{
-                      width: '100%',
-                      height: '1684px'
-                    }}
-                    title="AI-Generated Resume Design"
-                    sandbox="allow-same-origin"
-                  />
-                ) : (
-                  <div className="p-8">
-                    <ResumePreviewStyled text={improvedText} />
-                  </div>
-                )}
+                <div className="p-8">
+                  <ResumePreviewStyled text={improvedText} />
+                </div>
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
                   <div className="bg-white/90 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
                     <ZoomIn className="w-4 h-4" />
@@ -792,22 +963,9 @@ export default function Editor() {
           {/* Resume Content - Scrollable Full View */}
           <div className="flex-1 flex items-start justify-center bg-gray-100 p-8 overflow-auto">
             <div className="mx-auto max-w-[650px] w-full bg-white shadow-2xl">
-              {resume?.improvedHtml ? (
-                <iframe
-                  srcDoc={resume.improvedHtml}
-                  className="w-full border-0 block"
-                  style={{
-                    width: '100%',
-                    height: '1684px'
-                  }}
-                  title="Full Resume Preview"
-                  sandbox="allow-same-origin"
-                />
-              ) : (
-                <div className="p-12">
-                  <ResumePreviewStyled text={improvedText} />
-                </div>
-              )}
+              <div className="p-12">
+                <ResumePreviewStyled text={improvedText} />
+              </div>
             </div>
           </div>
 

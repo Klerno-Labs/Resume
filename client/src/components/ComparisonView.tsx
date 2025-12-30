@@ -133,7 +133,7 @@ export function ComparisonView({
                       srcDoc={improvedHtml}
                       className="w-full h-[500px] border-0 pointer-events-none"
                       title="AI-Generated Resume Design"
-                      sandbox="allow-same-origin"
+                      sandbox="allow-same-origin allow-scripts"
                     />
                     {/* Hover overlay */}
                     <div className="absolute inset-0 bg-purple-500/0 group-hover:bg-purple-500/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">

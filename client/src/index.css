@@ -135,6 +135,24 @@
   }
 }
 
+/* Hide browser print headers and footers */
+@page {
+  margin: 0;
+  size: auto;
+}
+
+@media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide default browser headers/footers (date, URL, page numbers) */
+  @page {
+    margin: 0;
+  }
+}
+
 /* Custom Utilities */
 .glass-panel {
   @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl;

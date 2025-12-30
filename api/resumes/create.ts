@@ -105,13 +105,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log('[Create Resume] Successfully created resume:', resumeId);
 
+    // CRITICAL FIX: NEVER return improvedHtml - designs must be explicitly requested
+    console.log('[resumes/create] FORCING improvedHtml to NULL');
+
     return res.json({
       id: newResume[0].id,
       userId: newResume[0].user_id,
       fileName: newResume[0].file_name,
       originalText: newResume[0].original_text,
       improvedText: newResume[0].improved_text,
-      improvedHtml: newResume[0].improved_html,
+      improvedHtml: null, // FORCE NULL - designs must be explicitly requested
       atsScore: newResume[0].ats_score,
       keywordsScore: newResume[0].keywords_score,
       formattingScore: newResume[0].formatting_score,

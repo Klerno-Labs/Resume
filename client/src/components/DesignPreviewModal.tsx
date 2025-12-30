@@ -119,7 +119,7 @@ export function DesignPreviewModal({
                         height: '1818px',
                       }}
                       title={`Preview: ${preview.templateName}`}
-                      sandbox="allow-same-origin"
+                      sandbox="allow-same-origin allow-scripts"
                     />
                   </div>
                 </div>

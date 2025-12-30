@@ -200,7 +200,7 @@ export function DesignModal({
                   srcDoc={htmlContent}
                   className="w-full min-h-[842px] border-0"
                   title="Resume Design Preview"
-                  sandbox="allow-same-origin"
+                  sandbox="allow-same-origin allow-scripts"
                 />
               </div>
             </div>

@@ -213,7 +213,7 @@ export function TemplateGallery({ currentTemplate, onSelectTemplate, userTier, o
                         className="w-full h-full border-0 pointer-events-none transform scale-[0.2] origin-top-left"
                         style={{ width: '500%', height: '500%' }}
                         title={`Preview of ${template.name}`}
-                        sandbox="allow-same-origin"
+                        sandbox="allow-same-origin allow-scripts"
                       />
 
                       {/* Locked Overlay */}

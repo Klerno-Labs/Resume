@@ -88,13 +88,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Paid users (basic/pro/premium/admin) can see everything
     const canAccessImprovedText = user && user.plan !== 'free';
 
+    // CRITICAL FIX: NEVER return improvedHtml in the main resume fetch
+    // Design should ONLY be returned when user explicitly requests it via regenerate-design or preview-designs
+    // This prevents automatic design appearance even with old cached frontend code
+    console.log('[resumes/[id]] FORCING improvedHtml to NULL - designs must be explicitly requested');
+
     return res.json({
       id: resume.id,
       userId: resume.user_id,
       fileName: resume.file_name,
       originalText: resume.original_text,
       improvedText: canAccessImprovedText ? resume.improved_text : null,
-      improvedHtml: canAccessImprovedText ? resume.improved_html : null,
+      improvedHtml: null, // FORCE NULL - designs must be explicitly requested
       atsScore: resume.ats_score,
       keywordsScore: resume.keywords_score,
       formattingScore: resume.formatting_score,

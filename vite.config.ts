@@ -45,8 +45,14 @@ export default defineConfig(async (): Promise<UserConfig> => {
       outDir: path.resolve(import.meta.dirname, 'dist/public'),
       emptyOutDir: true,
       chunkSizeWarningLimit: 1500,
+      // Force cache busting with unique hashes
+      assetsInlineLimit: 0,
       rollupOptions: {
         output: {
+          // Add timestamp to ensure fresh builds have unique filenames
+          entryFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
+          chunkFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
+          assetFileNames: `assets/[name]-[hash]-${Date.now()}[extname]`,
           manualChunks(id: string) {
             if (!id) return;
             if (id.includes('node_modules')) {
