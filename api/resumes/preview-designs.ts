@@ -102,30 +102,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log('[Preview Designs] Generating 3 design options for resume:', resumeId);
 
-    // Get all templates and select 3 diverse ones
+    // Get all templates and select 3 COMPLETELY RANDOM ones each time
     const allTemplates = await getAllTemplates();
 
-    // Select 3 templates with different layouts
-    const selectedTemplates = [];
-    const usedLayouts = new Set<string>();
-
-    for (const template of allTemplates) {
-      if (selectedTemplates.length >= 3) break;
-      if (!usedLayouts.has(template.layout)) {
-        selectedTemplates.push(template);
-        usedLayouts.add(template.layout);
-      }
+    // SUPER RANDOM SELECTION - Fisher-Yates shuffle algorithm for true randomness
+    const shuffled = [...allTemplates];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
-    // If we don't have 3 yet, add random ones
-    while (selectedTemplates.length < 3 && selectedTemplates.length < allTemplates.length) {
-      const randomTemplate = allTemplates[Math.floor(Math.random() * allTemplates.length)];
-      if (!selectedTemplates.includes(randomTemplate)) {
-        selectedTemplates.push(randomTemplate);
-      }
-    }
+    // Take the first 3 from the shuffled array (completely random every time)
+    const selectedTemplates = shuffled.slice(0, 3);
 
-    console.log('[Preview Designs] Selected templates:', selectedTemplates.map(t => `${t.name} (${t.layout})`));
+    console.log('[Preview Designs] RANDOMLY selected templates:', selectedTemplates.map(t => `${t.name} (${t.layout})`));
 
     const openai = getOpenAI();
     const previews = [];
