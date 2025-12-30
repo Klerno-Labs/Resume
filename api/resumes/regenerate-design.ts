@@ -142,73 +142,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       messages: [
         {
           role: 'system',
-          content: `You are an ELITE resume designer creating PREMIUM, VISUALLY STUNNING resumes for executives.
+          content: `You are a premium resume designer. Create a visually impressive HTML resume.
 
-TEMPLATE: "${template.name}" - ${template.style} style, ${template.layout} layout
+TEMPLATE: ${template.name}
+- Layout: ${template.layout}${template.sidebar !== 'none' ? ` with ${template.sidebar} sidebar (35% width, gradient: ${template.gradient}, white text)` : ''}
+- Accent Color: ${template.accentColor}
+- Fonts: ${template.fonts[0]} (headers), ${template.fonts[1]} (body)
+${template.gradient !== 'none' ? `- Background Gradient: ${template.gradient}` : ''}
 
-DESIGN SPECIFICATIONS:
-${template.sidebar !== 'none' ? `
-SIDEBAR DESIGN:
-- ${template.sidebar === 'left' ? 'Left' : 'Right'} sidebar: 35% width with gradient background: ${template.gradient}
-- Sidebar text: WHITE (#FFFFFF) on gradient background
-- Sidebar contains: Contact info, Skills with visual bars, Education
-- Main content: 65% width, white background, contains Experience
-` : template.layout === 'header-banner' ? `
-HEADER BANNER:
-- Full-width banner with gradient: ${template.gradient}
-- Banner height: 180px, contains Name (32pt white) and Title/Contact
-- Below banner: Two columns - left 60% (Experience), right 40% (Skills, Education)
-` : template.layout === '2-column' ? `
-TWO-COLUMN LAYOUT:
-- Left column 50%, right column 50%
-- Section headers with gradient underline using: ${template.gradient}
-- Alternating content placement for visual interest
-` : `
-SINGLE-COLUMN PREMIUM:
-- Full-width header with subtle background tint
-- Section dividers with accent color
-- Clean spacing with premium typography
-`}
+DESIGN ELEMENTS:
+- Use gradient backgrounds and colored sections
+- Add visual skill bars with progress indicators
+- Include contact icons (✉ ☎ 📍)
+- Use the accent color for headers and highlights
+- Add subtle shadows and professional spacing
+- Make it visually striking and premium
 
-COLORS & STYLING:
-- Accent color: ${template.accentColor} (use for headers, borders, highlights)
-- Primary font: ${template.fonts[0]} for headers (16-24pt)
-- Body font: ${template.fonts[1]} for content (10-11pt)
-${template.gradient !== 'none' ? `- Gradient: ${template.gradient} (use generously for visual impact)` : ''}
-- Add subtle shadows, borders, and spacing for depth
-- Use icons for contact info (email, phone, location symbols)
-
-PREMIUM ELEMENTS:
-✨ Visual skill bars with percentages
-✨ Timeline dots and lines for experience
-✨ Section icons and decorative headers
-✨ Gradient backgrounds and colored sections
-✨ Professional spacing and whitespace
-✨ Modern card-style sections with subtle shadows
-
-CRITICAL:
-- Make it VISUALLY STUNNING - this is a PREMIUM paid feature
-- Apply the template's gradient and colors BOLDLY
-- Include ALL content sections from the resume
-- Page height: auto-fit content (no fixed height)
-
-OUTPUT: {"html": "<!DOCTYPE html>..."}`,
+RULES:
+- Return ONLY valid JSON: {"html": "<!DOCTYPE html><html>...</html>"}
+- Include ALL resume content
+- Height: auto (not fixed)
+- Make it look expensive and professional`,
         },
         {
           role: 'user',
-          content: `Create a PREMIUM, VISUALLY STUNNING "${template.name}" resume with this content:
+          content: `Create a premium HTML resume using the ${template.name} template.
 
+CONTENT:
 ${resume.improved_text || resume.original_text}
 
-APPLY THE TEMPLATE DESIGN:
-- Use gradient background: ${template.gradient}
-- Use accent color ${template.accentColor} prominently
-- Use fonts: ${template.fonts.join(', ')}
-- Layout: ${template.layout}${template.sidebar !== 'none' ? ` with ${template.sidebar} sidebar` : ''}
-
-Make it look EXPENSIVE and PROFESSIONAL - this is a premium paid feature!
-
-Return JSON: {"html": "<!DOCTYPE html>..."}`,
+Apply gradient ${template.gradient} and accent color ${template.accentColor}.
+Return ONLY JSON: {"html": "<!DOCTYPE html>..."}`,
         },
       ],
       response_format: { type: 'json_object' },
