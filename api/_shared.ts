@@ -4,31 +4,12 @@ import jwt from 'jsonwebtoken';
 import { parse } from 'cookie';
 import { neon } from '@neondatabase/serverless';
 
-// Lazy database connection - initialized on first use
-let _sql: ReturnType<typeof neon> | null = null;
-
-export function getSQL() {
-  if (_sql) return _sql;
-
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is required');
-  }
-
-  _sql = neon(process.env.DATABASE_URL);
-  return _sql;
+// Database connection - initialized once on cold start
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is required');
 }
 
-// Export as const for compatibility
-export const sql = new Proxy({} as ReturnType<typeof neon>, {
-  get(target, prop) {
-    const db = getSQL();
-    return (db as any)[prop];
-  },
-  apply(target, thisArg, args) {
-    const db = getSQL();
-    return (db as any)(...args);
-  }
-}) as ReturnType<typeof neon>;
+export const sql = neon(process.env.DATABASE_URL);
 
 // User interface
 export interface User {
