@@ -1,7 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import jwt from 'jsonwebtoken';
-import { parse } from 'cookie';
-import { neon } from '@neondatabase/serverless';
+import { sql, getUserFromRequest, checkRateLimit, getRateLimitIdentifier } from '../_shared';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 import crypto from 'crypto';
@@ -14,41 +12,6 @@ export const config = {
     bodyParser: false,
   },
 };
-
-// Lazy database connection
-let _sql: ReturnType<typeof neon> | null = null;
-
-function getSQL() {
-  if (_sql) return _sql;
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is required');
-  }
-  _sql = neon(process.env.DATABASE_URL);
-  return _sql;
-}
-
-// Helper to verify JWT
-function verifyToken(token: string): { userId: string; email: string } | null {
-  try {
-    return jwt.verify(token, process.env.JWT_SECRET!) as { userId: string; email: string };
-  } catch {
-    return null;
-  }
-}
-
-// Helper to get user from request
-async function getUserFromRequest(req: VercelRequest): Promise<any | null> {
-  const cookies = parse(req.headers.cookie || '');
-  const token = cookies.token;
-  if (!token) return null;
-
-  const decoded = verifyToken(token);
-  if (!decoded) return null;
-
-  const sql = getSQL();
-  const users = await sql`SELECT * FROM users WHERE id = ${decoded.userId}`;
-  return users[0] || null;
-}
 
 // Helper to parse multipart form data using formidable
 async function parseMultipartForm(req: VercelRequest): Promise<{
@@ -108,14 +71,10 @@ async function parseMultipartForm(req: VercelRequest): Promise<{
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
-    const origin = req.headers.origin || '';
-    const allowedOrigins = ['https://rewriteme.app', 'http://localhost:5174'];
-    const isAllowed = allowedOrigins.includes(origin) || origin.includes('vercel.app');
-
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', isAllowed ? origin : allowedOrigins[0]);
-    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    const headers: Record<string, string> = {};
+    const { setCORS } = await import('../_shared');
+    setCORS(req, headers);
+    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 
     if (req.method === 'OPTIONS') {
       return res.status(200).end();
@@ -133,6 +92,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     console.log(`[Upload] User authenticated: ${user.id}, plan: ${user.plan}, credits: ${user.credits_remaining}`);
+
+    // Rate limiting: 10 uploads per minute for free users, 30 for paid users
+    const rateLimit = user.plan === 'free' ? 10 : 30;
+    const rateLimitCheck = checkRateLimit(getRateLimitIdentifier(req, user), rateLimit);
+
+    // Set rate limit headers
+    res.setHeader('X-RateLimit-Limit', rateLimit.toString());
+    res.setHeader('X-RateLimit-Remaining', rateLimitCheck.remaining.toString());
+    res.setHeader('X-RateLimit-Reset', new Date(rateLimitCheck.resetAt).toISOString());
+
+    if (!rateLimitCheck.allowed) {
+      console.log(`[Upload] Rate limit exceeded for user ${user.id}`);
+      return res.status(429).json({
+        error: 'Too many requests',
+        message: `Rate limit exceeded. Try again after ${new Date(rateLimitCheck.resetAt).toISOString()}`,
+        retryAfter: Math.ceil((rateLimitCheck.resetAt - Date.now()) / 1000),
+      });
+    }
 
     const contentType = req.headers['content-type'] || '';
     console.log('[Upload] Content-Type:', contentType);
@@ -177,8 +154,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         message: message,
       });
     }
-
-    const sql = getSQL();
 
     let contentHash: string | null = null;
     // Skip duplicate detection for admin users - they can upload anything

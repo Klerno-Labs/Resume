@@ -1,41 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import jwt from 'jsonwebtoken';
 import { serialize } from 'cookie';
-import { neon } from '@neondatabase/serverless';
 import crypto from 'crypto';
-
-// Lazy database connection
-let _sql: ReturnType<typeof neon> | null = null;
-
-function getSQL() {
-  if (_sql) return _sql;
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is required');
-  }
-  _sql = neon(process.env.DATABASE_URL);
-  return _sql;
-}
-
-// Helper to detect production environment
-function isProductionEnv(req: VercelRequest): boolean {
-  if (process.env.NODE_ENV === 'production') return true;
-  if (process.env.VERCEL === '1') return true;
-  const host = req.headers.host || '';
-  return !host.includes('localhost') && !host.includes('127.0.0.1');
-}
-
-// Helper to check if email is admin
-function isAdmin(email: string): boolean {
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase());
-  return adminEmails.includes(email.toLowerCase());
-}
-
-// Helper to generate JWT
-function generateToken(payload: { userId: string; email: string }): string {
-  return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '7d' });
-}
+import { sql, generateToken, isProductionEnv, isAdmin } from '../../_shared';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -82,10 +48,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const googleUser = (await userRes.json()) as { email: string; name?: string; id: string };
 
-    const sql = getSQL();
-
-    // Find or create user
-    let users = await sql`SELECT * FROM users WHERE email = ${googleUser.email}`;
+    // Security: SELECT specific columns only
+    let users = await sql`
+      SELECT id, email, name, plan, credits_remaining, email_verified, created_at, updated_at
+      FROM users
+      WHERE email = ${googleUser.email}
+    `;
     let user = users[0] as any;
     const admin = isAdmin(googleUser.email);
 
@@ -96,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const result = await sql`
         INSERT INTO users (email, password_hash, name, plan, credits_remaining, email_verified)
         VALUES (${googleUser.email}, ${secureOAuthHash}, ${googleUser.name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 1}, true)
-        RETURNING *
+        RETURNING id, email, name, plan, credits_remaining, email_verified, created_at, updated_at
       `;
       user = result[0];
     } else if (admin && user.plan !== 'admin') {

@@ -1,87 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import jwt from 'jsonwebtoken';
-import { parse } from 'cookie';
-import { neon } from '@neondatabase/serverless';
+import { sql, getUserFromRequest, parseJSONBody } from '../_shared';
 import { enqueueJob } from '../lib/queue.js';
-
-// Lazy database connection
-let _sql: ReturnType<typeof neon> | null = null;
-
-function getSQL() {
-  if (_sql) return _sql;
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is required');
-  }
-  _sql = neon(process.env.DATABASE_URL);
-  return _sql;
-}
-
-// Helper to verify JWT
-function verifyToken(token: string): { userId: string; email: string } | null {
-  try {
-    return jwt.verify(token, process.env.JWT_SECRET!) as { userId: string; email: string };
-  } catch {
-    return null;
-  }
-}
-
-// Helper to get user from request
-async function getUserFromRequest(req: VercelRequest): Promise<any | null> {
-  const cookies = parse(req.headers.cookie || '');
-  const token = cookies.token;
-  if (!token) return null;
-
-  const decoded = verifyToken(token);
-  if (!decoded) return null;
-
-  const sql = getSQL();
-  const users = await sql`SELECT * FROM users WHERE id = ${decoded.userId}`;
-  return users[0] || null;
-}
-
-// Helper to parse JSON body
-async function parseJSONBody(req: VercelRequest): Promise<any> {
-  return new Promise((resolve) => {
-    const chunks: Buffer[] = [];
-
-    // If a parsed body was attached by the runtime, return it directly
-    try {
-      // @ts-ignore
-      if (req.body && typeof req.body === 'object') return resolve(req.body);
-      // @ts-ignore
-      if (req.body && typeof req.body === 'string') return resolve(JSON.parse(req.body));
-    } catch (e) {
-      // Ignore and fall back to stream
-    }
-
-    req.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk))));
-
-    req.on('end', () => {
-      try {
-        const bodyStr = Buffer.concat(chunks).toString('utf-8').trim();
-        if (!bodyStr) return resolve(null);
-        return resolve(JSON.parse(bodyStr));
-      } catch (err) {
-        console.error('[parseJSONBody] JSON.parse failed:', err instanceof Error ? err.message : String(err));
-        return resolve(null);
-      }
-    });
-
-    req.on('error', () => resolve(null));
-  });
-}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
-    const origin = req.headers.origin || '';
-    const allowedOrigins = ['https://rewriteme.app', 'http://localhost:5174'];
-    const isAllowed = allowedOrigins.includes(origin) || origin.includes('vercel.app');
-
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', isAllowed ? origin : allowedOrigins[0]);
-    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    const headers: Record<string, string> = {};
+    const { setCORS } = await import('../_shared');
+    setCORS(req, headers);
+    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 
     if (req.method === 'OPTIONS') {
       return res.status(200).end();
@@ -110,8 +37,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!bucket) {
       return res.status(500).json({ error: 'S3_BUCKET not configured' });
     }
-
-    const sql = getSQL();
 
     // Create resume placeholder in DB with queued status
     const result = await sql`

@@ -15,12 +15,30 @@ function getOpenAI() {
 // Use gpt-4o-mini for maximum speed
 const FAST_MODEL = 'gpt-4o-mini';
 
-// Simple in-memory cache for resume results
-const resumeCache = new Map<string, { result: ResumeOptimizationResult; timestamp: number }>();
+// LRU cache for resume results - optimized for serverless
+const MAX_CACHE_SIZE = 50; // Reduced for serverless memory limits
 const CACHE_TTL = 1000 * 60 * 60; // 1 hour cache
+const resumeCache = new Map<string, { result: ResumeOptimizationResult; timestamp: number; hits: number }>();
 
 function getCacheKey(text: string): string {
   return crypto.createHash('md5').update(text.trim().toLowerCase()).digest('hex');
+}
+
+// LRU eviction - remove oldest accessed entry
+function evictOldestEntry() {
+  let oldestKey: string | null = null;
+  let oldestTime = Infinity;
+
+  for (const [key, value] of resumeCache.entries()) {
+    if (value.timestamp < oldestTime) {
+      oldestTime = value.timestamp;
+      oldestKey = key;
+    }
+  }
+
+  if (oldestKey) {
+    resumeCache.delete(oldestKey);
+  }
 }
 
 interface ResumeOptimizationResult {
@@ -36,8 +54,13 @@ export async function optimizeResume(originalText: string): Promise<ResumeOptimi
   // Check cache first
   const cacheKey = getCacheKey(originalText);
   const cached = resumeCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    console.log('Resume cache hit!');
+  const now = Date.now();
+
+  if (cached && now - cached.timestamp < CACHE_TTL) {
+    // Update timestamp for LRU
+    cached.timestamp = now;
+    cached.hits++;
+    console.log(`[OpenAI] Cache hit! (hits: ${cached.hits}, age: ${Math.round((now - cached.timestamp) / 1000)}s)`);
     return cached.result;
   }
 
@@ -117,16 +140,31 @@ Return ONLY valid JSON:
     formattingScore: scores.formattingScore ? Math.max(9, Math.min(10, scores.formattingScore)) : 10,
   };
 
-  // Cache the result
-  resumeCache.set(cacheKey, { result, timestamp: Date.now() });
+  // Cache the result with LRU eviction
+  if (resumeCache.size >= MAX_CACHE_SIZE) {
+    evictOldestEntry();
+  }
 
-  // Cleanup old cache entries
-  if (resumeCache.size > 100) {
+  resumeCache.set(cacheKey, {
+    result,
+    timestamp: Date.now(),
+    hits: 0
+  });
+
+  console.log(`[OpenAI] Cached result (cache size: ${resumeCache.size}/${MAX_CACHE_SIZE})`);
+
+  // Periodic cleanup of expired entries (only when cache is getting full)
+  if (resumeCache.size > MAX_CACHE_SIZE * 0.8) {
     const now = Date.now();
+    let cleaned = 0;
     for (const [key, value] of resumeCache.entries()) {
       if (now - value.timestamp > CACHE_TTL) {
         resumeCache.delete(key);
+        cleaned++;
       }
+    }
+    if (cleaned > 0) {
+      console.log(`[OpenAI] Cleaned ${cleaned} expired cache entries`);
     }
   }
 

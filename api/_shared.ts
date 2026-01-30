@@ -65,7 +65,12 @@ export async function getUserFromRequest(req: VercelRequest): Promise<User | nul
   const decoded = verifyToken(token);
   if (!decoded) return null;
 
-  const users = await sql`SELECT * FROM users WHERE id = ${decoded.userId}`;
+  // Security: Never use SELECT * - explicitly select columns to avoid exposing password_hash
+  const users = await sql`
+    SELECT id, email, name, plan, credits_remaining, email_verified, created_at, updated_at
+    FROM users
+    WHERE id = ${decoded.userId}
+  `;
   return (users[0] as User) || null;
 }
 
@@ -85,6 +90,98 @@ export function isProductionEnv(req: VercelRequest): boolean {
   return !host.includes('localhost') && !host.includes('127.0.0.1');
 }
 
+// Parse JSON body helper
+export async function parseJSONBody(req: VercelRequest): Promise<any> {
+  return new Promise((resolve) => {
+    const chunks: Buffer[] = [];
+
+    // If a parsed body was attached by the runtime, return it directly
+    try {
+      // @ts-ignore
+      if (req.body && typeof req.body === 'object') return resolve(req.body);
+      // @ts-ignore
+      if (req.body && typeof req.body === 'string') return resolve(JSON.parse(req.body));
+    } catch (e) {
+      // Ignore and fall back to stream
+    }
+
+    req.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk))));
+
+    req.on('end', () => {
+      try {
+        const bodyStr = Buffer.concat(chunks).toString('utf-8').trim();
+        if (!bodyStr) return resolve(null);
+        return resolve(JSON.parse(bodyStr));
+      } catch (err) {
+        console.error('[parseJSONBody] JSON.parse failed:', err instanceof Error ? err.message : String(err));
+        return resolve(null);
+      }
+    });
+
+    req.on('error', () => resolve(null));
+  });
+}
+
+// Rate limiting - simple in-memory implementation for serverless
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+
+const rateLimitStore = new Map<string, RateLimitEntry>();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute window
+const DEFAULT_RATE_LIMIT = 60; // 60 requests per minute
+
+// Cleanup old rate limit entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitStore.entries()) {
+    if (now > entry.resetAt) {
+      rateLimitStore.delete(key);
+    }
+  }
+}, 5 * 60 * 1000); // Cleanup every 5 minutes
+
+export function checkRateLimit(
+  identifier: string,
+  limit: number = DEFAULT_RATE_LIMIT
+): { allowed: boolean; remaining: number; resetAt: number } {
+  const now = Date.now();
+  const entry = rateLimitStore.get(identifier);
+
+  if (!entry || now > entry.resetAt) {
+    // New window
+    const resetAt = now + RATE_LIMIT_WINDOW;
+    rateLimitStore.set(identifier, { count: 1, resetAt });
+    return { allowed: true, remaining: limit - 1, resetAt };
+  }
+
+  if (entry.count >= limit) {
+    // Rate limit exceeded
+    return { allowed: false, remaining: 0, resetAt: entry.resetAt };
+  }
+
+  // Increment counter
+  entry.count++;
+  return { allowed: true, remaining: limit - entry.count, resetAt: entry.resetAt };
+}
+
+export function getRateLimitIdentifier(req: VercelRequest, user?: User | null): string {
+  // Use user ID if authenticated, otherwise IP address
+  if (user?.id) {
+    return `user:${user.id}`;
+  }
+
+  // Get IP from various headers (Vercel/Cloudflare)
+  const ip =
+    req.headers['x-real-ip'] ||
+    req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
+    req.socket?.remoteAddress ||
+    'unknown';
+
+  return `ip:${ip}`;
+}
+
 // CORS helper
 export function setCORS(req: VercelRequest, headers: Record<string, string>) {
   const allowedOrigins = [
@@ -93,8 +190,13 @@ export function setCORS(req: VercelRequest, headers: Record<string, string>) {
     'http://localhost:3003',
     'http://localhost:5000'
   ];
+
+  // Security: Only allow specific Vercel preview deployments, not wildcards
+  const vercelPreviewDomains = process.env.VERCEL_PREVIEW_DOMAINS?.split(',').map(d => d.trim()) || [];
+  const allAllowedOrigins = [...allowedOrigins, ...vercelPreviewDomains];
+
   const origin = req.headers.origin || '';
-  const isAllowed = allowedOrigins.includes(origin) || origin.includes('vercel.app');
+  const isAllowed = allAllowedOrigins.includes(origin);
 
   headers['Access-Control-Allow-Credentials'] = 'true';
   headers['Access-Control-Allow-Origin'] = isAllowed ? origin : allowedOrigins[0];

@@ -1,43 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import jwt from 'jsonwebtoken';
-import { parse } from 'cookie';
-import { neon } from '@neondatabase/serverless';
+import { sql, getUserFromRequest } from '../_shared';
 import { v4 as uuidv4 } from 'uuid';
-
-// Lazy database connection
-let _sql: ReturnType<typeof neon> | null = null;
-
-function getSQL() {
-  if (_sql) return _sql;
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is required');
-  }
-  _sql = neon(process.env.DATABASE_URL);
-  return _sql;
-}
-
-// Helper to verify JWT
-function verifyToken(token: string): { userId: string; email: string } | null {
-  try {
-    return jwt.verify(token, process.env.JWT_SECRET!) as { userId: string; email: string };
-  } catch {
-    return null;
-  }
-}
-
-// Helper to get user from request
-async function getUserFromRequest(req: VercelRequest): Promise<any | null> {
-  const cookies = parse(req.headers.cookie || '');
-  const token = cookies.token;
-  if (!token) return null;
-
-  const decoded = verifyToken(token);
-  if (!decoded) return null;
-
-  const sql = getSQL();
-  const users = await sql`SELECT * FROM users WHERE id = ${decoded.userId}`;
-  return users[0] || null;
-}
 
 /**
  * Create a new resume from form data
@@ -47,14 +10,10 @@ async function getUserFromRequest(req: VercelRequest): Promise<any | null> {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
-    const origin = req.headers.origin || '';
-    const allowedOrigins = ['https://rewriteme.app', 'http://localhost:5174'];
-    const isAllowed = allowedOrigins.includes(origin) || origin.includes('vercel.app');
-
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', isAllowed ? origin : allowedOrigins[0]);
-    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    const headers: Record<string, string> = {};
+    const { setCORS } = await import('../_shared');
+    setCORS(req, headers);
+    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 
     if (req.method === 'OPTIONS') {
       return res.status(200).end();
@@ -76,7 +35,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'fileName and originalText are required' });
     }
 
-    const sql = getSQL();
     const resumeId = uuidv4();
 
     // Insert new resume

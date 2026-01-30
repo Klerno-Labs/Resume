@@ -1,77 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import { serialize } from 'cookie';
-import { neon } from '@neondatabase/serverless';
-
-// Lazy database connection
-let _sql: ReturnType<typeof neon> | null = null;
-
-function getSQL() {
-  if (_sql) return _sql;
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is required');
-  }
-  _sql = neon(process.env.DATABASE_URL);
-  return _sql;
-}
-
-// Helper to detect production environment
-function isProductionEnv(req: VercelRequest): boolean {
-  if (process.env.NODE_ENV === 'production') return true;
-  if (process.env.VERCEL === '1') return true;
-  const host = req.headers.host || '';
-  return !host.includes('localhost') && !host.includes('127.0.0.1');
-}
-
-// Helper to generate JWT
-function generateToken(payload: { userId: string; email: string }): string {
-  return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '7d' });
-}
-
-// Helper to parse JSON body
-async function parseJSONBody(req: VercelRequest): Promise<any> {
-  return new Promise((resolve) => {
-    const chunks: Buffer[] = [];
-
-    // If a parsed body was attached by the runtime, return it directly
-    try {
-      // @ts-ignore
-      if (req.body && typeof req.body === 'object') return resolve(req.body);
-      // @ts-ignore
-      if (req.body && typeof req.body === 'string') return resolve(JSON.parse(req.body));
-    } catch (e) {
-      // Ignore and fall back to stream
-    }
-
-    req.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk))));
-
-    req.on('end', () => {
-      try {
-        const bodyStr = Buffer.concat(chunks).toString('utf-8').trim();
-        if (!bodyStr) return resolve(null);
-        return resolve(JSON.parse(bodyStr));
-      } catch (err) {
-        console.error('[parseJSONBody] JSON.parse failed:', err instanceof Error ? err.message : String(err));
-        return resolve(null);
-      }
-    });
-
-    req.on('error', () => resolve(null));
-  });
-}
+import { sql, generateToken, isProductionEnv, parseJSONBody, checkRateLimit, getRateLimitIdentifier } from '../_shared';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
-    const origin = req.headers.origin || '';
-    const allowedOrigins = ['https://rewriteme.app', 'http://localhost:5174'];
-    const isAllowed = allowedOrigins.includes(origin) || origin.includes('vercel.app');
-
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', isAllowed ? origin : allowedOrigins[0]);
-    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    const headers: Record<string, string> = {};
+    const { setCORS } = await import('../_shared');
+    setCORS(req, headers);
+    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 
     if (req.method === 'OPTIONS') {
       return res.status(200).end();
@@ -79,6 +17,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // Rate limiting: 5 login attempts per minute to prevent brute force attacks
+    const rateLimitCheck = checkRateLimit(getRateLimitIdentifier(req, null), 5);
+
+    res.setHeader('X-RateLimit-Limit', '5');
+    res.setHeader('X-RateLimit-Remaining', rateLimitCheck.remaining.toString());
+    res.setHeader('X-RateLimit-Reset', new Date(rateLimitCheck.resetAt).toISOString());
+
+    if (!rateLimitCheck.allowed) {
+      console.log('[auth/login] Rate limit exceeded:', req.headers['x-forwarded-for'] || req.socket?.remoteAddress);
+      return res.status(429).json({
+        error: 'Too many login attempts',
+        message: 'Please wait before trying again',
+        retryAfter: Math.ceil((rateLimitCheck.resetAt - Date.now()) / 1000),
+      });
     }
 
     const body = await parseJSONBody(req);
@@ -91,8 +45,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Email and password required' });
     }
 
-    const sql = getSQL();
-    const users = await sql`SELECT * FROM users WHERE email = ${email}`;
+    // Security: SELECT only needed columns, not password_hash which we need separately
+    const users = await sql`
+      SELECT id, email, name, plan, credits_remaining, email_verified, password_hash
+      FROM users
+      WHERE email = ${email}
+    `;
     const user = users[0] as any;
 
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {

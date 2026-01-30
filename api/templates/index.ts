@@ -1,16 +1,12 @@
 import type { Request, Response } from 'express';
-import { getSQL } from '../lib/db.js';
+import { sql } from '../_shared';
 
 export default async function handler(req: Request, res: Response) {
   // CORS headers
-  const origin = req.headers.origin || '';
-  const allowedOrigins = ['https://rewriteme.app', 'http://localhost:5174'];
-  const isAllowed = allowedOrigins.includes(origin) || origin.includes('vercel.app');
-
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', isAllowed ? origin : allowedOrigins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  const headers: Record<string, string> = {};
+  const { setCORS } = await import('../_shared');
+  setCORS(req as any, headers);
+  Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -21,8 +17,6 @@ export default async function handler(req: Request, res: Response) {
   }
 
   try {
-    const sql = getSQL();
-
     const templates = await sql`
       SELECT
         id,

@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
-import { db } from '../lib/db';
+import { sql, getUserFromRequest, parseJSONBody, checkRateLimit, getRateLimitIdentifier } from '../_shared';
 import { generateCoverLetter } from '../lib/openai';
 
 const generateSchema = z.object({
@@ -10,20 +10,55 @@ const generateSchema = z.object({
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
   try {
-    // Parse and validate request
-    const body = generateSchema.parse(req.body);
+    // CORS
+    const headers: Record<string, string> = {};
+    const { setCORS } = await import('../_shared');
+    setCORS(req, headers);
+    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 
-    // Fetch resume
-    const resume = await db
-      .selectFrom('resumes')
-      .select(['id', 'user_id', 'improved_text', 'original_text'])
-      .where('id', '=', body.resumeId)
-      .executeTakeFirst();
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
+
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // Authentication required
+    const user = await getUserFromRequest(req);
+    if (!user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // Rate limiting: 5-20 cover letters per minute (expensive AI operation)
+    const rateLimit = user.plan === 'free' ? 5 : 20;
+    const rateLimitCheck = checkRateLimit(getRateLimitIdentifier(req, user), rateLimit);
+
+    res.setHeader('X-RateLimit-Limit', rateLimit.toString());
+    res.setHeader('X-RateLimit-Remaining', rateLimitCheck.remaining.toString());
+    res.setHeader('X-RateLimit-Reset', new Date(rateLimitCheck.resetAt).toISOString());
+
+    if (!rateLimitCheck.allowed) {
+      console.log(`[cover-letters/generate] Rate limit exceeded for user ${user.id}`);
+      return res.status(429).json({
+        error: 'Too many requests',
+        message: 'Cover letter generation limit reached. Please wait before generating more.',
+        retryAfter: Math.ceil((rateLimitCheck.resetAt - Date.now()) / 1000),
+      });
+    }
+
+    // Parse and validate request
+    const body = await parseJSONBody(req);
+    const validated = generateSchema.parse(body);
+
+    // Fetch resume - using Neon SQL syntax, not Kysely
+    const resumes = await sql`
+      SELECT id, user_id, improved_text, original_text
+      FROM resumes
+      WHERE id = ${validated.resumeId} AND user_id = ${user.id}
+    `;
+    const resume = resumes[0] as any;
 
     if (!resume) {
       return res.status(404).json({ error: 'Resume not found' });
@@ -39,24 +74,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Generate cover letter using OpenAI
     const coverLetterResult = await generateCoverLetter(
       resumeText,
-      body.jobDescription,
-      body.tone
+      validated.jobDescription,
+      validated.tone
     );
     const coverLetterContent = coverLetterResult.content;
 
-    // Save to database
-    const coverLetter = await db
-      .insertInto('cover_letters')
-      .values({
-        user_id: resume.user_id,
-        resume_id: body.resumeId,
-        job_description: body.jobDescription,
-        tone: body.tone,
-        content: coverLetterContent,
-        created_at: new Date().toISOString(),
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    // Save to database - using Neon SQL syntax
+    const coverLetters = await sql`
+      INSERT INTO cover_letters (user_id, resume_id, job_description, tone, content, created_at)
+      VALUES (${resume.user_id}, ${validated.resumeId}, ${validated.jobDescription}, ${validated.tone}, ${coverLetterContent}, NOW())
+      RETURNING id, content, tone, created_at
+    `;
+    const coverLetter = coverLetters[0] as any;
 
     return res.status(200).json({
       id: coverLetter.id,

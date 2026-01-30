@@ -1,22 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import jwt from 'jsonwebtoken';
-import { parse } from 'cookie';
-import { neon } from '@neondatabase/serverless';
+import { sql, getUserFromRequest, checkRateLimit, getRateLimitIdentifier } from '../_shared';
 import OpenAI from 'openai';
 import { getRandomTemplate } from '../lib/designTemplates.js';
 import { validateResumeContrast } from '../lib/contrastValidator.js';
-
-// Lazy database connection
-let _sql: ReturnType<typeof neon> | null = null;
-
-function getSQL() {
-  if (_sql) return _sql;
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is required');
-  }
-  _sql = neon(process.env.DATABASE_URL);
-  return _sql;
-}
 
 // Lazy OpenAI client
 let _openai: OpenAI | null = null;
@@ -30,29 +16,6 @@ function getOpenAI() {
   return _openai;
 }
 
-// Helper to verify JWT
-function verifyToken(token: string): { userId: string; email: string } | null {
-  try {
-    return jwt.verify(token, process.env.JWT_SECRET!) as { userId: string; email: string };
-  } catch {
-    return null;
-  }
-}
-
-// Helper to get user from request
-async function getUserFromRequest(req: VercelRequest): Promise<any | null> {
-  const cookies = parse(req.headers.cookie || '');
-  const token = cookies.token;
-  if (!token) return null;
-
-  const decoded = verifyToken(token);
-  if (!decoded) return null;
-
-  const sql = getSQL();
-  const users = await sql`SELECT * FROM users WHERE id = ${decoded.userId}`;
-  return users[0] || null;
-}
-
 // Tier-based regeneration limits
 const REGENERATION_LIMITS: Record<string, number> = {
   free: 3,
@@ -64,14 +27,10 @@ const REGENERATION_LIMITS: Record<string, number> = {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
-    const origin = req.headers.origin || '';
-    const allowedOrigins = ['https://rewriteme.app', 'http://localhost:5174'];
-    const isAllowed = allowedOrigins.includes(origin) || origin.includes('vercel.app');
-
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', isAllowed ? origin : allowedOrigins[0]);
-    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    const headers: Record<string, string> = {};
+    const { setCORS } = await import('../_shared');
+    setCORS(req, headers);
+    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 
     if (req.method === 'OPTIONS') {
       return res.status(200).end();
@@ -85,6 +44,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const user = await getUserFromRequest(req);
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Rate limiting: 5-15 regenerations per minute (expensive AI operation)
+    const rateLimit = user.plan === 'free' ? 3 : user.plan === 'premium' ? 15 : 10;
+    const rateLimitCheck = checkRateLimit(getRateLimitIdentifier(req, user), rateLimit);
+
+    res.setHeader('X-RateLimit-Limit', rateLimit.toString());
+    res.setHeader('X-RateLimit-Remaining', rateLimitCheck.remaining.toString());
+    res.setHeader('X-RateLimit-Reset', new Date(rateLimitCheck.resetAt).toISOString());
+
+    if (!rateLimitCheck.allowed) {
+      console.log(`[regenerate-design] Rate limit exceeded for user ${user.id}`);
+      return res.status(429).json({
+        error: 'Too many requests',
+        message: 'Design regeneration limit reached. Please wait before trying again.',
+        retryAfter: Math.ceil((rateLimitCheck.resetAt - Date.now()) / 1000),
+      });
     }
 
     // PREMIUM-ONLY FEATURE: Only premium+ users can regenerate designs
@@ -106,10 +82,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log('[Regenerate Design] User:', user.id, 'Resume:', resumeId);
 
-    const sql = getSQL();
-
     // Get resume
-    const resumes = await sql`SELECT * FROM resumes WHERE id = ${resumeId} AND user_id = ${user.id}`;
+    const resumes = await sql`
+      SELECT id, user_id, file_name, original_text, improved_text, improved_html,
+             ats_score, keywords_score, formatting_score, status, design_regenerations_used,
+             created_at, updated_at
+      FROM resumes
+      WHERE id = ${resumeId} AND user_id = ${user.id}
+    `;
     const resume = resumes[0] as any;
 
     if (!resume) {

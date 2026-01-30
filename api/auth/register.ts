@@ -1,85 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import { serialize } from 'cookie';
-import { neon } from '@neondatabase/serverless';
-
-// Lazy database connection
-let _sql: ReturnType<typeof neon> | null = null;
-
-function getSQL() {
-  if (_sql) return _sql;
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is required');
-  }
-  _sql = neon(process.env.DATABASE_URL);
-  return _sql;
-}
-
-// Helper to detect production environment
-function isProductionEnv(req: VercelRequest): boolean {
-  if (process.env.NODE_ENV === 'production') return true;
-  if (process.env.VERCEL === '1') return true;
-  const host = req.headers.host || '';
-  return !host.includes('localhost') && !host.includes('127.0.0.1');
-}
-
-// Helper to check if email is admin
-function isAdmin(email: string): boolean {
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase());
-  return adminEmails.includes(email.toLowerCase());
-}
-
-// Helper to generate JWT
-function generateToken(payload: { userId: string; email: string }): string {
-  return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '7d' });
-}
-
-// Helper to parse JSON body
-async function parseJSONBody(req: VercelRequest): Promise<any> {
-  return new Promise((resolve) => {
-    const chunks: Buffer[] = [];
-
-    // If a parsed body was attached by the runtime, return it directly
-    try {
-      // @ts-ignore
-      if (req.body && typeof req.body === 'object') return resolve(req.body);
-      // @ts-ignore
-      if (req.body && typeof req.body === 'string') return resolve(JSON.parse(req.body));
-    } catch (e) {
-      // Ignore and fall back to stream
-    }
-
-    req.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk))));
-
-    req.on('end', () => {
-      try {
-        const bodyStr = Buffer.concat(chunks).toString('utf-8').trim();
-        if (!bodyStr) return resolve(null);
-        return resolve(JSON.parse(bodyStr));
-      } catch (err) {
-        console.error('[parseJSONBody] JSON.parse failed:', err instanceof Error ? err.message : String(err));
-        return resolve(null);
-      }
-    });
-
-    req.on('error', () => resolve(null));
-  });
-}
+import { sql, generateToken, isProductionEnv, isAdmin, parseJSONBody, checkRateLimit, getRateLimitIdentifier } from '../_shared';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
-    const origin = req.headers.origin || '';
-    const allowedOrigins = ['https://rewriteme.app', 'http://localhost:5174'];
-    const isAllowed = allowedOrigins.includes(origin) || origin.includes('vercel.app');
-
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', isAllowed ? origin : allowedOrigins[0]);
-    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    const headers: Record<string, string> = {};
+    const { setCORS } = await import('../_shared');
+    setCORS(req, headers);
+    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 
     if (req.method === 'OPTIONS') {
       return res.status(200).end();
@@ -87,6 +17,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // Rate limiting: 3 registration attempts per minute to prevent spam accounts
+    const rateLimitCheck = checkRateLimit(getRateLimitIdentifier(req, null), 3);
+
+    res.setHeader('X-RateLimit-Limit', '3');
+    res.setHeader('X-RateLimit-Remaining', rateLimitCheck.remaining.toString());
+    res.setHeader('X-RateLimit-Reset', new Date(rateLimitCheck.resetAt).toISOString());
+
+    if (!rateLimitCheck.allowed) {
+      console.log('[auth/register] Rate limit exceeded:', req.headers['x-forwarded-for'] || req.socket?.remoteAddress);
+      return res.status(429).json({
+        error: 'Too many registration attempts',
+        message: 'Please wait before trying again',
+        retryAfter: Math.ceil((rateLimitCheck.resetAt - Date.now()) / 1000),
+      });
     }
 
     const body = await parseJSONBody(req);
@@ -99,7 +45,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Email and password required' });
     }
 
-    const sql = getSQL();
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Email length check
+    if (email.length > 255) {
+      return res.status(400).json({ error: 'Email too long' });
+    }
+
+    // Password strength validation
+    if (password.length < 8) {
+      return res.status(400).json({
+        error: 'Password too short',
+        message: 'Password must be at least 8 characters long'
+      });
+    }
+
+    if (password.length > 128) {
+      return res.status(400).json({ error: 'Password too long' });
+    }
+
+    // Check for common weak passwords
+    const weakPasswords = ['password', '12345678', 'password123', 'qwerty123'];
+    if (weakPasswords.includes(password.toLowerCase())) {
+      return res.status(400).json({
+        error: 'Weak password',
+        message: 'Please choose a stronger password'
+      });
+    }
+
+    // Name validation (optional but should be reasonable length)
+    if (name && name.length > 255) {
+      return res.status(400).json({ error: 'Name too long' });
+    }
+
     const existing = await sql`SELECT id FROM users WHERE email = ${email}`;
     if (Array.isArray(existing) && existing.length > 0) {
       return res.status(400).json({ error: 'Email already registered' });
@@ -111,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = await sql`
       INSERT INTO users (email, password_hash, name, plan, credits_remaining, email_verified)
       VALUES (${email}, ${passwordHash}, ${name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 1}, NULL)
-      RETURNING *
+      RETURNING id, email, name, plan, credits_remaining, email_verified, created_at, updated_at
     `;
     const user = result[0] as any;
 
