@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { sql, setCORS } from '../_shared';
+import { sql, setCORS } from '../_shared.js';
 
 export default async function handler(req: Request, res: Response) {
   // CORS headers

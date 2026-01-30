@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { serialize } from 'cookie';
 import crypto from 'crypto';
-import { sql, generateToken, isProductionEnv, isAdmin } from '../../_shared';
+import { sql, generateToken, isProductionEnv, isAdmin } from '../../_shared.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {

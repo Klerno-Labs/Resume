@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
-import { getSQL } from '../_shared';
-import { getRandomTemplate } from './designTemplates';
-import { validateResumeContrast } from './contrastValidator';
+import { getSQL } from '../_shared.js';
+import { getRandomTemplate } from './designTemplates.js';
+import { validateResumeContrast } from './contrastValidator.js';
 
 let _openai: OpenAI | null = null;
 

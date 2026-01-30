@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import bcrypt from 'bcryptjs';
 import { serialize } from 'cookie';
-import { sql, generateToken, isProductionEnv, isAdmin, parseJSONBody, checkRateLimit, getRateLimitIdentifier, setCORS } from '../_shared';
+import { sql, generateToken, isProductionEnv, isAdmin, parseJSONBody, checkRateLimit, getRateLimitIdentifier, setCORS } from '../_shared.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {

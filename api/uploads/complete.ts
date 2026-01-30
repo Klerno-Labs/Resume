@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sql, getUserFromRequest, parseJSONBody, setCORS } from '../_shared';
+import { sql, getUserFromRequest, parseJSONBody, setCORS } from '../_shared.js';
 import { enqueueJob } from '../lib/queue.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

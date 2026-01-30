@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sql, getUserFromRequest, checkRateLimit, getRateLimitIdentifier, setCORS } from '../_shared';
+import { sql, getUserFromRequest, checkRateLimit, getRateLimitIdentifier, setCORS } from '../_shared.js';
 import OpenAI from 'openai';
-import { getAllTemplates } from '../lib/designTemplates';
-import { validateResumeContrast } from '../lib/contrastValidator';
+import { getAllTemplates } from '../lib/designTemplates.js';
+import { validateResumeContrast } from '../lib/contrastValidator.js';
 
 // Lazy OpenAI client
 let _openai: OpenAI | null = null;
