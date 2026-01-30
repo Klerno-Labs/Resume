@@ -1,10 +1,19 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { serialize } from 'cookie';
 import crypto from 'crypto';
-import { sql, generateToken, isProductionEnv, isAdmin } from '../../_shared.js';
+import { sql, generateToken, isProductionEnv, isAdmin, setCORS } from '../../_shared.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
+    // CORS
+    const headers: Record<string, string> = {};
+    setCORS(req, headers);
+    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
+
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
+
     if (req.method !== 'GET') {
       return res.status(405).json({ error: 'Method not allowed' });
     }
