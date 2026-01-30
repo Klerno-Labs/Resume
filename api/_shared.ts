@@ -132,21 +132,23 @@ const rateLimitStore = new Map<string, RateLimitEntry>();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute window
 const DEFAULT_RATE_LIMIT = 60; // 60 requests per minute
 
-// Cleanup old rate limit entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (now > entry.resetAt) {
-      rateLimitStore.delete(key);
-    }
-  }
-}, 5 * 60 * 1000); // Cleanup every 5 minutes
-
 export function checkRateLimit(
   identifier: string,
   limit: number = DEFAULT_RATE_LIMIT
 ): { allowed: boolean; remaining: number; resetAt: number } {
   const now = Date.now();
+
+  // On-demand cleanup: Remove expired entries (max 10 per check to avoid blocking)
+  if (rateLimitStore.size > 50) {
+    let cleaned = 0;
+    for (const [key, entry] of rateLimitStore.entries()) {
+      if (now > entry.resetAt) {
+        rateLimitStore.delete(key);
+        if (++cleaned >= 10) break; // Limit cleanup to avoid blocking
+      }
+    }
+  }
+
   const entry = rateLimitStore.get(identifier);
 
   if (!entry || now > entry.resetAt) {
