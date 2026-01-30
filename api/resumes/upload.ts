@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sql, getUserFromRequest, checkRateLimit, getRateLimitIdentifier, setCORS } from '../_shared';
+import { sql, getUserFromRequest, checkRateLimit, getRateLimitIdentifier, setCORS } from '../_shared.js';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 import crypto from 'crypto';

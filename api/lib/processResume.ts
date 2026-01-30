@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { getSQL } from './db.js';
+import { getSQL } from '../_shared.js';
 import { getRandomTemplate } from './designTemplates.js';
 import { validateResumeContrast } from './contrastValidator.js';
 

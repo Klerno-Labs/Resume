@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
-import { sql, getUserFromRequest, setCORS } from '../_shared';
+import { sql, getUserFromRequest, setCORS } from '../_shared.js';
 import { sanitizeResumeHTML, extractDesignProperties } from '../lib/sanitizeTemplate.js';
 
 const saveTemplateSchema = z.object({
