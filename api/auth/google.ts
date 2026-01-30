@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { setCORS } from './_shared.js';
+import { setCORS } from '../_shared.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -14,6 +14,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method !== 'GET') {
       return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // Validate required environment variables
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.APP_URL) {
+      console.error('[auth/google] Missing required environment variables');
+      return res.redirect(302, '/auth?error=oauth_not_configured');
     }
 
     const redirectUri = `${process.env.APP_URL}/api/auth/google/callback`;

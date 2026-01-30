@@ -40,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!tokenRes.ok) {
       console.error('[auth/google/callback] Token exchange failed:', await tokenRes.text());
-      return res.redirect(302, '/auth?error=token_failed');
+      return res.redirect(302, '/auth?error=token_exchange_failed');
     }
 
     const tokens = (await tokenRes.json()) as { access_token: string };
@@ -97,6 +97,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.redirect(302, '/');
   } catch (error) {
     console.error('[auth/google/callback] Error:', error);
-    return res.redirect(302, '/auth?error=server_error');
+    return res.redirect(302, '/auth?error=oauth_failed');
   }
 }

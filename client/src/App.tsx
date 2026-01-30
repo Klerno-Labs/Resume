@@ -14,6 +14,7 @@ import CreateResume from '@/pages/CreateResume';
 import Auth from '@/pages/Auth';
 import PaymentSuccess from '@/pages/PaymentSuccess';
 import Pricing from '@/pages/Pricing';
+import Settings from '@/pages/Settings';
 import AiResumeBuilder from '@/pages/ai-resume-builder';
 import ResumeSoftwareEngineer from '@/pages/resume/software-engineer';
 import ResumeNurse from '@/pages/resume/nurse';
@@ -51,6 +52,7 @@ function Router() {
       <Route path="/editor" component={Editor} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/payment-success" component={PaymentSuccess} />
+      <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );
