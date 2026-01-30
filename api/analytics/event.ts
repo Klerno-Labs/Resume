@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sql, getUserFromRequest, parseJSONBody, setCORS } from '../_shared.js';
+import { sql, getUserFromRequest, parseJSONBody, setCORS } from '../_shared';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {

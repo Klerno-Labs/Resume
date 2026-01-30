@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
-import { sql, getUserFromRequest, setCORS } from '../_shared.js';
-import { sanitizeResumeHTML, extractDesignProperties } from '../lib/sanitizeTemplate.js';
+import { sql, getUserFromRequest, setCORS } from '../_shared';
+import { sanitizeResumeHTML, extractDesignProperties } from '../lib/sanitizeTemplate';
 
 const saveTemplateSchema = z.object({
   name: z.string().min(3).max(100),

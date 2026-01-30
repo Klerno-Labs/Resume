@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
-import { sql, getUserFromRequest, parseJSONBody, checkRateLimit, getRateLimitIdentifier, setCORS } from '../_shared.js';
-import { generateCoverLetter } from '../lib/openai.js';
+import { sql, getUserFromRequest, parseJSONBody, checkRateLimit, getRateLimitIdentifier, setCORS } from '../_shared';
+import { generateCoverLetter } from '../lib/openai';
 
 const generateSchema = z.object({
   resumeId: z.string().min(1),

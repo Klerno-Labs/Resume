@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sql, getUserFromRequest, setCORS } from '../_shared.js';
+import { sql, getUserFromRequest, setCORS } from '../_shared';
 import { v4 as uuidv4 } from 'uuid';
 
 /**

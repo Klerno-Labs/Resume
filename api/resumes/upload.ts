@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sql, getUserFromRequest, checkRateLimit, getRateLimitIdentifier, setCORS } from '../_shared.js';
+import { sql, getUserFromRequest, checkRateLimit, getRateLimitIdentifier, setCORS } from '../_shared';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 import crypto from 'crypto';
-import { parseFile } from '../lib/fileParser.js';
-import { processResume } from '../lib/processResume.js';
+import { parseFile } from '../lib/fileParser';
+import { processResume } from '../lib/processResume';
 
 // CRITICAL: Disable Vercel body parsing to handle multipart uploads
 export const config = {
