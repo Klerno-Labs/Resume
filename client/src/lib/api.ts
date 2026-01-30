@@ -144,48 +144,6 @@ class ApiClient {
     };
   }
 
-  async verifyEmail(token: string): Promise<{ success: boolean; message: string }> {
-    const res = await this.fetchWithCredentials(`${this.baseUrl}/auth/verify-email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    });
-    if (!res.ok) {
-      const error = await res.json() as { message?: string };
-      throw new Error(this.toErrorMessage(error, 'Email verification failed'));
-    }
-    return res.json() as Promise<{ success: boolean; message: string }>;
-  }
-
-  async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
-    const res = await this.fetchWithCredentials(`${this.baseUrl}/auth/forgot-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    if (!res.ok) {
-      const error = await res.json() as { message?: string };
-      throw new Error(this.toErrorMessage(error, 'Failed to send reset email'));
-    }
-    return res.json() as Promise<{ success: boolean; message: string }>;
-  }
-
-  async resetPassword(
-    token: string,
-    password: string
-  ): Promise<{ success: boolean; message: string }> {
-    const res = await this.fetchWithCredentials(`${this.baseUrl}/auth/reset-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, password }),
-    });
-    if (!res.ok) {
-      const error = await res.json() as { message?: string };
-      throw new Error(this.toErrorMessage(error, 'Password reset failed'));
-    }
-    return res.json() as Promise<{ success: boolean; message: string }>;
-  }
-
   // Resumes
   async uploadResume(
     file: File,

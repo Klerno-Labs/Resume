@@ -1,16 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { setCORS } from '../_shared.js';
+import { setupCORSAndHandleOptions, getGoogleCallbackRedirectUri } from '../_shared.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
-    const headers: Record<string, string> = {};
-    setCORS(req, headers);
-    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
-
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
+    if (setupCORSAndHandleOptions(req, res)) return;
 
     if (req.method !== 'GET') {
       return res.status(405).json({ error: 'Method not allowed' });
@@ -22,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.redirect(302, '/auth?error=oauth_not_configured');
     }
 
-    const redirectUri = `${process.env.APP_URL}/api/auth/google/callback`;
+    const redirectUri = getGoogleCallbackRedirectUri();
     const scope = encodeURIComponent('email profile');
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
 

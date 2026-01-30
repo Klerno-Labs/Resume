@@ -1,18 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getUserFromRequest, parseJSONBody, setCORS } from '../_shared.js';
+import { getUserFromRequest, parseJSONBody, setupCORSAndHandleOptions } from '../_shared.js';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getS3Client, PutObjectCommand } from '../lib/s3.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
-    const headers: Record<string, string> = {};
-    setCORS(req, headers);
-    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
-
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
+    if (setupCORSAndHandleOptions(req, res)) return;
 
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });

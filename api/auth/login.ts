@@ -1,38 +1,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import bcrypt from 'bcryptjs';
-import { serialize } from 'cookie';
-import { sql, generateToken, isProductionEnv, parseJSONBody, checkRateLimit, getRateLimitIdentifier, setCORS } from '../_shared.js';
+import { sql, generateToken, parseJSONBody, setupCORSAndHandleOptions, setAuthTokenCookie, checkAndApplyRateLimit } from '../_shared.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
-    const headers: Record<string, string> = {};
-    setCORS(req, headers);
-    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
-
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
+    if (setupCORSAndHandleOptions(req, res)) return;
 
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
     }
 
     // Rate limiting: 5 login attempts per minute to prevent brute force attacks
-    const rateLimitCheck = checkRateLimit(getRateLimitIdentifier(req, null), 5);
-
-    res.setHeader('X-RateLimit-Limit', '5');
-    res.setHeader('X-RateLimit-Remaining', rateLimitCheck.remaining.toString());
-    res.setHeader('X-RateLimit-Reset', new Date(rateLimitCheck.resetAt).toISOString());
-
-    if (!rateLimitCheck.allowed) {
-      console.log('[auth/login] Rate limit exceeded:', req.headers['x-forwarded-for'] || req.socket?.remoteAddress);
-      return res.status(429).json({
-        error: 'Too many login attempts',
-        message: 'Please wait before trying again',
-        retryAfter: Math.ceil((rateLimitCheck.resetAt - Date.now()) / 1000),
-      });
-    }
+    if (!checkAndApplyRateLimit(req, res, 5, 'auth/login')) return;
 
     const body = await parseJSONBody(req);
     if (!body) {
@@ -57,16 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const token = generateToken({ userId: user.id, email: user.email });
-    res.setHeader(
-      'Set-Cookie',
-      serialize('token', token, {
-        httpOnly: true,
-        secure: isProductionEnv(req),
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60,
-        path: '/',
-      })
-    );
+    setAuthTokenCookie(res, token, req);
 
     return res.json({
       user: {

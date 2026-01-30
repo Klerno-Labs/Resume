@@ -1,15 +1,9 @@
 import type { Request, Response } from 'express';
-import { sql, setCORS } from '../_shared.js';
+import { sql, setupCORSAndHandleOptions } from '../_shared.js';
 
 export default async function handler(req: Request, res: Response) {
-  // CORS headers
-  const headers: Record<string, string> = {};
-  setCORS(req as any, headers);
-  Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  // CORS
+  if (setupCORSAndHandleOptions(req as any, res)) return;
 
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });

@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
-import { sql, getUserFromRequest, parseJSONBody, checkRateLimit, getRateLimitIdentifier, setCORS } from '../_shared.js';
+import { sql, getUserFromRequest, parseJSONBody, checkRateLimit, getRateLimitIdentifier, setupCORSAndHandleOptions } from '../_shared.js';
 import { generateCoverLetter } from '../lib/openai.js';
 
 const generateSchema = z.object({
@@ -12,13 +12,7 @@ const generateSchema = z.object({
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
-    const headers: Record<string, string> = {};
-    setCORS(req, headers);
-    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
-
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
+    if (setupCORSAndHandleOptions(req, res)) return;
 
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });

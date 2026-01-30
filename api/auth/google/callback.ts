@@ -1,18 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { serialize } from 'cookie';
 import crypto from 'crypto';
-import { sql, generateToken, isProductionEnv, isAdmin, setCORS } from '../../_shared.js';
+import { sql, generateToken, isAdmin, setupCORSAndHandleOptions, setAuthTokenCookie, getGoogleCallbackRedirectUri } from '../../_shared.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
-    const headers: Record<string, string> = {};
-    setCORS(req, headers);
-    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
-
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
+    if (setupCORSAndHandleOptions(req, res)) return;
 
     if (req.method !== 'GET') {
       return res.status(405).json({ error: 'Method not allowed' });
@@ -23,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.redirect(302, '/auth?error=no_code');
     }
 
-    const redirectUri = `${process.env.APP_URL}/api/auth/google/callback`;
+    const redirectUri = getGoogleCallbackRedirectUri();
 
     // Exchange code for tokens
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -83,16 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const token = generateToken({ userId: user.id, email: user.email });
-    res.setHeader(
-      'Set-Cookie',
-      serialize('token', token, {
-        httpOnly: true,
-        secure: isProductionEnv(req),
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60,
-        path: '/',
-      })
-    );
+    setAuthTokenCookie(res, token, req);
 
     return res.redirect(302, '/');
   } catch (error) {

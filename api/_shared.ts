@@ -1,5 +1,5 @@
 // Shared utilities for API endpoints - will be inlined by bundler
-import type { VercelRequest } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
 import { parse } from 'cookie';
 import { neon } from '@neondatabase/serverless';
@@ -204,4 +204,70 @@ export function setCORS(req: VercelRequest, headers: Record<string, string>) {
   headers['Access-Control-Allow-Origin'] = isAllowed ? origin : allowedOrigins[0];
   headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS';
   headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization';
+}
+
+// CORS middleware - sets up CORS headers and handles OPTIONS requests
+// Returns true if OPTIONS request was handled (caller should return), false otherwise
+export function setupCORSAndHandleOptions(
+  req: VercelRequest,
+  res: VercelResponse
+): boolean {
+  const headers: Record<string, string> = {};
+  setCORS(req, headers);
+  Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return true;
+  }
+  return false;
+}
+
+// Auth token cookie helper - sets authentication token cookie with secure settings
+export function setAuthTokenCookie(res: VercelResponse, token: string, req: VercelRequest): void {
+  const { serialize } = require('cookie');
+  res.setHeader(
+    'Set-Cookie',
+    serialize('token', token, {
+      httpOnly: true,
+      secure: isProductionEnv(req),
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60,
+      path: '/',
+    })
+  );
+}
+
+// Google OAuth redirect URI helper
+export function getGoogleCallbackRedirectUri(): string {
+  if (!process.env.APP_URL) {
+    throw new Error('APP_URL environment variable is required');
+  }
+  return `${process.env.APP_URL}/api/auth/google/callback`;
+}
+
+// Rate limiting middleware - checks rate limit and sets headers
+// Returns true if allowed, false if rate limited (caller should return 429)
+export function checkAndApplyRateLimit(
+  req: VercelRequest,
+  res: VercelResponse,
+  limit: number,
+  endpointName: string
+): boolean {
+  const rateLimitCheck = checkRateLimit(getRateLimitIdentifier(req, null), limit);
+
+  res.setHeader('X-RateLimit-Limit', limit.toString());
+  res.setHeader('X-RateLimit-Remaining', rateLimitCheck.remaining.toString());
+  res.setHeader('X-RateLimit-Reset', new Date(rateLimitCheck.resetAt).toISOString());
+
+  if (!rateLimitCheck.allowed) {
+    console.log(`[${endpointName}] Rate limit exceeded:`, req.headers['x-forwarded-for'] || req.socket?.remoteAddress);
+    res.status(429).json({
+      error: 'Too many attempts',
+      message: 'Please wait before trying again',
+      retryAfter: Math.ceil((rateLimitCheck.resetAt - Date.now()) / 1000),
+    });
+    return false;
+  }
+  return true;
 }
