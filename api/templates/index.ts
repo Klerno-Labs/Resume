@@ -1,10 +1,9 @@
 import type { Request, Response } from 'express';
-import { sql } from '../_shared';
+import { sql, setCORS } from '../_shared';
 
 export default async function handler(req: Request, res: Response) {
   // CORS headers
   const headers: Record<string, string> = {};
-  const { setCORS } = await import('../_shared');
   setCORS(req as any, headers);
   Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 

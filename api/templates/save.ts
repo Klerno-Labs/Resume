@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
-import { sql, getUserFromRequest } from '../_shared';
+import { sql, getUserFromRequest, setCORS } from '../_shared';
 import { sanitizeResumeHTML, extractDesignProperties } from '../lib/sanitizeTemplate.js';
 
 const saveTemplateSchema = z.object({
@@ -15,7 +15,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
     const headers: Record<string, string> = {};
-    const { setCORS } = await import('../_shared');
     setCORS(req, headers);
     Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 

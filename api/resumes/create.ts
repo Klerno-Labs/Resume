@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sql, getUserFromRequest } from '../_shared';
+import { sql, getUserFromRequest, setCORS } from '../_shared';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -11,7 +11,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
     const headers: Record<string, string> = {};
-    const { setCORS } = await import('../_shared');
     setCORS(req, headers);
     Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 

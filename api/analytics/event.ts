@@ -1,11 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sql, getUserFromRequest, parseJSONBody } from '../_shared';
+import { sql, getUserFromRequest, parseJSONBody, setCORS } from '../_shared';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
     const headers: Record<string, string> = {};
-    const { setCORS } = await import('../_shared');
     setCORS(req, headers);
     Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 

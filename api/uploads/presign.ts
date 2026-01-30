@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getUserFromRequest, parseJSONBody } from '../_shared';
+import { getUserFromRequest, parseJSONBody, setCORS } from '../_shared';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getS3Client, PutObjectCommand } from '../lib/s3.js';
 
@@ -7,7 +7,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
     const headers: Record<string, string> = {};
-    const { setCORS } = await import('../_shared');
     setCORS(req, headers);
     Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 

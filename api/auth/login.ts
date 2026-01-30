@@ -1,13 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import bcrypt from 'bcryptjs';
 import { serialize } from 'cookie';
-import { sql, generateToken, isProductionEnv, parseJSONBody, checkRateLimit, getRateLimitIdentifier } from '../_shared';
+import { sql, generateToken, isProductionEnv, parseJSONBody, checkRateLimit, getRateLimitIdentifier, setCORS } from '../_shared';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // CORS
     const headers: Record<string, string> = {};
-    const { setCORS } = await import('../_shared');
     setCORS(req, headers);
     Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 
