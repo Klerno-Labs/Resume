@@ -3,6 +3,11 @@ import { getUserFromRequest, setupCORSAndHandleOptions } from '../_shared.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
+    console.log('[auth/me] Request received');
+    console.log('[auth/me] Request headers.cookie:', req.headers.cookie);
+    console.log('[auth/me] Request headers.origin:', req.headers.origin);
+    console.log('[auth/me] Request headers.referer:', req.headers.referer);
+
     // CORS
     if (setupCORSAndHandleOptions(req, res)) return;
 
@@ -14,8 +19,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const user = await getUserFromRequest(req);
 
     if (!user) {
+      console.log('[auth/me] No user found from cookie');
       return res.json({ authenticated: false, user: null });
     }
+
+    console.log('[auth/me] User authenticated:', user.email);
 
     return res.json({
       authenticated: true,

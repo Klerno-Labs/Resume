@@ -221,11 +221,15 @@ export function setAuthTokenCookie(res: VercelResponse, token: string, req: Verc
     // Extract root domain (e.g., rewriteme.app from www.rewriteme.app)
     const domainParts = host.split('.');
     if (domainParts.length >= 2) {
-      cookieOptions.domain = domainParts.slice(-2).join('.');
+      // Add leading dot for subdomain support per RFC 6265
+      cookieOptions.domain = '.' + domainParts.slice(-2).join('.');
     }
   }
 
-  res.setHeader('Set-Cookie', serialize('token', token, cookieOptions));
+  const cookieHeader = serialize('token', token, cookieOptions);
+  console.log('[setAuthTokenCookie] Setting cookie:', cookieHeader);
+  console.log('[setAuthTokenCookie] Cookie options:', JSON.stringify(cookieOptions));
+  res.setHeader('Set-Cookie', cookieHeader);
 }
 
 // Google OAuth redirect URI helper
