@@ -7,6 +7,7 @@ import { TemplateGallery } from '@/components/TemplateGallery';
 import { JobMatcher } from '@/components/JobMatcher';
 import { IndustryOptimizer } from '@/components/IndustryOptimizer';
 import { DesignPreviewModal } from '@/components/DesignPreviewModal';
+import { ResumeDesignQuestionnaire, generateDesignPrompt, type QuestionnaireAnswers } from '@/components/ResumeDesignQuestionnaire';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
@@ -23,8 +24,11 @@ export default function Editor() {
   const [isZoomed, setIsZoomed] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [showQuestionnaireModal, setShowQuestionnaireModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [designPreviews, setDesignPreviews] = useState<any[]>([]);
+  const [isLoadingPreviews, setIsLoadingPreviews] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const [designHistory, setDesignHistory] = useState<Array<{ html: string; templateName: string; timestamp: number }>>([]);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [, navigate] = useLocation();
@@ -70,10 +74,7 @@ export default function Editor() {
       try {
         const data = await api.getResume(resumeId);
 
-        // FORCE remove any existing improvedHtml - we only want to show regular text resume
-        console.log('[Editor v2.0 - BUILD 1767059282015] Resume fetched, improvedHtml before nullify:', !!data.improvedHtml);
-        data.improvedHtml = undefined;
-        console.log('[Editor v2.0 - BUILD 1767059282015] improvedHtml FORCED TO UNDEFINED - Design will NEVER auto-appear');
+        console.log('[Editor] Resume fetched, has improvedHtml:', !!data.improvedHtml);
 
         setResume(data);
         retryCount = 0; // Reset retry count on success
@@ -310,8 +311,8 @@ export default function Editor() {
   };
 
   const handleDownloadHTML = () => {
-    // Create clean HTML from the improved text
-    const htmlContent = `
+    // Use the designed HTML if available, otherwise create basic HTML from text
+    const htmlContent = resume.improvedHtml || `
       <!DOCTYPE html>
       <html lang="en">
         <head>
@@ -421,6 +422,58 @@ export default function Editor() {
     localStorage.setItem(`design-history-${resume.id}`, JSON.stringify(updatedHistory));
   };
 
+  const handleQuestionnaireSubmit = async (answers: QuestionnaireAnswers) => {
+    if (!resume) return;
+
+    try {
+      console.log('[Editor] Questionnaire submitted:', answers);
+      console.log('[Editor] Starting custom design generation...');
+
+      setShowQuestionnaireModal(false);
+      setIsRegenerating(true);
+      setIsLoadingPreviews(true);
+      setPreviewError(null);
+      setDesignPreviews([]); // Clear old previews
+      setShowPreviewModal(true);
+
+      console.log('[Editor] Modal opened, calling API with custom preferences...');
+
+      // Generate custom prompt from questionnaire answers
+      const customPrompt = generateDesignPrompt(answers);
+      console.log('[Editor] Custom prompt:', customPrompt);
+
+      // Generate 3 preview options with custom prompt
+      const result = await api.previewDesigns(resume.id, customPrompt);
+
+      console.log('[Editor] API response:', result);
+      console.log('[Editor] Number of previews:', result.previews?.length || 0);
+
+      if (!result.previews || result.previews.length === 0) {
+        throw new Error('No designs were generated. Please try again.');
+      }
+
+      setDesignPreviews(result.previews);
+
+      toast({
+        title: '🎨 Custom Designs Generated!',
+        description: 'Choose your favorite design',
+      });
+    } catch (error) {
+      console.error('[Editor] Design generation error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate design previews';
+      setPreviewError(errorMessage);
+      toast({
+        title: 'Preview Generation Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      console.log('[Editor] Design generation complete');
+      setIsRegenerating(false);
+      setIsLoadingPreviews(false);
+    }
+  };
+
   const handleUndoDesign = () => {
     if (designHistory.length === 0) {
       toast({
@@ -520,13 +573,18 @@ export default function Editor() {
                     triggerUpgrade('watermark_notice');
                   }
 
-                  exportResumeToPDF({
-                    improvedText: resume.improvedText || resume.originalText,
-                    fileName: resume.fileName,
-                    atsScore: resume.atsScore,
-                    watermarkText:
-                      (user?.plan === 'free') ? 'Resume Repairer • Free Plan' : undefined,
-                  });
+                  // If we have HTML design, use print/browser PDF instead
+                  if (resume.improvedHtml) {
+                    window.print();
+                  } else {
+                    exportResumeToPDF({
+                      improvedText: resume.improvedText || resume.originalText,
+                      fileName: resume.fileName,
+                      atsScore: resume.atsScore,
+                      watermarkText:
+                        (user?.plan === 'free') ? 'Resume Repairer • Free Plan' : undefined,
+                    });
+                  }
 
                   toast({
                     title: 'Success!',
@@ -723,36 +781,27 @@ export default function Editor() {
                         variant="outline"
                         size="sm"
                         className="w-full border-purple-200 hover:bg-purple-50 hover:border-purple-300 transition-all"
-                        onClick={async () => {
+                        onClick={() => {
+                          // Check if resume exists
+                          if (!resume) {
+                            toast({
+                              title: 'No Resume Found',
+                              description: 'Please upload a resume first',
+                              variant: 'destructive',
+                            });
+                            return;
+                          }
+
                           // PREMIUM-ONLY FEATURE: Check if user has premium access
                           if (!user || !['premium', 'pro', 'admin'].includes(user.plan)) {
                             triggerUpgrade('feature', 'Premium Designs');
                             return;
                           }
 
-                          try {
-                            setIsRegenerating(true);
-
-                            // Generate 3 preview options
-                            const result = await api.previewDesigns(resume.id);
-                            setDesignPreviews(result.previews);
-                            setShowPreviewModal(true);
-
-                            toast({
-                              title: '🎨 3 Designs Generated!',
-                              description: 'Choose your favorite design',
-                            });
-                          } catch (error) {
-                            toast({
-                              title: 'Preview Generation Failed',
-                              description: error instanceof Error ? error.message : 'Failed to generate design previews',
-                              variant: 'destructive',
-                            });
-                          } finally {
-                            setIsRegenerating(false);
-                          }
+                          // Show questionnaire instead of immediately generating
+                          setShowQuestionnaireModal(true);
                         }}
-                        disabled={isRegenerating}
+                        disabled={isRegenerating || !resume}
                       >
                         {isRegenerating ? (
                           <>
@@ -762,7 +811,7 @@ export default function Editor() {
                         ) : (
                           <>
                             <Palette className="w-4 h-4" />
-                            <span>{resume.improvedHtml ? 'Preview New Designs' : 'Preview Designs'}</span>
+                            <span>Design Resume</span>
                             {user && !['premium', 'pro', 'admin'].includes(user.plan) && (
                               <span className="ml-1 text-[10px] bg-gradient-to-r from-purple-500 to-pink-500 text-white px-1.5 py-0.5 rounded font-semibold">
                                 PREMIUM
@@ -936,7 +985,11 @@ export default function Editor() {
                 onClick={() => setIsZoomed(true)}
               >
                 <div className="p-8">
-                  <ResumePreviewStyled text={improvedText} />
+                  {resume.improvedHtml ? (
+                    <div dangerouslySetInnerHTML={{ __html: resume.improvedHtml }} />
+                  ) : (
+                    <ResumePreviewStyled text={improvedText} />
+                  )}
                 </div>
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
                   <div className="bg-white/90 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
@@ -979,7 +1032,11 @@ export default function Editor() {
           <div className="flex-1 flex items-start justify-center bg-gray-100 p-8 overflow-auto">
             <div className="mx-auto max-w-[650px] w-full bg-white shadow-2xl">
               <div className="p-12">
-                <ResumePreviewStyled text={improvedText} />
+                {resume.improvedHtml ? (
+                  <div dangerouslySetInnerHTML={{ __html: resume.improvedHtml }} />
+                ) : (
+                  <ResumePreviewStyled text={improvedText} />
+                )}
               </div>
             </div>
           </div>
@@ -1000,10 +1057,22 @@ export default function Editor() {
         </DialogContent>
       </Dialog>
 
+      <ResumeDesignQuestionnaire
+        isOpen={showQuestionnaireModal}
+        onClose={() => setShowQuestionnaireModal(false)}
+        onSubmit={handleQuestionnaireSubmit}
+        isGenerating={isRegenerating}
+      />
+
       <DesignPreviewModal
         isOpen={showPreviewModal}
-        onClose={() => setShowPreviewModal(false)}
+        onClose={() => {
+          setShowPreviewModal(false);
+          setPreviewError(null);
+        }}
         previews={designPreviews}
+        isLoading={isLoadingPreviews}
+        error={previewError}
         onSelectDesign={(html, templateName) => {
           // Save current design to history before applying new one
           if (resume?.improvedHtml) {

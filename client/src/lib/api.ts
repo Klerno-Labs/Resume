@@ -432,7 +432,7 @@ class ApiClient {
     return res.json() as Promise<{ success: boolean; html: string }>;
   }
 
-  async previewDesigns(resumeId: string): Promise<{
+  async previewDesigns(resumeId: string, customPrompt?: string): Promise<{
     success: boolean;
     previews: Array<{
       templateName: string;
@@ -452,7 +452,7 @@ class ApiClient {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/resumes/preview-designs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ resumeId }),
+      body: JSON.stringify({ resumeId, customPrompt }),
     });
     if (!res.ok) {
       const error = await res.json() as { message?: string; error?: string };

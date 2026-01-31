@@ -1,0 +1,364 @@
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { X, Sparkles } from 'lucide-react';
+
+export interface QuestionnaireAnswers {
+  includePicture: string;
+  style: string;
+  colorScheme: string;
+  layout: string;
+  headerStyle: string;
+  fontPairing: string;
+  sectionDividers: string;
+  accentColor: string;
+  emphasisOn: string;
+  contactInfoPlacement: string;
+}
+
+/**
+ * Convert questionnaire answers into a detailed design prompt for AI
+ */
+export function generateDesignPrompt(answers: QuestionnaireAnswers): string {
+  const pictureLine = answers.includePicture === 'yes'
+    ? 'Include a professional circular profile picture placeholder in the header.'
+    : 'Do not include a profile picture.';
+
+  const styleDescriptions: Record<string, string> = {
+    modern: 'modern, clean, contemporary design with sharp lines and ample white space',
+    classic: 'classic, traditional, timeless design with serif fonts and balanced proportions',
+    creative: 'creative, bold, artistic design with unique visual elements and dynamic layouts',
+    minimalist: 'minimalist, simple, elegant design with maximum white space and minimal decoration',
+    professional: 'professional, corporate, polished design with conservative styling',
+    tech: 'tech-inspired, sleek, innovative design with geometric elements and modern aesthetics',
+  };
+
+  const colorSchemeDescriptions: Record<string, string> = {
+    bold: 'Use bold, high-contrast colors with vivid accent tones',
+    subtle: 'Use subtle, soft, muted color tones for a gentle appearance',
+    monochrome: 'Use only black, white, and shades of gray for a monochrome palette',
+    colorful: 'Use multiple complementary accent colors throughout',
+    professional: 'Use a conservative, professional color palette with minimal color',
+  };
+
+  const layoutDescriptions: Record<string, string> = {
+    single: 'single column layout with traditional linear flow',
+    'two-column': 'two column layout with split content sections',
+    sidebar: 'sidebar layout with main content area and dedicated side panel',
+    asymmetric: 'asymmetric, creative layout with uneven column widths',
+  };
+
+  const headerDescriptions: Record<string, string> = {
+    centered: 'centered header with name and title in the middle',
+    left: 'left-aligned header with modern alignment',
+    banner: 'full-width banner header with background color',
+    split: 'split header with name on left and contact information on right',
+  };
+
+  const fontDescriptions: Record<string, string> = {
+    'classic-serif': 'classic serif fonts like Times New Roman or Garamond',
+    'modern-sans': 'modern sans-serif fonts like Helvetica or Inter',
+    tech: 'geometric tech fonts like Montserrat or Roboto',
+    creative: 'creative unique fonts like Playfair Display or Lora',
+    minimal: 'minimal simple fonts like Source Sans Pro or Open Sans',
+  };
+
+  const dividerDescriptions: Record<string, string> = {
+    lines: 'horizontal dividing lines between sections',
+    spacing: 'white space only for section separation, no lines',
+    icons: 'section icons with titles for visual interest',
+    colored: 'accent-colored bars or dividers between sections',
+    none: 'minimal separation with no visible dividers',
+  };
+
+  const accentColorMap: Record<string, string> = {
+    blue: '#2563eb',
+    purple: '#9333ea',
+    green: '#059669',
+    red: '#dc2626',
+    orange: '#ea580c',
+    navy: '#1e3a8a',
+    teal: '#0d9488',
+    black: '#1a1a1a',
+  };
+
+  const emphasisDescriptions: Record<string, string> = {
+    skills: 'Give prominent visual emphasis to the skills section with larger space and visual elements',
+    experience: 'Give prominent visual emphasis to work experience with detailed formatting',
+    education: 'Give prominent visual emphasis to education section',
+    projects: 'Give prominent visual emphasis to projects/portfolio section',
+    balanced: 'Give balanced, equal emphasis to all resume sections',
+  };
+
+  const contactDescriptions: Record<string, string> = {
+    header: 'Place contact information in the header at top of page',
+    sidebar: 'Place contact information in the sidebar panel',
+    footer: 'Place contact information in the footer at bottom',
+    integrated: 'Integrate contact information within the name/title section',
+  };
+
+  const prompt = `Create a ${styleDescriptions[answers.style]} resume.
+
+DESIGN SPECIFICATIONS:
+- Style: ${answers.style}
+- Layout: ${layoutDescriptions[answers.layout]}
+- Header: ${headerDescriptions[answers.headerStyle]}
+- Fonts: ${fontDescriptions[answers.fontPairing]}
+- Section Dividers: ${dividerDescriptions[answers.sectionDividers]}
+- Color Scheme: ${colorSchemeDescriptions[answers.colorScheme]}
+- Accent Color: ${accentColorMap[answers.accentColor]} (${answers.accentColor})
+- Contact Info: ${contactDescriptions[answers.contactInfoPlacement]}
+- Emphasis: ${emphasisDescriptions[answers.emphasisOn]}
+- Profile Picture: ${pictureLine}
+
+REQUIREMENTS:
+- Use the exact accent color ${accentColorMap[answers.accentColor]} for headers, highlights, and visual elements
+- Create a visually impressive, premium-quality design
+- Include ALL resume content from the provided text
+- Make it look professional and polished
+- Use proper spacing and typography hierarchy
+- Return ONLY valid JSON: {"html": "<!DOCTYPE html><html>...</html>"}`;
+
+  return prompt;
+}
+
+interface ResumeDesignQuestionnaireProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (answers: QuestionnaireAnswers) => void;
+  isGenerating?: boolean;
+}
+
+const questions = [
+  {
+    id: 'includePicture',
+    question: 'Include a profile picture?',
+    options: [
+      { value: 'yes', label: 'Yes, include picture' },
+      { value: 'no', label: 'No picture' },
+    ],
+  },
+  {
+    id: 'style',
+    question: 'What style do you prefer?',
+    options: [
+      { value: 'modern', label: 'Modern - Clean and contemporary' },
+      { value: 'classic', label: 'Classic - Traditional and timeless' },
+      { value: 'creative', label: 'Creative - Bold and artistic' },
+      { value: 'minimalist', label: 'Minimalist - Simple and elegant' },
+      { value: 'professional', label: 'Professional - Corporate and polished' },
+      { value: 'tech', label: 'Tech - Sleek and innovative' },
+    ],
+  },
+  {
+    id: 'colorScheme',
+    question: 'How vibrant should the colors be?',
+    options: [
+      { value: 'bold', label: 'Bold - High contrast, vivid colors' },
+      { value: 'subtle', label: 'Subtle - Soft, muted tones' },
+      { value: 'monochrome', label: 'Monochrome - Black, white, and grays' },
+      { value: 'colorful', label: 'Colorful - Multiple accent colors' },
+      { value: 'professional', label: 'Professional - Conservative palette' },
+    ],
+  },
+  {
+    id: 'layout',
+    question: 'What layout structure do you prefer?',
+    options: [
+      { value: 'single', label: 'Single Column - Traditional linear flow' },
+      { value: 'two-column', label: 'Two Column - Split content layout' },
+      { value: 'sidebar', label: 'Sidebar - Main content with side panel' },
+      { value: 'asymmetric', label: 'Asymmetric - Creative uneven layout' },
+    ],
+  },
+  {
+    id: 'headerStyle',
+    question: 'How should your name and title be displayed?',
+    options: [
+      { value: 'centered', label: 'Centered - Classic centered header' },
+      { value: 'left', label: 'Left-aligned - Modern left alignment' },
+      { value: 'banner', label: 'Banner - Full-width header bar' },
+      { value: 'split', label: 'Split - Name left, contact right' },
+    ],
+  },
+  {
+    id: 'fontPairing',
+    question: 'What font style do you prefer?',
+    options: [
+      { value: 'classic-serif', label: 'Classic Serif - Traditional Times/Garamond' },
+      { value: 'modern-sans', label: 'Modern Sans - Clean Helvetica/Inter' },
+      { value: 'tech', label: 'Tech - Geometric Montserrat/Roboto' },
+      { value: 'creative', label: 'Creative - Unique Playfair/Lora' },
+      { value: 'minimal', label: 'Minimal - Simple Source Sans/Open Sans' },
+    ],
+  },
+  {
+    id: 'sectionDividers',
+    question: 'How should sections be separated?',
+    options: [
+      { value: 'lines', label: 'Lines - Horizontal dividing lines' },
+      { value: 'spacing', label: 'Spacing - White space only' },
+      { value: 'icons', label: 'Icons - Section icons with titles' },
+      { value: 'colored', label: 'Colored Bars - Accent color dividers' },
+      { value: 'none', label: 'None - Minimal separation' },
+    ],
+  },
+  {
+    id: 'accentColor',
+    question: 'What accent color should be used?',
+    options: [
+      { value: 'blue', label: 'Blue - Professional and trustworthy' },
+      { value: 'purple', label: 'Purple - Creative and modern' },
+      { value: 'green', label: 'Green - Growth and balance' },
+      { value: 'red', label: 'Red - Bold and energetic' },
+      { value: 'orange', label: 'Orange - Friendly and confident' },
+      { value: 'navy', label: 'Navy - Classic and authoritative' },
+      { value: 'teal', label: 'Teal - Fresh and professional' },
+      { value: 'black', label: 'Black - Elegant and timeless' },
+    ],
+  },
+  {
+    id: 'emphasisOn',
+    question: 'What should stand out most?',
+    options: [
+      { value: 'skills', label: 'Skills - Highlight technical abilities' },
+      { value: 'experience', label: 'Experience - Focus on work history' },
+      { value: 'education', label: 'Education - Emphasize academic background' },
+      { value: 'projects', label: 'Projects - Showcase portfolio work' },
+      { value: 'balanced', label: 'Balanced - Equal emphasis on all sections' },
+    ],
+  },
+  {
+    id: 'contactInfoPlacement',
+    question: 'Where should contact information go?',
+    options: [
+      { value: 'header', label: 'Header - Top of the page' },
+      { value: 'sidebar', label: 'Sidebar - Left or right panel' },
+      { value: 'footer', label: 'Footer - Bottom of the page' },
+      { value: 'integrated', label: 'Integrated - Within name section' },
+    ],
+  },
+];
+
+export function ResumeDesignQuestionnaire({
+  isOpen,
+  onClose,
+  onSubmit,
+  isGenerating = false,
+}: ResumeDesignQuestionnaireProps) {
+  const [answers, setAnswers] = useState<Partial<QuestionnaireAnswers>>({});
+
+  const handleAnswerChange = (questionId: string, value: string) => {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+  };
+
+  const allQuestionsAnswered = questions.every((q) => answers[q.id as keyof QuestionnaireAnswers]);
+
+  const handleSubmit = () => {
+    if (allQuestionsAnswered) {
+      onSubmit(answers as QuestionnaireAnswers);
+    }
+  };
+
+  const answeredCount = Object.keys(answers).length;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-[95vw] w-[800px] max-h-[95vh] p-0 overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
+          <div>
+            <DialogTitle className="font-semibold text-xl">Design Your Resume</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Answer 10 questions to create your perfect resume design
+            </DialogDescription>
+          </div>
+          <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="px-6 pt-4 shrink-0">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-muted-foreground">
+              Progress: {answeredCount} / {questions.length}
+            </span>
+            <span className="text-sm font-medium text-primary">
+              {Math.round((answeredCount / questions.length) * 100)}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-primary h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(answeredCount / questions.length) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Questions */}
+        <div className="flex-1 overflow-auto px-6 py-4">
+          <div className="space-y-6">
+            {questions.map((question, index) => (
+              <div
+                key={question.id}
+                className="p-4 bg-white border border-gray-200 rounded-lg hover:border-primary/50 transition-colors"
+              >
+                <label className="block mb-3">
+                  <span className="text-sm font-semibold text-gray-900">
+                    {index + 1}. {question.question}
+                  </span>
+                </label>
+                <Select
+                  value={answers[question.id as keyof QuestionnaireAnswers] || ''}
+                  onValueChange={(value) => handleAnswerChange(question.id, value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select an option..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {question.options.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50 shrink-0">
+          <p className="text-xs text-muted-foreground">
+            Your preferences will guide AI to create a custom design
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose} disabled={isGenerating}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={!allQuestionsAnswered || isGenerating}
+              className="min-w-[140px]"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate Design
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

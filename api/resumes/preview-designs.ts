@@ -63,11 +63,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    const { resumeId } = req.body;
+    const { resumeId, customPrompt } = req.body;
 
     if (!resumeId) {
       return res.status(400).json({ error: 'Resume ID is required' });
     }
+
+    console.log('[Preview Designs] Custom prompt provided:', !!customPrompt);
 
     // Get resume
     const resumes = await sql`
@@ -111,12 +113,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         console.log(`[Preview Designs] Attempt ${attempt}/${maxRetries} for template:`, template.name);
 
-        const designResult = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content: `You are a premium resume designer. Create a visually impressive HTML resume.
+        // Use custom prompt if provided, otherwise use default template-based prompt
+        const systemPrompt = customPrompt || `You are a premium resume designer. Create a visually impressive HTML resume.
 
 TEMPLATE: ${template.name}
 - Layout: ${template.layout}${template.sidebar !== 'none' ? ` with ${template.sidebar} sidebar (35% width, gradient: ${template.gradient}, white text)` : ''}
@@ -136,16 +134,23 @@ RULES:
 - Return ONLY valid JSON: {"html": "<!DOCTYPE html><html>...</html>"}
 - Include ALL resume content
 - Height: auto (not fixed)
-- Make it look expensive and professional`,
+- Make it look expensive and professional`;
+
+        const designResult = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: systemPrompt,
             },
             {
               role: 'user',
-              content: `Create a premium HTML resume using the ${template.name} template.
+              content: `Create a premium HTML resume${customPrompt ? ' based on the specifications above' : ` using the ${template.name} template`}.
 
 CONTENT:
 ${resume.improved_text || resume.original_text}
 
-Apply gradient ${template.gradient} and accent color ${template.accentColor}.
+${!customPrompt ? `Apply gradient ${template.gradient} and accent color ${template.accentColor}.` : ''}
 Return ONLY JSON: {"html": "<!DOCTYPE html>..."}`,
             },
           ],
