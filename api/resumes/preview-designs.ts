@@ -186,20 +186,29 @@ Return ONLY JSON: {"html": "<!DOCTYPE html>..."}`,
           continue; // Retry if no HTML
         }
 
-        // PREMIUM DESIGNS: We WANT colored backgrounds and gradients!
-        // Just validate that HTML exists and is complete
-        console.log(`[Preview] SUCCESS: Generated premium design for template:`, template.name);
+        // For custom prompts: Validate NO colored backgrounds (white background only)
+        if (customPrompt) {
+          const htmlLower = design.html.toLowerCase();
 
-        // Skip the colored background check - we want premium visual designs
-        if (false) { // Disabled - we want colored backgrounds for premium designs
-          const hasColoredBackground = design.html.toLowerCase().includes('background:') &&
-            !design.html.toLowerCase().match(/background:\s*(white|#fff|#ffffff)/gi);
+          // Check for background-color declarations that aren't white/transparent
+          const backgroundMatches = htmlLower.match(/background(-color)?:\s*[^;}\n]+/gi) || [];
+          const hasColoredBackground = backgroundMatches.some(match => {
+            // Allow white, transparent, or inherit only
+            return !match.match(/:\s*(white|#fff|#ffffff|transparent|none|inherit)/i);
+          });
 
           if (hasColoredBackground) {
-            console.warn('[Preview] Max retries reached, rejecting design for:', template.name);
-            return null;
+            console.warn(`[Preview] Attempt ${attempt}: Colored background detected, rejecting for template:`, template.name);
+            const badBackgrounds = backgroundMatches.filter(m => !m.match(/:\s*(white|#fff|#ffffff|transparent|none|inherit)/i));
+            console.warn('[Preview] Invalid backgrounds found:', badBackgrounds.slice(0, 5));
+            if (attempt === maxRetries) {
+              console.warn('[Preview] Max retries reached, rejecting design:', template.name);
+              return null;
+            }
+            continue; // Retry if colored backgrounds found
           }
-          continue; // Retry if colored backgrounds found
+
+          console.log(`[Preview] Background validation passed for template:`, template.name);
         }
 
         // Check if AI used wrong colors (reject if it used colors not in our palette)

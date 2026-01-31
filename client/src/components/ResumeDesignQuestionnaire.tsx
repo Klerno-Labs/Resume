@@ -239,19 +239,34 @@ HTML STRUCTURE (FOLLOW THIS PATTERN):
 </html>
 \`\`\`
 
-CRITICAL RULES:
+CRITICAL RULES - STRICTLY ENFORCE:
 - Use the EXACT CSS framework and HTML structure shown above as your foundation
 - Use the EXACT accent color ${accentColorMap[answers.accentColor]} - do not substitute
 - Keep the design SIMPLE and CLEAN - no fancy graphics, gradients, or colored backgrounds
-- Section headers should use the accent color with a simple underline border
+- Section headers (h2) should ONLY use the accent color for TEXT and BORDER - no background colors
 - Maximum width 8.5 inches with 0.5 inch margins/padding (NOT 0.6in or 0.75in)
 - Include ALL resume content from the provided text - do not omit any sections
 - Font sizes: Name 32px, Section headers 17px, Body 11pt, Metadata 10pt
 - Return ONLY valid JSON: {"html": "<!DOCTYPE html><html>...</html>"}
 - The design must look like a traditional professional resume, not a website
-- NO purple, teal, or bright colored backgrounds - white background only
-- NO large colored header bars - keep headers minimal
-- Maximize usable space - do NOT add excessive padding or margins`;
+
+ABSOLUTELY FORBIDDEN - DO NOT USE:
+- NO colored backgrounds on ANY element (header, sections, divs, etc.)
+- NO background-color property except "background: white" or "background: #ffffff"
+- NO colored banner headers - the header must have white background
+- NO colored boxes or containers around name/contact info
+- The ONLY place the accent color appears is: h2 text color and h2 border-bottom
+- Maximize usable space - do NOT add excessive padding or margins
+
+EXAMPLE OF CORRECT HEADER (white background, black text):
+<header>
+  <h1 style="color: #1a1a1a; background: white;">Name</h1>
+  <div style="color: #666666; background: white;">Title</div>
+  <div style="color: #666666; background: white;">Contact</div>
+</header>
+
+NEVER create headers like this (WRONG - colored background):
+<header style="background: ${accentColorMap[answers.accentColor]}; color: white;">...</header>`;
 
   return prompt;
 }
