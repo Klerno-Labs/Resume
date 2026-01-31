@@ -128,12 +128,15 @@ PROFESSIONAL RESUME DESIGN RULES:
    - Maintain consistent vertical rhythm
    - Maximize content space - don't waste space with excessive margins
 
-3. COLOR USAGE:
-   - Primary accent: ${accentColorMap[answers.accentColor]} for headers, icons, borders
-   - Text colors: #1a1a1a (headings), #333333 (body), #666666 (metadata)
-   - Background: White (#ffffff) for main content
-   - Use accent color sparingly (10-15% of design) for maximum impact
-   - Ensure WCAG AA contrast ratios (4.5:1 minimum)
+3. COLOR USAGE (WCAG AA COMPLIANT ONLY):
+   - Primary accent: ${accentColorMap[answers.accentColor]} for headers, icons, borders ONLY
+   - Text colors (WCAG AA compliant on white):
+     * Headings: #1a1a1a (17.40:1 contrast)
+     * Body text: #333333 (12.63:1 contrast)
+     * Metadata/dates: #595959 (7.00:1 contrast) - USE THIS, NOT #666666
+   - Background: White (#ffffff) ONLY - no other backgrounds allowed
+   - CRITICAL: Use ONLY these exact color values - no substitutions
+   - These are the ONLY colors allowed in the entire document
 
 4. VISUAL HIERARCHY:
    - Name should be the most prominent element
@@ -165,7 +168,7 @@ PROFESSIONAL RESUME DESIGN RULES:
    - Contact information easily accessible
    - URLs and email addresses should be clickable
 
-CSS FRAMEWORK (USE THIS STRUCTURE):
+CSS FRAMEWORK (USE EXACTLY - ALL COLORS WCAG AA COMPLIANT):
 \`\`\`css
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -181,12 +184,12 @@ body {
 h1 { font-size: 32px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
 h2 { font-size: 17px; font-weight: 600; color: ${accentColorMap[answers.accentColor]}; margin: 20px 0 10px; border-bottom: 2px solid ${accentColorMap[answers.accentColor]}; padding-bottom: 4px; }
 h3 { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
-.contact { font-size: 10pt; color: #666666; margin-bottom: 16px; }
-.job-title { font-size: 12pt; color: #666666; font-weight: 400; margin-bottom: 4px; }
+.contact { font-size: 10pt; color: #595959; margin-bottom: 16px; }
+.job-title { font-size: 12pt; color: #595959; font-weight: 400; margin-bottom: 4px; }
 .company { font-weight: 600; color: #1a1a1a; }
-.date { color: #666666; font-size: 10pt; font-style: italic; }
+.date { color: #595959; font-size: 10pt; font-style: italic; }
 ul { margin-left: 18px; margin-top: 6px; }
-li { margin-bottom: 4px; }
+li { margin-bottom: 4px; color: #333333; }
 \`\`\`
 
 HTML STRUCTURE (FOLLOW THIS PATTERN):
@@ -239,9 +242,15 @@ HTML STRUCTURE (FOLLOW THIS PATTERN):
 </html>
 \`\`\`
 
-CRITICAL RULES - STRICTLY ENFORCE:
+CRITICAL RULES - STRICTLY ENFORCE (WCAG AA COMPLIANCE):
 - Use the EXACT CSS framework and HTML structure shown above as your foundation
-- Use the EXACT accent color ${accentColorMap[answers.accentColor]} - do not substitute
+- ONLY USE THESE COLORS - NO OTHER COLORS ALLOWED:
+  * Accent: ${accentColorMap[answers.accentColor]} (section headers only)
+  * Headings: #1a1a1a
+  * Body: #333333
+  * Metadata: #595959 (NOT #666666, NOT #999999, NOT any other gray)
+  * Background: #ffffff (white only)
+- ANY color not in the above list will cause WCAG AA failure
 - Keep the design SIMPLE and CLEAN - no fancy graphics, gradients, or colored backgrounds
 - Section headers (h2) should ONLY use the accent color for TEXT and BORDER - no background colors
 - Maximum width 8.5 inches with 0.5 inch margins/padding (NOT 0.6in or 0.75in)
@@ -249,6 +258,7 @@ CRITICAL RULES - STRICTLY ENFORCE:
 - Font sizes: Name 32px, Section headers 17px, Body 11pt, Metadata 10pt
 - Return ONLY valid JSON: {"html": "<!DOCTYPE html><html>...</html>"}
 - The design must look like a traditional professional resume, not a website
+- ZERO CONTRAST WARNINGS REQUIRED - use only approved colors
 
 ABSOLUTELY FORBIDDEN - DO NOT USE:
 - NO colored backgrounds on ANY element (header, sections, divs, etc.)
