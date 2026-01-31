@@ -98,7 +98,7 @@ export function generateDesignPrompt(answers: QuestionnaireAnswers): string {
     integrated: 'Integrate contact information within the name/title section',
   };
 
-  const prompt = `Create a ${styleDescriptions[answers.style]} resume.
+  const prompt = `You are an expert resume designer creating a ${styleDescriptions[answers.style]} resume.
 
 DESIGN SPECIFICATIONS:
 - Style: ${answers.style}
@@ -112,13 +112,66 @@ DESIGN SPECIFICATIONS:
 - Emphasis: ${emphasisDescriptions[answers.emphasisOn]}
 - Profile Picture: ${pictureLine}
 
-REQUIREMENTS:
-- Use the exact accent color ${accentColorMap[answers.accentColor]} for headers, highlights, and visual elements
-- Create a visually impressive, premium-quality design
-- Include ALL resume content from the provided text
-- Make it look professional and polished
-- Use proper spacing and typography hierarchy
-- Return ONLY valid JSON: {"html": "<!DOCTYPE html><html>...</html>"}`;
+PROFESSIONAL RESUME DESIGN RULES:
+1. TYPOGRAPHY:
+   - Use professional font sizes: Name (28-36px), Section Headers (16-18px), Body (11-12px)
+   - Line height: 1.4-1.6 for readability
+   - Use font-weight variations (400, 500, 600, 700) for hierarchy
+   - Ensure excellent readability with proper letter-spacing
+
+2. SPACING & LAYOUT:
+   - Max width: 8.5in (letter size)
+   - Margins: 0.5in to 0.75in all sides
+   - Section spacing: 1.2-1.5rem between sections
+   - Item spacing: 0.5-0.8rem between list items
+   - Use CSS Grid or Flexbox for precise alignment
+   - Maintain consistent vertical rhythm
+
+3. COLOR USAGE:
+   - Primary accent: ${accentColorMap[answers.accentColor]} for headers, icons, borders
+   - Text colors: #1a1a1a (headings), #333333 (body), #666666 (metadata)
+   - Background: White (#ffffff) for main content
+   - Use accent color sparingly (10-15% of design) for maximum impact
+   - Ensure WCAG AA contrast ratios (4.5:1 minimum)
+
+4. VISUAL HIERARCHY:
+   - Name should be the most prominent element
+   - Section headers should be clearly distinct but not oversized
+   - Use subtle dividers or spacing to separate sections
+   - Bullet points should be clean and aligned
+   - Dates and locations should be visually de-emphasized
+
+5. PROFESSIONAL ELEMENTS:
+   - Clean, aligned sections with consistent formatting
+   - Professional icons for contact info (if applicable)
+   - Proper date formatting (MMM YYYY or MM/YYYY)
+   - Bullet points for achievements (not paragraphs)
+   - No decorative graphics or unprofessional elements
+   - Print-friendly design with no backgrounds that waste ink
+
+6. TECHNICAL REQUIREMENTS:
+   - Include <!DOCTYPE html> and proper HTML5 structure
+   - Embed all CSS in <style> tag (no external stylesheets)
+   - Use semantic HTML (header, section, article)
+   - Set page size: @page { size: 8.5in 11in; margin: 0; }
+   - Make responsive with @media print styles
+   - No JavaScript or external dependencies
+
+7. CONTENT FORMATTING:
+   - Job titles and company names should be prominent
+   - Skills should be easy to scan (consider columns or pills)
+   - Education dates and degrees clearly formatted
+   - Contact information easily accessible
+   - URLs and email addresses should be clickable
+
+CRITICAL RULES:
+- Use the EXACT accent color ${accentColorMap[answers.accentColor]} - do not substitute or modify
+- Include ALL resume content from the provided text - do not omit any sections
+- Create a clean, ATS-friendly design that looks professional on screen and in print
+- Ensure the design matches the ${answers.style} style aesthetic
+- Return ONLY valid JSON: {"html": "<!DOCTYPE html><html>...</html>"}
+- Height should be auto, not fixed
+- Test that all text is readable and properly contrasted`;
 
   return prompt;
 }
