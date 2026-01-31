@@ -1,7 +1,7 @@
 // Shared utilities for API endpoints - will be inlined by bundler
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
-import { parse } from 'cookie';
+import { parse, serialize } from 'cookie';
 import { neon } from '@neondatabase/serverless';
 
 // Database connection - initialized once on cold start
@@ -205,8 +205,6 @@ export function setupCORSAndHandleOptions(
 
 // Auth token cookie helper - sets authentication token cookie with secure settings
 export function setAuthTokenCookie(res: VercelResponse, token: string, req: VercelRequest): void {
-  const { serialize } = require('cookie');
-
   const cookieOptions: any = {
     httpOnly: true,
     secure: isProductionEnv(req),
