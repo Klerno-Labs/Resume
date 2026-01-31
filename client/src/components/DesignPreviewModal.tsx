@@ -153,28 +153,29 @@ export function DesignPreviewModal({
                   )}
                 </div>
 
-                {/* Preview Iframe */}
+                {/* Preview Iframe - Scaled thumbnail */}
                 <div className="p-4 bg-gray-100 relative group">
-                  <div className="bg-white shadow-md overflow-auto rounded-sm" style={{ height: '500px' }}>
-                    <div style={{ width: '8.5in', margin: '0 auto', minHeight: '11in' }}>
-                      <iframe
-                        srcDoc={preview.html}
-                        className="w-full border-0"
-                        style={{
-                          width: '8.5in',
-                          height: '11in',
-                          display: 'block',
-                        }}
-                        title={`Preview: ${preview.templateName}`}
-                        sandbox="allow-same-origin allow-scripts"
-                      />
-                    </div>
+                  <div className="bg-white shadow-md overflow-hidden rounded-sm" style={{ height: '500px' }}>
+                    <iframe
+                      srcDoc={preview.html}
+                      className="w-full border-0"
+                      style={{
+                        transform: 'scale(0.45)',
+                        transformOrigin: 'top center',
+                        width: '8.5in',
+                        height: '1111px',
+                        display: 'block',
+                        margin: '0 auto',
+                      }}
+                      title={`Preview: ${preview.templateName}`}
+                      sandbox="allow-same-origin allow-scripts"
+                    />
                   </div>
                   {/* Full Size Button */}
                   <Button
                     size="sm"
                     variant="secondary"
-                    className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10"
                     onClick={(e) => {
                       e.stopPropagation();
                       setFullScreenPreview(index);
