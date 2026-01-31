@@ -194,24 +194,29 @@ Return ONLY JSON: {"html": "<!DOCTYPE html>..."}`,
         }
 
         // Check if AI used wrong colors (reject if it used colors not in our palette)
-        const allowedColors = [
-          template.accentColor.toLowerCase(),
-          '#ffffff', '#fff',
-          '#1a1a1a', '#2d2d2d', '#333333', '#666666', '#999999', '#cccccc',
-          '#f5f5f5', '#f0f0f0', '#000000', '#000',
-        ];
+        // Skip color validation if using custom prompt (user chose their own colors)
+        if (!customPrompt) {
+          const allowedColors = [
+            template.accentColor.toLowerCase(),
+            '#ffffff', '#fff',
+            '#1a1a1a', '#2d2d2d', '#333333', '#666666', '#999999', '#cccccc',
+            '#f5f5f5', '#f0f0f0', '#000000', '#000',
+          ];
 
-        const colorRegex = /#([a-f0-9]{6}|[a-f0-9]{3})\b/gi;
-        const foundColors = (design.html.match(colorRegex) || []).map((c: string) => c.toLowerCase());
-        const unauthorizedColors = foundColors.filter((c: string) => !allowedColors.includes(c));
+          const colorRegex = /#([a-f0-9]{6}|[a-f0-9]{3})\b/gi;
+          const foundColors = (design.html.match(colorRegex) || []).map((c: string) => c.toLowerCase());
+          const unauthorizedColors = foundColors.filter((c: string) => !allowedColors.includes(c));
 
-        if (unauthorizedColors.length > 0) {
-          console.warn(`[Preview] Attempt ${attempt}: Unauthorized colors found:`, unauthorizedColors, 'for template:', template.name);
-          if (attempt === maxRetries) {
-            console.warn('[Preview] Max retries reached, rejecting design for:', template.name);
-            return null;
+          if (unauthorizedColors.length > 0) {
+            console.warn(`[Preview] Attempt ${attempt}: Unauthorized colors found:`, unauthorizedColors, 'for template:', template.name);
+            if (attempt === maxRetries) {
+              console.warn('[Preview] Max retries reached, rejecting design for:', template.name);
+              return null;
+            }
+            continue; // Retry if wrong colors
           }
-          continue; // Retry if wrong colors
+        } else {
+          console.log('[Preview] Custom prompt - skipping color validation');
         }
 
         // Success - validate contrast and return
