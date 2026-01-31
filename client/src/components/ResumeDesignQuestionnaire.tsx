@@ -268,11 +268,11 @@ ABSOLUTELY FORBIDDEN - DO NOT USE:
 - The ONLY place the accent color appears is: h2 text color and h2 border-bottom
 - Maximize usable space - do NOT add excessive padding or margins
 
-EXAMPLE OF CORRECT HEADER (white background, black text):
+EXAMPLE OF CORRECT HEADER (white background, WCAG AA compliant colors):
 <header>
   <h1 style="color: #1a1a1a; background: white;">Name</h1>
-  <div style="color: #666666; background: white;">Title</div>
-  <div style="color: #666666; background: white;">Contact</div>
+  <div style="color: #595959; background: white;">Title</div>
+  <div style="color: #595959; background: white;">Contact</div>
 </header>
 
 NEVER create headers like this (WRONG - colored background):
