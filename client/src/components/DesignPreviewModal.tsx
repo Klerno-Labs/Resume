@@ -155,23 +155,23 @@ export function DesignPreviewModal({
 
                 {/* Preview Iframe - Scaled thumbnail */}
                 <div className="p-4 bg-gray-100 relative group">
-                  <div className="bg-white shadow-md overflow-auto rounded-sm flex items-center justify-center" style={{ height: '500px' }}>
-                    <div style={{
-                      transform: 'scale(0.65)',
-                      transformOrigin: 'center center',
-                      width: '8.5in',
-                      height: '769px',
-                    }}>
-                      <iframe
-                        srcDoc={preview.html}
-                        className="w-full h-full border-0"
-                        style={{
-                          display: 'block',
-                        }}
-                        title={`Preview: ${preview.templateName}`}
-                        sandbox="allow-same-origin allow-scripts"
-                      />
-                    </div>
+                  <div className="bg-white shadow-md rounded-sm overflow-hidden" style={{ height: '500px', position: 'relative' }}>
+                    <iframe
+                      srcDoc={preview.html}
+                      className="border-0"
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: '50%',
+                        transform: 'translateX(-50%) scale(0.48)',
+                        transformOrigin: 'top center',
+                        width: '8.5in',
+                        height: '1042px',
+                        display: 'block',
+                      }}
+                      title={`Preview: ${preview.templateName}`}
+                      sandbox="allow-same-origin allow-scripts"
+                    />
                   </div>
                   {/* Full Size Button */}
                   <Button
