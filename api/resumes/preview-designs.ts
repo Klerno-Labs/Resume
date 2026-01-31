@@ -310,19 +310,19 @@ Return ONLY JSON: {"html": "<!DOCTYPE html>..."}`,
         if (styleMatch) {
           let modifiedStyles = styleMatch[1];
 
-          // 1. Force body padding
+          // 1. Force body padding (CRITICAL - prevents content cutoff on sides)
           if (/body\s*{[^}]*padding:/i.test(modifiedStyles)) {
             modifiedStyles = modifiedStyles.replace(
               /(body\s*{[^}]*)padding:\s*[^;]+;/gi,
-              '$1padding: 0.4in 0.5in;'
+              '$1padding: 0.5in 0.6in !important;'
             );
-            console.log(`[Preview] ✓ Replaced existing body padding`);
+            console.log(`[Preview] ✓ Replaced existing body padding with 0.5in 0.6in`);
           } else {
             modifiedStyles = modifiedStyles.replace(
               /(body\s*{)/gi,
-              '$1 padding: 0.4in 0.5in;'
+              '$1 padding: 0.5in 0.6in !important; box-sizing: border-box;'
             );
-            console.log(`[Preview] ✓ Added missing body padding`);
+            console.log(`[Preview] ✓ Added missing body padding: 0.5in 0.6in`);
           }
 
           // 2. Force body line-height

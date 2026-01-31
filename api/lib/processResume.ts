@@ -337,14 +337,14 @@ ${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-co
 7. SINGLE-PAGE CONSTRAINT (CRITICAL - MAXIMIZE CONTENT AND SPACE):
    ✓ Page Size: width: 8.5in (612pt), height: 11in (842pt) - US Letter
    ✓ Container: width: 100%, height: 100%, NO max-width or centering - USE FULL PAGE WIDTH
-   ✓ Body padding: EXACTLY 0.4in top/bottom, 0.5in left/right (this creates the margins)
+   ✓ Body padding: EXACTLY 0.5in top/bottom, 0.6in left/right (this creates the margins - CRITICAL FOR READABILITY)
    ✓ Content area: Should span from left margin to right margin - NO narrow centered containers
    ✓ Font sizes: Precisely calculated - Name 26-28px, Headers 14px, Body 10-11px, Meta 9px
    ✓ Strategic spacing: Use TIGHT spacing - section gaps 12-14px, line-height 1.4
    ✓ If too long: Reduce bullet points to 2-3 per job, shorten summary, prioritize recent experience
-   ✓ CSS: html, body { overflow: hidden !important; height: 842px !important; margin: 0; padding: 0; }
-   ✓ CRITICAL: NO max-width on container - content should use ALL available horizontal space
-   ✓ GOAL: Fit ALL content on one page AND use ALL available space (horizontal + vertical)
+   ✓ CSS: html { overflow: hidden !important; height: 842px !important; margin: 0; padding: 0; } body { margin: 0; padding: 0.5in 0.6in !important; box-sizing: border-box; width: 100%; }
+   ✓ CRITICAL: Body MUST have padding for margins - NO padding: 0 on body element
+   ✓ GOAL: Fit ALL content on one page, use full horizontal space WITH proper side margins (0.6in each side)
 
 8. CODE STRUCTURE - CLEAN & SEMANTIC:
    ✓ DOCTYPE: <!DOCTYPE html>
@@ -440,17 +440,22 @@ Expected JSON format:
         }
       );
 
-      // FORCE body padding to tight margins
+      // FORCE body padding to create proper margins (CRITICAL - prevents content cutoff)
       styles = styles.replace(
         /(body)\s*{([^}]*?)}/gi,
         (match, selector, props) => {
           let bodyProps = props;
 
-          // Force tight padding
+          // Force proper padding - 0.6in sides to prevent cutoff
           if (/padding:/i.test(bodyProps)) {
-            bodyProps = bodyProps.replace(/padding:\s*[^;]+;/gi, 'padding: 0.4in 0.5in;');
+            bodyProps = bodyProps.replace(/padding:\s*[^;]+;/gi, 'padding: 0.5in 0.6in !important;');
           } else {
-            bodyProps += ' padding: 0.4in 0.5in;';
+            bodyProps += ' padding: 0.5in 0.6in !important;';
+          }
+
+          // Force box-sizing for correct padding calculation
+          if (!/box-sizing:/i.test(bodyProps)) {
+            bodyProps += ' box-sizing: border-box;';
           }
 
           // Force line-height

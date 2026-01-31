@@ -191,7 +191,8 @@ body {
   background: white;
   width: 100%;
   margin: 0;
-  padding: 0.4in 0.5in;
+  padding: 0.5in 0.6in;
+  box-sizing: border-box;
 }
 h1 { font-size: 28px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
 h2 { font-size: 16px; font-weight: 600; color: ${accentColorMap[answers.accentColor]}; margin: 14px 0 8px; border-bottom: 2px solid ${accentColorMap[answers.accentColor]}; padding-bottom: 3px; }
