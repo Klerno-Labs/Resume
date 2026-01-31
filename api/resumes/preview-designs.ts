@@ -215,31 +215,49 @@ Return ONLY JSON: {"html": "<!DOCTYPE html>..."}`,
           console.log(`[Preview] Background validation passed for template:`, template.name);
         }
 
-        // Check if AI used wrong colors (reject if it used colors not in our palette)
-        // Skip color validation if using custom prompt (user chose their own colors)
-        if (!customPrompt) {
-          const allowedColors = [
-            template.accentColor.toLowerCase(),
-            '#ffffff', '#fff',
-            '#1a1a1a', '#2d2d2d', '#333333', '#666666', '#999999', '#cccccc',
-            '#f5f5f5', '#f0f0f0', '#000000', '#000',
-          ];
-
-          const colorRegex = /#([a-f0-9]{6}|[a-f0-9]{3})\b/gi;
-          const foundColors = (design.html.match(colorRegex) || []).map((c: string) => c.toLowerCase());
-          const unauthorizedColors = foundColors.filter((c: string) => !allowedColors.includes(c));
-
-          if (unauthorizedColors.length > 0) {
-            console.warn(`[Preview] Attempt ${attempt}: Unauthorized colors found:`, unauthorizedColors, 'for template:', template.name);
-            if (attempt === maxRetries) {
-              console.warn('[Preview] Max retries reached, rejecting design for:', template.name);
-              return null;
-            }
-            continue; // Retry if wrong colors
+        // STRICT COLOR VALIDATION - WCAG AA COMPLIANCE REQUIRED
+        // For custom prompts: Extract user's selected accent color and only allow WCAG AA compliant colors
+        // For default templates: Use template-specific colors
+        let userAccentColor = null;
+        if (customPrompt) {
+          const colorMatch = customPrompt.match(/Accent Color: (#[0-9a-f]{6})/i);
+          if (colorMatch) {
+            userAccentColor = colorMatch[1].toLowerCase();
           }
-        } else {
-          console.log('[Preview] Custom prompt - skipping color validation');
         }
+
+        const allowedColors = customPrompt ? [
+          // WCAG AA compliant colors only (from questionnaire)
+          '#1d4ed8', '#7c3aed', '#047857', '#b91c1c', '#c2410c', '#1e3a8a', '#0f766e', '#1a1a1a', // All accent options
+          userAccentColor, // User's selected accent color
+          '#1a1a1a', // Headings (17.40:1)
+          '#333333', '#333',  // Body text (12.63:1)
+          '#595959', // Metadata (7.00:1) - WCAG AA compliant
+          '#ffffff', '#fff',  // White background
+          '#000000', '#000',  // Pure black (if needed)
+        ].filter(Boolean) : [
+          // Default template colors (backward compatibility)
+          template.accentColor.toLowerCase(),
+          '#ffffff', '#fff',
+          '#1a1a1a', '#2d2d2d', '#333333', '#666666', '#999999', '#cccccc',
+          '#f5f5f5', '#f0f0f0', '#000000', '#000',
+        ];
+
+        const colorRegex = /#([a-f0-9]{6}|[a-f0-9]{3})\b/gi;
+        const foundColors = (design.html.match(colorRegex) || []).map((c: string) => c.toLowerCase());
+        const unauthorizedColors = foundColors.filter((c: string) => !allowedColors.includes(c));
+
+        if (unauthorizedColors.length > 0) {
+          console.warn(`[Preview] Attempt ${attempt}: Unauthorized colors found:`, unauthorizedColors, 'for template:', template.name);
+          console.warn(`[Preview] Allowed colors:`, allowedColors);
+          if (attempt === maxRetries) {
+            console.warn('[Preview] Max retries reached, rejecting design for:', template.name);
+            return null;
+          }
+          continue; // Retry if wrong colors
+        }
+
+        console.log(`[Preview] Color validation passed for template:`, template.name);
 
         // Success - validate contrast and return
         const contrastValidation = validateResumeContrast(design.html);
