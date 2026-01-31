@@ -73,14 +73,14 @@ export function generateDesignPrompt(answers: QuestionnaireAnswers): string {
   };
 
   const accentColorMap: Record<string, string> = {
-    blue: '#2563eb',
-    purple: '#9333ea',
-    green: '#059669',
-    red: '#dc2626',
-    orange: '#ea580c',
-    navy: '#1e3a8a',
-    teal: '#0d9488',
-    black: '#1a1a1a',
+    blue: '#1d4ed8',     // 6.70:1 contrast (WCAG AA compliant)
+    purple: '#7c3aed',   // 5.70:1 contrast (WCAG AA compliant)
+    green: '#047857',    // 5.48:1 contrast (WCAG AA compliant)
+    red: '#b91c1c',      // 6.47:1 contrast (WCAG AA compliant)
+    orange: '#c2410c',   // 5.18:1 contrast (WCAG AA compliant)
+    navy: '#1e3a8a',     // 10.36:1 contrast (WCAG AA compliant)
+    teal: '#0f766e',     // 5.47:1 contrast (WCAG AA compliant)
+    black: '#1a1a1a',    // 17.40:1 contrast (WCAG AA compliant)
   };
 
   const emphasisDescriptions: Record<string, string> = {
