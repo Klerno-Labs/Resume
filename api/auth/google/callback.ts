@@ -108,8 +108,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('[auth/google/callback] JWT token generated successfully');
 
     console.log('[auth/google/callback] Setting auth cookie...');
+    console.log('[auth/google/callback] Request host:', req.headers.host);
+    console.log('[auth/google/callback] Request origin:', req.headers.origin);
     setAuthTokenCookie(res, token, req);
     console.log('[auth/google/callback] Auth cookie set, redirecting to home...');
+    console.log('[auth/google/callback] Cookie header:', res.getHeader('Set-Cookie'));
 
     return res.redirect(302, '/');
   } catch (error) {

@@ -122,9 +122,13 @@ class ApiClient {
   }
 
   async getCurrentUser(): Promise<{ user: User | null; authenticated: boolean }> {
+    console.log('[API] Fetching current user from /auth/me');
+    console.log('[API] Document cookies:', document.cookie);
     const res = await this.fetchWithCredentials(`${this.baseUrl}/auth/me`);
+    console.log('[API] /auth/me response status:', res.status);
     if (!res.ok) {
       if (res.status === 401) {
+        console.log('[API] User not authenticated (401)');
         return { user: null, authenticated: false };
       }
       let message = 'Failed to get current user';
@@ -134,10 +138,12 @@ class ApiClient {
       } catch {
         // ignore parse errors and fall back to default message
       }
+      console.error('[API] getCurrentUser error:', message);
       throw new Error(message);
     }
 
     const data = (await res.json()) as { user?: User | null; authenticated?: boolean };
+    console.log('[API] getCurrentUser response:', data);
     return {
       user: data.user ?? null,
       authenticated: data.authenticated ?? Boolean(data.user),

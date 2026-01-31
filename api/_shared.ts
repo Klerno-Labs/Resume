@@ -206,16 +206,26 @@ export function setupCORSAndHandleOptions(
 // Auth token cookie helper - sets authentication token cookie with secure settings
 export function setAuthTokenCookie(res: VercelResponse, token: string, req: VercelRequest): void {
   const { serialize } = require('cookie');
-  res.setHeader(
-    'Set-Cookie',
-    serialize('token', token, {
-      httpOnly: true,
-      secure: isProductionEnv(req),
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60,
-      path: '/',
-    })
-  );
+
+  const cookieOptions: any = {
+    httpOnly: true,
+    secure: isProductionEnv(req),
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60,
+    path: '/',
+  };
+
+  // Set domain for production to ensure cookie works across the entire domain
+  const host = req.headers.host || '';
+  if (isProductionEnv(req) && host && !host.includes('localhost')) {
+    // Extract root domain (e.g., rewriteme.app from www.rewriteme.app)
+    const domainParts = host.split('.');
+    if (domainParts.length >= 2) {
+      cookieOptions.domain = domainParts.slice(-2).join('.');
+    }
+  }
+
+  res.setHeader('Set-Cookie', serialize('token', token, cookieOptions));
 }
 
 // Google OAuth redirect URI helper

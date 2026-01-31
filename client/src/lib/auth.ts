@@ -28,10 +28,13 @@ export const useAuth = create<AuthState>()(
         }
       },
       restoreSession: async () => {
+        console.log('[Auth] restoreSession called');
         try {
           const { user } = await api.getCurrentUser();
+          console.log('[Auth] Session restored, user:', user);
           set({ user, isLoading: false });
-        } catch {
+        } catch (error) {
+          console.error('[Auth] Failed to restore session:', error);
           set({ user: null, isLoading: false });
         }
       },
