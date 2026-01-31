@@ -168,9 +168,11 @@ export function DesignPreviewModal({
                         width: '8.5in',
                         height: '1042px',
                         display: 'block',
+                        overflow: 'hidden',
                       }}
                       title={`Preview: ${preview.templateName}`}
                       sandbox="allow-same-origin allow-scripts"
+                      scrolling="no"
                     />
                   </div>
                   {/* Full Size Button */}
