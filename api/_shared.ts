@@ -19,7 +19,7 @@ export interface User {
   password_hash: string;
   plan: string;
   credits_remaining: number;
-  email_verified: boolean;
+  email_verified: Date | null;
   created_at: Date;
 }
 

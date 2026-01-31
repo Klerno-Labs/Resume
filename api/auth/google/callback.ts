@@ -88,7 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const result = await sql`
         INSERT INTO users (email, password_hash, name, plan, credits_remaining, email_verified)
-        VALUES (${googleUser.email}, ${secureOAuthHash}, ${googleUser.name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 1}, true)
+        VALUES (${googleUser.email}, ${secureOAuthHash}, ${googleUser.name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 1}, NOW())
         RETURNING id, email, name, plan, credits_remaining, email_verified, created_at
       `;
       user = result[0];

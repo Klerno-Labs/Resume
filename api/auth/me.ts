@@ -25,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         name: user.name,
         plan: user.plan,
         creditsRemaining: user.credits_remaining,
-        emailVerified: user.email_verified,
+        emailVerified: !!user.email_verified, // Convert timestamp to boolean
       },
     });
   } catch (error) {
