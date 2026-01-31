@@ -46,10 +46,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Paid users (basic/pro/premium/admin) can see everything
     const canAccessImprovedText = user && user.plan !== 'free';
 
-    // CRITICAL FIX: NEVER return improvedHtml in the main resume fetch
-    // Design should ONLY be returned when user explicitly requests it via regenerate-design or preview-designs
-    // This prevents automatic design appearance even with old cached frontend code
-    console.log('[resumes/[id]] FORCING improvedHtml to NULL - designs must be explicitly requested');
+    // Return saved design if it exists in the database
+    // This allows users to see their previously selected/saved designs on page reload
+    console.log('[resumes/[id]] ========================================');
+    console.log('[resumes/[id]] RETURNING RESUME TO CLIENT');
+    console.log('[resumes/[id]] Resume ID:', resumeId);
+    console.log('[resumes/[id]] Has saved design:', !!resume.improved_html);
+    console.log('[resumes/[id]] ImprovedHtml length:', resume.improved_html?.length || 0, 'characters');
+    console.log('[resumes/[id]] Status:', resume.status);
+    console.log('[resumes/[id]] ========================================');
 
     return res.json({
       id: resume.id,
@@ -57,7 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       fileName: resume.file_name,
       originalText: resume.original_text,
       improvedText: canAccessImprovedText ? resume.improved_text : null,
-      improvedHtml: null, // FORCE NULL - designs must be explicitly requested
+      improvedHtml: resume.improved_html || null, // Return saved design if exists
       atsScore: resume.ats_score,
       keywordsScore: resume.keywords_score,
       formattingScore: resume.formatting_score,

@@ -26,25 +26,69 @@ export async function processResume(resumeId: string, originalText: string, user
         messages: [
           {
             role: 'system',
-            content: 'You are an expert resume writer and career coach. Your task is to transform resumes into ATS-optimized, professional documents that highlight achievements and use strong action verbs. Always output valid JSON with an "improvedText" field containing the complete rewritten resume.'
+            content: 'You are an expert ATS (Applicant Tracking System) optimization specialist and career coach. Your task is to transform resumes into ATS-optimized, professional documents that will achieve 90%+ ATS scores. You understand how ATS systems parse, rank, and filter resumes. Always output valid JSON with an "improvedText" field containing the complete rewritten resume.'
           },
           {
             role: 'user',
-            content: `Rewrite this resume to make it more professional and ATS-friendly. Follow these guidelines:
+            content: `Rewrite this resume to achieve MAXIMUM ATS compatibility (90%+ score). Follow these CRITICAL ATS optimization guidelines:
 
-1. Use strong action verbs (Led, Managed, Achieved, Spearheaded, etc.)
-2. Quantify achievements with numbers, percentages, or metrics
-3. Remove weak language like "some", "most of the time", "still learning"
-4. Make bullet points concise and impact-focused
-5. Improve formatting and structure
-6. Maintain all contact information and dates exactly as provided
-7. Keep the same overall length and sections
+ATS-FRIENDLY FORMATTING (CRITICAL):
+1. Use ONLY standard section headers: "Professional Summary", "Work Experience", "Skills", "Education", "Certifications"
+2. Use simple, clean formatting - NO tables, NO text boxes, NO columns, NO graphics
+3. Use standard date format: "Month YYYY - Month YYYY" (e.g., "January 2022 - December 2023")
+4. Place dates on the same line as job titles, separated by |
+5. Use standard bullet points (•) - no fancy symbols or icons
+6. Keep formatting simple and linear - single column layout
+7. Each job should follow this exact format:
+   Company Name | Job Title | Month YYYY - Month YYYY
+   • Achievement with quantifiable results
+   • Achievement with quantifiable results
+
+CONTENT OPTIMIZATION (HIGH-IMPACT):
+1. Use powerful action verbs at the start of EVERY bullet point:
+   - Leadership: Led, Directed, Managed, Supervised, Coordinated, Spearheaded
+   - Achievement: Achieved, Exceeded, Delivered, Attained, Accomplished
+   - Improvement: Improved, Enhanced, Optimized, Streamlined, Transformed
+   - Creation: Created, Developed, Designed, Built, Established, Launched
+   - Analysis: Analyzed, Evaluated, Assessed, Investigated, Researched
+2. QUANTIFY EVERY achievement with specific metrics:
+   - Revenue/Sales: "Increased revenue by $500K (25%)"
+   - Efficiency: "Reduced processing time by 40%"
+   - Team/Scale: "Managed team of 15 engineers"
+   - Volume: "Processed 1000+ customer requests monthly"
+3. Remove ALL weak language:
+   - Delete: "some", "various", "several", "many", "helped with", "assisted in", "participated in"
+   - Replace: "Responsible for X" → "Managed X" or "Led X"
+   - Replace: "Worked on Y" → "Developed Y" or "Implemented Y"
+4. Make bullet points concise (1-2 lines max), impact-focused, and results-driven
+
+KEYWORD OPTIMIZATION (ATS RANKING):
+1. Include industry-specific keywords naturally in achievements
+2. Mirror common job posting language (without keyword stuffing)
+3. Include technical skills, tools, and methodologies used
+4. Add relevant certifications and credentials
+5. Use both acronyms AND full terms (e.g., "CRM (Customer Relationship Management)")
+
+PROFESSIONAL SUMMARY (CRITICAL FOR ATS):
+1. Start with a 3-4 line Professional Summary section
+2. Include: Years of experience, key expertise areas, notable achievements
+3. Pack with relevant keywords (title, industry terms, core skills)
+4. Example: "Results-driven Marketing Manager with 8+ years driving digital growth. Expert in SEO, PPC, and content strategy. Increased organic traffic by 300% and generated $2M in revenue through data-driven campaigns."
+
+SKILLS SECTION (ATS KEYWORD MATCHING):
+1. Create a dedicated "Skills" section with 15-25 relevant skills
+2. Group by category: "Technical Skills:", "Soft Skills:", "Tools & Platforms:"
+3. Use exact skill names from job postings (e.g., "Microsoft Excel", not "Excel")
+4. Include both hard and soft skills
+5. Prioritize skills with high industry demand
 
 Resume to improve:
 ${originalText.substring(0, 3000)}
 
 Return ONLY valid JSON in this exact format:
-{"improvedText": "the complete improved resume text here"}`,
+{"improvedText": "the complete improved resume text here"}
+
+REMEMBER: Format must be ATS-parseable (simple, linear, no tables). Content must be achievement-focused with quantified results. Every bullet starts with a strong action verb.`,
           },
         ],
         response_format: { type: 'json_object' },
@@ -55,36 +99,81 @@ Return ONLY valid JSON in this exact format:
         messages: [
           {
             role: 'system',
-            content: 'You are an ATS (Applicant Tracking System) expert and resume evaluator. Analyze resumes and provide detailed scores and actionable feedback. Always output valid JSON.'
+            content: 'You are a strict ATS (Applicant Tracking System) evaluator and optimization expert. You analyze resumes using the same criteria as Fortune 500 company ATS systems (Taleo, Workday, iCIMS, Greenhouse). Your scores are rigorous - a resume must be EXCELLENT to score 90+. Always output valid JSON.'
           },
           {
             role: 'user',
-            content: `Analyze this resume and provide scores and specific issues:
+            content: `Analyze this resume using strict ATS criteria. Be DEMANDING in your evaluation.
 
 Resume:
 ${originalText.substring(0, 1200)}
 
-Evaluate:
-1. ATS Score (0-100): How well would this pass automated screening systems?
-   - Consider: keywords, formatting, structure, quantifiable achievements
-2. Keywords Score (0-10): Presence of relevant industry keywords and action verbs
-3. Formatting Score (0-10): Professional structure, consistency, readability
-4. Issues: Specific problems to fix (weak verbs, missing metrics, formatting issues, etc.)
+STRICT EVALUATION CRITERIA:
+
+1. ATS Score (0-100) - How well would this pass Fortune 500 ATS systems?
+   MUST CHECK:
+   ✓ Standard section headers (Professional Summary, Work Experience, Skills, Education)
+   ✓ Simple formatting (no tables, columns, text boxes, graphics)
+   ✓ Consistent date formats (Month YYYY - Month YYYY)
+   ✓ Keywords and industry terms present throughout
+   ✓ Quantifiable achievements (numbers, percentages, metrics)
+   ✓ Strong action verbs starting every bullet
+   ✓ No weak language ("some", "various", "helped with")
+   ✓ Relevant skills section with 15+ skills
+   ✓ Professional summary with keywords
+   ✓ Clean, parseable structure (single column, linear)
+
+   SCORING GUIDE:
+   - 90-100: EXCELLENT - Passes all major ATS systems, top 10% of resumes
+   - 80-89: GOOD - Passes most ATS, but has 2-3 minor issues
+   - 70-79: AVERAGE - Passes basic ATS, needs improvement
+   - 60-69: POOR - May be rejected by ATS, major formatting or keyword issues
+   - Below 60: FAIL - Will likely be auto-rejected
+
+2. Keywords Score (0-10) - Presence of relevant keywords and action verbs
+   - 9-10: Rich with industry keywords, strong action verbs, ATS-optimized
+   - 7-8: Good keyword presence, most bullets have action verbs
+   - 5-6: Some keywords, inconsistent action verbs
+   - 3-4: Few keywords, weak verbs ("responsible for", "helped")
+   - 0-2: No keywords, passive language, will fail ATS
+
+3. Formatting Score (0-10) - ATS-parseable structure and consistency
+   - 9-10: Perfect ATS formatting (simple, linear, standard headers)
+   - 7-8: Good formatting with 1-2 minor issues
+   - 5-6: Some formatting issues (inconsistent dates, non-standard headers)
+   - 3-4: Major issues (tables, columns, graphics, special characters)
+   - 0-2: Unparseable by ATS (complex layouts, images, text boxes)
+
+4. Issues - Be SPECIFIC and ACTIONABLE. List 3-7 critical issues to fix.
+   Common issues to check for:
+   - Weak verbs ("responsible for", "helped with", "worked on")
+   - Missing metrics/quantification ("increased sales" vs "increased sales by 25%")
+   - Non-standard section headers ("Career History" instead of "Work Experience")
+   - Complex formatting (tables, columns, text boxes)
+   - Inconsistent date formats
+   - Missing keywords or industry terms
+   - No Professional Summary
+   - Skills section too short (<10 skills) or missing
+   - Passive language instead of active achievements
 
 Return ONLY valid JSON in this exact format:
 {
-  "atsScore": 85,
-  "keywordsScore": 7,
-  "formattingScore": 8,
+  "atsScore": 75,
+  "keywordsScore": 6,
+  "formattingScore": 7,
   "issues": [
-    {"type": "weak-language", "message": "Replace 'some experience' with specific metrics", "severity": "high"},
-    {"type": "missing-achievement", "message": "Add quantifiable results to work experience", "severity": "medium"}
+    {"type": "weak-language", "message": "Replace 'responsible for managing team' with 'Managed team of 12 engineers'", "severity": "high"},
+    {"type": "missing-metrics", "message": "Add quantifiable results: 'Increased revenue by X%' or 'Reduced costs by $X'", "severity": "high"},
+    {"type": "formatting", "message": "Use standard header 'Work Experience' instead of 'Career History'", "severity": "medium"},
+    {"type": "keywords", "message": "Add more industry-specific keywords in Skills and Summary sections", "severity": "medium"}
   ]
-}`,
+}
+
+BE STRICT: Only exceptional resumes score 90+. Most resumes need improvement.`,
           },
         ],
         response_format: { type: 'json_object' },
-        max_tokens: 600,  // Reduced from 800
+        max_tokens: 800,
       }),
     ]);
 
@@ -143,7 +232,7 @@ export async function generateResumeDesign(resumeId: string) {
       messages: [
         {
           role: 'system',
-          content: `You are a minimalist resume designer creating expensive-looking resumes for 2025. Your designs are EXTREMELY MINIMAL, clean, and typographically disciplined. Key principles: (1) Maximum white space - nothing cramped, generous margins (0.5-1 inch), consistent vertical rhythm, (2) ONE professional font only (Lato, Calibri, or Georgia) at 10-11pt body, 11-12pt headers, 14-18pt name, (3) ONE subtle accent color for structure only (navy, deep green, or burgundy), (4) Perfect alignment and pixel-precise spacing consistency, (5) NO icons, NO photos, NO graphics, NO decorative elements, (6) Looks like a premium business document first, designed object second. Think: minimalist luxury, Swiss design, NOT Canva templates. Always output valid JSON.`
+          content: `You are a minimalist resume designer creating expensive-looking resumes for 2025. Your designs are EXTREMELY MINIMAL, clean, and typographically disciplined. Key principles: (1) MAXIMIZE space usage - tight margins (0.4-0.5 inch), compact spacing, fit maximum content, (2) ONE professional font only (Lato, Calibri, or Georgia) at 10-11pt body, 11-12pt headers, 14-18pt name, (3) ONE subtle accent color for structure only (navy, deep green, or burgundy), (4) Perfect alignment and pixel-precise spacing consistency, (5) NO icons, NO photos, NO graphics, NO decorative elements, (6) Looks like a premium business document first, designed object second. Think: minimalist luxury, Swiss design, NOT Canva templates. Always output valid JSON.`
         },
         {
           role: 'user',
@@ -160,39 +249,39 @@ Gradient: ${template.gradient}
 Accent: ${template.accentColor}
 Fonts: ${template.fonts[0]} (headers), ${template.fonts[1]} (body)
 
-🎨 MINIMALIST DESIGN REQUIREMENTS (CRITICAL - MAXIMUM WHITE SPACE, ZERO CLUTTER):
+🎨 MINIMALIST DESIGN REQUIREMENTS (CRITICAL - MAXIMIZE SPACE, ZERO CLUTTER):
 
 1. LAYOUT - ${template.layout.toUpperCase()} STRUCTURE:
 ${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-columns: 280px 1fr; height: 842px;
-   ✓ SIDEBAR (280px): Gradient background ${template.gradient}, full height, elegant padding (30px)
-   ✓ MAIN (remaining): Pure white (#ffffff), generous margins (40px), professional spacing
-   ✓ Name at TOP of sidebar: Large (32px), bold (700), ${template.fonts[0]}, white, letter-spacing: 1px
-   ✓ Job title below name: 13px, ${template.fonts[1]}, white, opacity: 0.95, elegant spacing
-   ✓ NO photo - use elegant monogram circle instead: 80px circle with initials, subtle border` : ''}${template.layout === 'single-column' ? `   ✓ Container: max-width: 500px, centered, height: 842px
-   ✓ Name: Large (36px), bold, ${template.fonts[0]}, color: ${template.accentColor}, centered, letter-spacing: 1px
-   ✓ Job title: 16px, ${template.fonts[1]}, centered below name, margin: 8px 0
+   ✓ SIDEBAR (280px): Gradient background ${template.gradient}, full height, tight padding (20px)
+   ✓ MAIN (remaining): Pure white (#ffffff), tight margins (28px), compact spacing
+   ✓ Name at TOP of sidebar: Medium (26px), bold (700), ${template.fonts[0]}, white, letter-spacing: 0px
+   ✓ Job title below name: 12px, ${template.fonts[1]}, white, opacity: 0.95, compact spacing
+   ✓ NO photo - use elegant monogram circle instead: 70px circle with initials, subtle border` : ''}${template.layout === 'single-column' ? `   ✓ Container: width: 100%, height: 842px, NO max-width (use full page width)
+   ✓ Name: Medium (28px), bold, ${template.fonts[0]}, color: ${template.accentColor}, letter-spacing: 0px
+   ✓ Job title: 13px, ${template.fonts[1]}, below name, margin: 4px 0
    ✓ Contact info: Horizontal row beneath title, 10px, separated by bullets (•)
-   ✓ Sections: Full-width blocks with generous spacing (32px between), left-aligned content
-   ✓ Headers: Centered or left-aligned, 16px, uppercase, ${template.accentColor}, underline or bottom border` : ''}${template.layout === 'timeline' ? `   ✓ Container: max-width: 550px, centered, height: 842px
-   ✓ Header: Name (36px), title (14px), contact - all centered at top
+   ✓ Sections: Full-width blocks with compact spacing (14px between), left-aligned content
+   ✓ Headers: Left-aligned, 14px, uppercase, ${template.accentColor}, underline or bottom border` : ''}${template.layout === 'timeline' ? `   ✓ Container: width: 100%, height: 842px, NO max-width (use full page width)
+   ✓ Header: Name (36px), title (14px), contact - at top
    ✓ Timeline: Vertical line on left (3px solid ${template.accentColor}), connecting experience items
    ✓ Timeline dots: 16px circles on the line at each job, filled with ${template.accentColor}
    ✓ Experience cards: Offset from timeline (margin-left: 40px), with date badges
    ✓ Dates: Small badges (10px) positioned on timeline, background ${template.accentColor}, white text
-   ✓ Visual flow: Connecting lines between timeline dots create career progression visualization` : ''}${template.layout === 'skills-first' ? `   ✓ Container: max-width: 595px, height: 842px
+   ✓ Visual flow: Connecting lines between timeline dots create career progression visualization` : ''}${template.layout === 'skills-first' ? `   ✓ Container: width: 100%, height: 842px, NO max-width (use full page width)
    ✓ Header: Name (34px) and title (14px) at top, ${template.accentColor}
    ✓ Skills Section: Immediately below header, prominent placement (top 25% of page)
    ✓ Skills Display: Grid of pills (3-4 columns), padding: 8px 16px, background: ${template.accentColor}15, border: 1px solid ${template.accentColor}50
    ✓ OR Skill bars: Horizontal bars showing proficiency, filled portion ${template.accentColor}
    ✓ Experience: Standard format below skills, condensed to fit remaining space
-   ✓ Visual hierarchy: Skills visually dominant, larger and more colorful than experience` : ''}${template.layout === 'split-column' ? `   ✓ Grid: display: grid; grid-template-columns: 1fr 1fr; gap: 30px; height: 842px
-   ✓ Header: Spans both columns, name (32px) and title (13px), ${template.accentColor}
+   ✓ Visual hierarchy: Skills visually dominant, larger and more colorful than experience` : ''}${template.layout === 'split-column' ? `   ✓ Grid: display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 842px
+   ✓ Header: Spans both columns, name (28px) and title (12px), ${template.accentColor}
    ✓ Left column: Experience (chronological work history)
    ✓ Right column: Skills, Education, Certifications
    ✓ Equal weight: Both columns same width (50/50), balanced visual importance
    ✓ Divider: Optional subtle vertical line between columns (1px, #e5e7eb)
    ✓ Symmetry: Matching spacing and alignment in both columns` : ''}${template.layout === 'header-banner' ? `   ✓ Banner: Full-width header (height: 180px), gradient ${template.gradient}, contains name and contact
-   ✓ Name in banner: 36px, bold, white, ${template.fonts[0]}, centered or left-aligned with padding
+   ✓ Name in banner: 36px, bold, white, ${template.fonts[0]}, left-aligned with padding
    ✓ Title in banner: 14px, white, opacity 0.95, below name
    ✓ Contact in banner: Horizontal row, white icons/text, 11px
    ✓ Content below: 2-3 column grid (grid-template-columns: 1fr 2fr or three columns)
@@ -217,14 +306,14 @@ ${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-co
    ✓ NO decorative colors, NO multiple accent colors, NO colorful skill badges
    ✓ Skill Display: Simple text list OR minimal pills with light gray background (#f5f5f5), black text
 
-4. SPACING & WHITESPACE - MAXIMUM WHITE SPACE (CRITICAL):
-   ✓ Page Margins: 0.5-1 inch (36-72px) on all sides - generous breathing room
-   ✓ Section Spacing: 24-32px between major sections (NEVER cramped, NEVER crowded)
-   ✓ Line Height: 1.5-1.6 for body text (excellent readability)
-   ✓ Paragraph Spacing: 8-12px between bullet points, 16-20px between job entries
-   ✓ Vertical Rhythm: Consistent spacing grid (8px, 12px, 16px, 24px, 32px)
+4. SPACING & WHITESPACE - MAXIMIZE SPACE (CRITICAL):
+   ✓ Page Margins: 0.4-0.5 inch (29-36px) on all sides - TIGHT to fit more content
+   ✓ Section Spacing: 12-16px between major sections (compact but readable)
+   ✓ Line Height: 1.4 for body text (compact for maximum content)
+   ✓ Paragraph Spacing: 3-4px between bullet points, 8-10px between job entries
+   ✓ Vertical Rhythm: Consistent spacing grid (4px, 8px, 12px, 16px)
    ✓ Letter Spacing: 0-0.5px MAX (no excessive tracking - looks amateur)
-   ✓ White space is a FEATURE, not wasted space - embrace emptiness
+   ✓ GOAL: Fit maximum content on page while maintaining professional appearance
 
 5. MINIMAL DETAILS - NO DECORATION, ONLY STRUCTURE:
    ✓ NO shadows, NO gradients (except sidebar background if template requires)
@@ -245,12 +334,17 @@ ${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-co
    ✓ Pixel-precise consistency: All spacing follows 8px grid (8, 12, 16, 24, 32, etc.)
    ✓ Quality is in the ABSENCE of decoration, not the presence
 
-7. SINGLE-PAGE CONSTRAINT (CRITICAL):
-   ✓ Container: width: 595px, height: 842px (exact US Letter), overflow: hidden
-   ✓ Font sizes: Precisely calculated - Name 32px, Headers 14px, Body 10px, Meta 9px
-   ✓ Strategic spacing: Use all sizing values given above - they're calculated to fit perfectly
+7. SINGLE-PAGE CONSTRAINT (CRITICAL - MAXIMIZE CONTENT AND SPACE):
+   ✓ Page Size: width: 8.5in (612pt), height: 11in (842pt) - US Letter
+   ✓ Container: width: 100%, height: 100%, NO max-width or centering - USE FULL PAGE WIDTH
+   ✓ Body padding: EXACTLY 0.4in top/bottom, 0.5in left/right (this creates the margins)
+   ✓ Content area: Should span from left margin to right margin - NO narrow centered containers
+   ✓ Font sizes: Precisely calculated - Name 26-28px, Headers 14px, Body 10-11px, Meta 9px
+   ✓ Strategic spacing: Use TIGHT spacing - section gaps 12-14px, line-height 1.4
    ✓ If too long: Reduce bullet points to 2-3 per job, shorten summary, prioritize recent experience
-   ✓ CSS: html, body { overflow: hidden !important; height: 842px !important; margin: 0; }
+   ✓ CSS: html, body { overflow: hidden !important; height: 842px !important; margin: 0; padding: 0; }
+   ✓ CRITICAL: NO max-width on container - content should use ALL available horizontal space
+   ✓ GOAL: Fit ALL content on one page AND use ALL available space (horizontal + vertical)
 
 8. CODE STRUCTURE - CLEAN & SEMANTIC:
    ✓ DOCTYPE: <!DOCTYPE html>
@@ -259,18 +353,20 @@ ${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-co
    ✓ Semantic HTML5: <header>, <section>, <article>, <aside>
    ✓ Print CSS: @page { margin: 0; size: letter; } @media print { .container { box-shadow: none !important; } }
 
-9. EXAMPLES OF MINIMAL STRUCTURE (Study these):
-   ✓ Name Section: Name (18-24px, bold, letter-spacing: 0px) → Title (15px, regular, margin-top: 4px) → Contact (plain text: email | phone | location, 13px)
-   ✓ Experience Entry: Company (13px, ${template.accentColor} OR #1a1a1a, semibold) | Job Title (13px, #1a1a1a, semibold) | Dates (13px, #666666, regular, right-aligned) → Standard • bullets
-   ✓ Skills Section: Simple comma-separated list OR minimal boxes: padding: 4px 8px, background: #f5f5f5, border: none, font-size: 13px, color: #1a1a1a
-   ✓ Section Header: Text (15px, uppercase OR sentence case, letter-spacing: 0px, ${template.accentColor} OR #1a1a1a) + 1px bottom border + 12px margin-bottom
+9. EXAMPLES OF MINIMAL STRUCTURE (Study these - TIGHT SPACING):
+   ✓ Name Section: Name (26-28px, bold, letter-spacing: 0px) → Title (13px, regular, margin-top: 3px) → Contact (plain text: email | phone | location, 11px)
+   ✓ Experience Entry: Company (12px, ${template.accentColor} OR #1a1a1a, semibold) | Job Title (12px, #1a1a1a, semibold) | Dates (11px, #666666, regular, right-aligned) → Standard • bullets (3px spacing)
+   ✓ Skills Section: Simple comma-separated list OR minimal boxes: padding: 3px 6px, background: #f5f5f5, border: none, font-size: 11px, color: #1a1a1a
+   ✓ Section Header: Text (14px, uppercase OR sentence case, letter-spacing: 0px, ${template.accentColor} OR #1a1a1a) + 1px bottom border + 8px margin-bottom
 
 💎 FINAL QUALITY CHECK - DOES IT LOOK LIKE AN EXPENSIVE 2025 MINIMAL RESUME?
    ✓ Typography: ONE font only, perfect hierarchy through size/weight, NO excessive letter-spacing
    ✓ Color: ONE accent color used sparingly, mostly black/gray text on white
-   ✓ Whitespace: MAXIMUM white space, generous margins (0.5-1 inch), consistent vertical rhythm
+   ✓ Space Usage: MAXIMIZED content per page, tight margins (0.4-0.5 inch), compact spacing
    ✓ Zero Clutter: NO icons, NO photos, NO monograms, NO decorative elements, NO shadows
    ✓ Overall: Looks like a premium business document, NOT a Canva template. Clean, minimal, expensive.
+   ✓ Content Fit: ALL resume content fits on one page through efficient spacing
+   ✓ CRITICAL WIDTH CHECK: Content spans FULL width of page (left margin to right margin), NO narrow centered containers, NO max-width under 100%
 
 CRITICAL: You MUST return ONLY a single JSON object. Do NOT include any markdown, explanations, apologies, or extra text.
 Start your response with { and end with }. Nothing else.
@@ -299,10 +395,90 @@ Expected JSON format:
       console.error('[Design] Raw content:', designResult.choices[0].message.content?.substring(0, 500));
       throw new Error('AI generated invalid JSON format');
     }
-    const designHtml = design.html;
+    let designHtml = design.html;
 
     if (!designHtml) {
       throw new Error('No HTML generated');
+    }
+
+    // POST-PROCESS: FORCE FULL-WIDTH LAYOUT (AI ignores instructions)
+    console.log('[Design] POST-PROCESSING: Forcing full-width layout...');
+    const styleMatch = designHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+
+    if (styleMatch) {
+      let styles = styleMatch[1];
+
+      // Count issues before fixing
+      const beforeMaxWidth = (styles.match(/max-width:\s*(?!100%|none)[^;]+;/gi) || []).length;
+      const beforeAutoMargin = (styles.match(/margin:\s*(0\s+)?auto/gi) || []).length;
+
+      console.log('[Design] BEFORE width fixes:', { maxWidthCount: beforeMaxWidth, autoMarginCount: beforeAutoMargin });
+
+      // REMOVE restrictive max-width (keep only max-width: 100% or none)
+      styles = styles.replace(/max-width:\s*(?!100%|none)[^;]+;/gi, '');
+
+      // REMOVE centering auto margins
+      styles = styles.replace(/margin:\s*0\s+auto;?/gi, 'margin: 0;');
+      styles = styles.replace(/margin:\s*auto;?/gi, 'margin: 0;');
+
+      // FORCE container/main/body to full width
+      styles = styles.replace(
+        /(\.container|\.main|body|html)\s*{([^}]*?)}/gi,
+        (match, selector, props) => {
+          let cleanProps = props;
+
+          // Remove restrictive width/max-width
+          cleanProps = cleanProps.replace(/max-width:\s*(?!100%|none)[^;]+;?/gi, '');
+          cleanProps = cleanProps.replace(/width:\s*(?!100%)[^;]+;?/gi, 'width: 100%;');
+
+          // Ensure width: 100%
+          if (!/width:\s*100%/i.test(cleanProps)) {
+            cleanProps += ' width: 100%;';
+          }
+
+          return `${selector} {${cleanProps}}`;
+        }
+      );
+
+      // FORCE body padding to tight margins
+      styles = styles.replace(
+        /(body)\s*{([^}]*?)}/gi,
+        (match, selector, props) => {
+          let bodyProps = props;
+
+          // Force tight padding
+          if (/padding:/i.test(bodyProps)) {
+            bodyProps = bodyProps.replace(/padding:\s*[^;]+;/gi, 'padding: 0.4in 0.5in;');
+          } else {
+            bodyProps += ' padding: 0.4in 0.5in;';
+          }
+
+          // Force line-height
+          if (/line-height:/i.test(bodyProps)) {
+            bodyProps = bodyProps.replace(/line-height:\s*[^;]+;/gi, 'line-height: 1.4;');
+          } else {
+            bodyProps += ' line-height: 1.4;';
+          }
+
+          return `${selector} {${bodyProps}}`;
+        }
+      );
+
+      // Replace style block
+      designHtml = designHtml.replace(
+        /<style[^>]*>[\s\S]*?<\/style>/i,
+        `<style>${styles}</style>`
+      );
+
+      // Verify fixes
+      const verifyStyles = designHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/i)?.[1] || '';
+      const afterMaxWidth = (verifyStyles.match(/max-width:\s*(?!100%|none)[^;]+;/gi) || []).length;
+      const afterAutoMargin = (verifyStyles.match(/margin:\s*(0\s+)?auto/gi) || []).length;
+
+      console.log('[Design] AFTER width fixes:', { maxWidthCount: afterMaxWidth, autoMarginCount: afterAutoMargin });
+      console.log('[Design] ✓ Full-width enforcement complete');
+    } else {
+      console.warn('[Design] WARNING: No <style> tag found - cannot enforce full-width!');
     }
 
     // Validate contrast ratios (WCAG AA compliance)

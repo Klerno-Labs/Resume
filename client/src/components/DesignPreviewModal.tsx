@@ -16,6 +16,13 @@ interface DesignPreview {
     passedAAA: number;
     failedAA: number;
   };
+  atsScore: number;
+  atsWarnings: string[];
+  atsIssues: Array<{
+    type: string;
+    message: string;
+    severity: 'high' | 'medium' | 'low';
+  }>;
 }
 
 interface DesignPreviewModalProps {
@@ -137,20 +144,34 @@ export function DesignPreviewModal({
                     )}
                   </div>
 
-                  {/* Contrast Validation Badge */}
-                  {preview.contrastPassed ? (
-                    <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 px-2.5 py-1.5 rounded-md border border-green-200">
+                  {/* Validation Badges */}
+                  <div className="flex flex-col gap-2">
+                    {/* ATS Score Badge */}
+                    <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border font-medium ${
+                      preview.atsScore >= 90 ? 'text-green-700 bg-green-50 border-green-200' :
+                      preview.atsScore >= 80 ? 'text-blue-700 bg-blue-50 border-blue-200' :
+                      preview.atsScore >= 70 ? 'text-amber-700 bg-amber-50 border-amber-200' :
+                      'text-red-700 bg-red-50 border-red-200'
+                    }`}>
                       <Check className="w-3.5 h-3.5" />
-                      <span className="font-medium">WCAG AA Compliant</span>
+                      <span>ATS Score: {preview.atsScore}%</span>
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-md border border-amber-200">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      <span className="font-medium">
-                        {preview.contrastSummary.failedAA} contrast warning(s)
-                      </span>
-                    </div>
-                  )}
+
+                    {/* Contrast Validation Badge */}
+                    {preview.contrastPassed ? (
+                      <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 px-2.5 py-1.5 rounded-md border border-green-200">
+                        <Check className="w-3.5 h-3.5" />
+                        <span className="font-medium">WCAG AA Compliant</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-md border border-amber-200">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        <span className="font-medium">
+                          {preview.contrastSummary.failedAA} contrast warning(s)
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Preview Iframe - Scaled thumbnail */}

@@ -112,21 +112,33 @@ DESIGN SPECIFICATIONS:
 - Emphasis: ${emphasisDescriptions[answers.emphasisOn]}
 - Profile Picture: ${pictureLine}
 
-PROFESSIONAL RESUME DESIGN RULES:
+PROFESSIONAL RESUME DESIGN RULES (ATS-OPTIMIZED):
 1. TYPOGRAPHY:
    - Use professional font sizes: Name (28-36px), Section Headers (16-18px), Body (11-12px)
    - Line height: 1.4-1.6 for readability
    - Use font-weight variations (400, 500, 600, 700) for hierarchy
    - Ensure excellent readability with proper letter-spacing
+   - Use standard web-safe fonts for ATS compatibility
 
-2. SPACING & LAYOUT:
-   - Max width: 8.5in (letter size)
-   - Margins: 0.5in all sides (use padding: 0.5in on body)
-   - Section spacing: 1.2-1.5rem between sections
-   - Item spacing: 0.5-0.8rem between list items
-   - Use CSS Grid or Flexbox for precise alignment
+2. SPACING & LAYOUT (ATS-FRIENDLY - MAXIMIZE SPACE):
+   - Page size: 8.5in x 11in (letter size) - USE FULL WIDTH
+   - Body padding: EXACTLY 0.4in top/bottom, 0.5in left/right (this creates the margins)
+   - NO max-width on containers - content should span full page width
+   - Section spacing: 0.8-1.0rem between sections (tight but readable)
+   - Item spacing: 0.3-0.5rem between list items (compact)
+   - Line height: 1.4 for body text (tighter for more content)
+   - PREFER simple, linear layouts - ATS systems parse top-to-bottom, left-to-right
+   - AVOID complex multi-column layouts if possible - single column is most ATS-friendly
    - Maintain consistent vertical rhythm
-   - Maximize content space - don't waste space with excessive margins
+   - CRITICAL: Maximize content space - use ALL available space, minimize margins
+
+3. ATS COMPATIBILITY (CRITICAL):
+   - Use standard section headers: "Professional Summary", "Work Experience", "Skills", "Education"
+   - NO tables, NO text boxes, NO graphics or charts
+   - Simple, clean HTML structure that ATS systems can parse
+   - Content should be readable when copied as plain text
+   - Every job entry should have clear company, title, and dates
+   - Skills should be text-based, not visual bars or charts
 
 3. COLOR USAGE (WCAG AA COMPLIANT ONLY):
    - Primary accent: ${accentColorMap[answers.accentColor]} for headers, icons, borders ONLY
@@ -168,28 +180,28 @@ PROFESSIONAL RESUME DESIGN RULES:
    - Contact information easily accessible
    - URLs and email addresses should be clickable
 
-CSS FRAMEWORK (USE EXACTLY - ALL COLORS WCAG AA COMPLIANT):
+CSS FRAMEWORK (USE EXACTLY - ALL COLORS WCAG AA COMPLIANT - MAXIMIZED SPACE):
 \`\`\`css
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 11pt;
-  line-height: 1.5;
+  line-height: 1.4;
   color: #333333;
   background: white;
-  max-width: 8.5in;
-  margin: 0 auto;
-  padding: 0.5in;
+  width: 100%;
+  margin: 0;
+  padding: 0.4in 0.5in;
 }
-h1 { font-size: 32px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
-h2 { font-size: 17px; font-weight: 600; color: ${accentColorMap[answers.accentColor]}; margin: 20px 0 10px; border-bottom: 2px solid ${accentColorMap[answers.accentColor]}; padding-bottom: 4px; }
-h3 { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
-.contact { font-size: 10pt; color: #595959; margin-bottom: 16px; }
-.job-title { font-size: 12pt; color: #595959; font-weight: 400; margin-bottom: 4px; }
+h1 { font-size: 28px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+h2 { font-size: 16px; font-weight: 600; color: ${accentColorMap[answers.accentColor]}; margin: 14px 0 8px; border-bottom: 2px solid ${accentColorMap[answers.accentColor]}; padding-bottom: 3px; }
+h3 { font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 3px; }
+.contact { font-size: 10pt; color: #595959; margin-bottom: 10px; }
+.job-title { font-size: 11pt; color: #595959; font-weight: 400; margin-bottom: 3px; }
 .company { font-weight: 600; color: #1a1a1a; }
 .date { color: #595959; font-size: 10pt; font-style: italic; }
-ul { margin-left: 18px; margin-top: 6px; }
-li { margin-bottom: 4px; color: #333333; }
+ul { margin-left: 16px; margin-top: 4px; }
+li { margin-bottom: 3px; color: #333333; line-height: 1.4; }
 \`\`\`
 
 HTML STRUCTURE (FOLLOW THIS PATTERN):
@@ -242,7 +254,7 @@ HTML STRUCTURE (FOLLOW THIS PATTERN):
 </html>
 \`\`\`
 
-CRITICAL RULES - STRICTLY ENFORCE (WCAG AA COMPLIANCE):
+CRITICAL RULES - STRICTLY ENFORCE (ATS + WCAG AA COMPLIANCE):
 - Use the EXACT CSS framework and HTML structure shown above as your foundation
 - ONLY USE THESE COLORS - NO OTHER COLORS ALLOWED:
   * Accent: ${accentColorMap[answers.accentColor]} (section headers only)
@@ -253,12 +265,26 @@ CRITICAL RULES - STRICTLY ENFORCE (WCAG AA COMPLIANCE):
 - ANY color not in the above list will cause WCAG AA failure
 - Keep the design SIMPLE and CLEAN - no fancy graphics, gradients, or colored backgrounds
 - Section headers (h2) should ONLY use the accent color for TEXT and BORDER - no background colors
-- Maximum width 8.5 inches with 0.5 inch margins/padding (NOT 0.6in or 0.75in)
+- Maximum width 8.5 inches with 0.4in top/bottom, 0.5in left/right margins (TIGHT MARGINS - use ALL space)
 - Include ALL resume content from the provided text - do not omit any sections
-- Font sizes: Name 32px, Section headers 17px, Body 11pt, Metadata 10pt
+- Font sizes: Name 28px, Section headers 16px, Body 11pt, Metadata 10pt
+- CRITICAL: Use compact spacing - line-height 1.4, tight margins between sections (14px), minimal padding
 - Return ONLY valid JSON: {"html": "<!DOCTYPE html><html>...</html>"}
 - The design must look like a traditional professional resume, not a website
 - ZERO CONTRAST WARNINGS REQUIRED - use only approved colors
+
+ATS COMPATIBILITY REQUIREMENTS (CRITICAL FOR 90%+ ATS SCORES):
+- Use STANDARD section headers: "Professional Summary", "Work Experience", "Skills", "Education", "Certifications"
+- Structure must be linear and parseable - avoid complex nested divs
+- NO tables for layout (ATS cannot parse them) - use simple divs with proper semantic HTML
+- NO text boxes, NO graphics, NO charts, NO images
+- Each job entry must clearly show: Company | Job Title | Dates on one line, then bullets below
+- Skills must be plain text lists, NOT visual bars or progress indicators
+- Date format must be consistent: "Month YYYY - Month YYYY" or "MM/YYYY - MM/YYYY"
+- Every achievement bullet should start with a strong action verb
+- Content should remain readable when HTML is stripped (ATS extracts plain text)
+- Use semantic HTML: <header>, <section>, <article>, <h1>, <h2>, <ul>, <li>
+- Avoid excessive CSS that might interfere with text extraction
 
 ABSOLUTELY FORBIDDEN - DO NOT USE:
 - NO colored backgrounds on ANY element (header, sections, divs, etc.)
@@ -266,7 +292,21 @@ ABSOLUTELY FORBIDDEN - DO NOT USE:
 - NO colored banner headers - the header must have white background
 - NO colored boxes or containers around name/contact info
 - The ONLY place the accent color appears is: h2 text color and h2 border-bottom
-- Maximize usable space - do NOT add excessive padding or margins
+- NO excessive padding or margins - every inch of space matters
+- NO large gaps between sections - keep it tight and professional
+- NO max-width constraints - use full page width (width: 100%)
+- NO centering with "margin: 0 auto" - content spans edge to edge (respecting body padding only)
+
+SPACE OPTIMIZATION (CRITICAL - FIT MORE CONTENT - MUST FOLLOW EXACTLY):
+- Body padding: EXACTLY "padding: 0.4in 0.5in;" (NOT "padding: 0.5in;")
+- Section spacing: EXACTLY "margin: 14px 0 8px;" for h2 headers
+- List item spacing: EXACTLY "margin-bottom: 3px;" for li elements
+- Line height: EXACTLY "line-height: 1.4;" for body text
+- Header margins: Name "margin-bottom: 6px;", h2 "margin: 14px 0 8px;"
+- Paragraph spacing: "margin-bottom: 3px;" between paragraphs
+- CRITICAL: Minimize ALL whitespace while maintaining readability
+- GOAL: Fit maximum content on one page - use EVERY available inch
+- VERIFY: Measure margins with DevTools - they must be 0.4in top/bottom, 0.5in sides
 
 EXAMPLE OF CORRECT HEADER (white background, WCAG AA compliant colors):
 <header>

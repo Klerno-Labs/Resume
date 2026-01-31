@@ -72,9 +72,17 @@ export default function Editor() {
     // Poll for resume updates with retry logic
     const fetchResume = async () => {
       try {
+        console.log('[Editor] ========================================');
+        console.log('[Editor] FETCHING RESUME FROM DATABASE');
+        console.log('[Editor] Resume ID:', resumeId);
+
         const data = await api.getResume(resumeId);
 
-        console.log('[Editor] Resume fetched, has improvedHtml:', !!data.improvedHtml);
+        console.log('[Editor] ✓ Resume fetched successfully');
+        console.log('[Editor] Has improvedHtml:', !!data.improvedHtml);
+        console.log('[Editor] ImprovedHtml length:', data.improvedHtml?.length || 0, 'characters');
+        console.log('[Editor] Status:', data.status);
+        console.log('[Editor] ========================================');
 
         setResume(data);
         retryCount = 0; // Reset retry count on success
@@ -888,15 +896,27 @@ export default function Editor() {
                           const designToApply = result.previews[0];
 
                           if (designToApply) {
+                            // Update local state
                             setResume(prev => prev ? {
                               ...prev,
                               improvedHtml: designToApply.html
                             } : null);
 
-                            toast({
-                              title: "✨ Template Applied!",
-                              description: `${template.name} is now active with your content`,
-                            });
+                            // Save to database
+                            try {
+                              await api.saveDesign(resume!.id, designToApply.html, template.name);
+                              console.log('[Editor] Template design saved to database:', template.name);
+                              toast({
+                                title: "✨ Template Applied & Saved!",
+                                description: `${template.name} is now active with your content`,
+                              });
+                            } catch (saveError) {
+                              console.error('[Editor] Failed to save template design:', saveError);
+                              toast({
+                                title: "✨ Template Applied!",
+                                description: `${template.name} is active but failed to save`,
+                              });
+                            }
                           } else {
                             throw new Error('No design generated');
                           }
@@ -1073,20 +1093,51 @@ export default function Editor() {
         previews={designPreviews}
         isLoading={isLoadingPreviews}
         error={previewError}
-        onSelectDesign={(html, templateName) => {
+        onSelectDesign={async (html, templateName) => {
+          console.log('[Editor] ========================================');
+          console.log('[Editor] DESIGN SELECTION STARTED');
+          console.log('[Editor] Resume ID:', resume!.id);
+          console.log('[Editor] Template Name:', templateName);
+          console.log('[Editor] HTML Length:', html.length, 'characters');
+          console.log('[Editor] ========================================');
+
           // Save current design to history before applying new one
           if (resume?.improvedHtml) {
+            console.log('[Editor] Saving current design to history');
             saveDesignToHistory(resume.improvedHtml, 'Previous Design');
           }
 
+          // Update local state
+          console.log('[Editor] Updating local state with new design');
           setResume(prev => ({
             ...prev!,
             improvedHtml: html,
           }));
-          toast({
-            title: '✨ Design Applied!',
-            description: `${templateName} is now active`,
-          });
+
+          // Save design to database
+          console.log('[Editor] Starting database save...');
+          try {
+            const saveResult = await api.saveDesign(resume!.id, html, templateName);
+            console.log('[Editor] ✓ Design saved to database successfully!');
+            console.log('[Editor] Save result:', saveResult);
+            console.log('[Editor] ========================================');
+
+            toast({
+              title: '✨ Design Applied & Saved!',
+              description: `${templateName} is now active and saved to database`,
+            });
+          } catch (error) {
+            console.error('[Editor] ✗ CRITICAL: Design save FAILED!');
+            console.error('[Editor] Error details:', error);
+            console.error('[Editor] Resume ID:', resume!.id);
+            console.error('[Editor] ========================================');
+
+            toast({
+              title: '⚠️ Design Applied Locally Only',
+              description: `${templateName} is active but FAILED to save. WILL BE LOST on refresh!`,
+              variant: 'destructive',
+            });
+          }
         }}
       />
 

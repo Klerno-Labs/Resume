@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
-import { FileText, Clock, CheckCircle2, XCircle, Sparkles, Eye, Calendar, TrendingUp, Upload, Edit } from 'lucide-react';
+import { FileText, Clock, CheckCircle2, XCircle, Sparkles, Eye, Calendar, TrendingUp, Upload, Edit, Palette } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { api } from '../lib/api';
+import { api, type Resume } from '../lib/api';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../lib/auth';
 import {
@@ -29,7 +29,9 @@ export function Dashboard() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [resumes, setResumes] = useState<ResumeListItem[]>([]);
+  const [designedResumes, setDesignedResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingDesigns, setLoadingDesigns] = useState(false);
 
   useEffect(() => {
     fetchResumes();
@@ -40,6 +42,12 @@ export function Dashboard() {
       setLoading(true);
       const data = await api.listResumes();
       setResumes(data.resumes);
+
+      // Fetch full resume data for designs
+      const resumesWithDesigns = data.resumes.filter(r => r.hasDesign);
+      if (resumesWithDesigns.length > 0) {
+        fetchDesignedResumes(resumesWithDesigns.map(r => r.id));
+      }
     } catch (error) {
       console.error('Failed to fetch resumes:', error);
       toast({
@@ -49,6 +57,27 @@ export function Dashboard() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDesignedResumes = async (resumeIds: string[]) => {
+    try {
+      setLoadingDesigns(true);
+      const designs = await Promise.all(
+        resumeIds.map(async (id) => {
+          try {
+            return await api.getResume(id);
+          } catch (error) {
+            console.error(`Failed to fetch design for resume ${id}:`, error);
+            return null;
+          }
+        })
+      );
+      setDesignedResumes(designs.filter((d): d is Resume => d !== null && !!d.improvedHtml));
+    } catch (error) {
+      console.error('Failed to fetch designs:', error);
+    } finally {
+      setLoadingDesigns(false);
     }
   };
 
@@ -202,6 +231,99 @@ export function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* My Designs Section */}
+        {designedResumes.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Palette className="w-6 h-6 text-purple-600" />
+                  My Designs
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Your professionally designed resumes
+                </p>
+              </div>
+            </div>
+
+            {loadingDesigns ? (
+              <div className="bg-white dark:bg-slate-800 rounded-lg border p-12 text-center">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading your designs...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {designedResumes.map((resume) => (
+                  <div
+                    key={resume.id}
+                    className="bg-white dark:bg-slate-800 rounded-lg border shadow-sm overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
+                    onClick={() => navigate(`/editor/${resume.id}`)}
+                  >
+                    {/* Design Preview */}
+                    <div className="relative bg-gray-50 dark:bg-gray-900" style={{ height: '300px', position: 'relative' }}>
+                      {resume.improvedHtml ? (
+                        <iframe
+                          srcDoc={resume.improvedHtml}
+                          className="border-0"
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: '50%',
+                            transform: 'translateX(-50%) scale(0.28)',
+                            transformOrigin: 'top center',
+                            width: '8.5in',
+                            height: '1071px',
+                            display: 'block',
+                            overflow: 'hidden',
+                            pointerEvents: 'none',
+                          }}
+                          title={`Preview: ${resume.fileName}`}
+                          sandbox="allow-same-origin"
+                          scrolling="no"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <FileText className="w-16 h-16 text-gray-300" />
+                        </div>
+                      )}
+
+                      {/* Hover Overlay */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+                          <Eye className="w-4 h-4" />
+                          <span className="text-sm font-medium">Open in Editor</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Design Info */}
+                    <div className="p-4 border-t">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-slate-900 dark:text-white truncate">
+                            {resume.fileName}
+                          </h3>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Updated {formatDate(resume.updatedAt)}
+                          </p>
+                        </div>
+                        {resume.atsScore && (
+                          <div className="flex flex-col items-end">
+                            <span className={`text-lg font-bold ${getScoreColor(resume.atsScore)}`}>
+                              {resume.atsScore}%
+                            </span>
+                            <span className="text-xs text-muted-foreground">ATS</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Resume List */}
         {resumes.length === 0 ? (

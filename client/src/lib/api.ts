@@ -447,6 +447,13 @@ class ApiClient {
         passedAAA: number;
         failedAA: number;
       };
+      atsScore: number;
+      atsWarnings: string[];
+      atsIssues: Array<{
+        type: string;
+        message: string;
+        severity: 'high' | 'medium' | 'low';
+      }>;
     }>;
   }> {
     const res = await this.fetchWithCredentials(`${this.baseUrl}/resumes/preview-designs`, {
@@ -473,6 +480,13 @@ class ApiClient {
           passedAAA: number;
           failedAA: number;
         };
+        atsScore: number;
+        atsWarnings: string[];
+        atsIssues: Array<{
+          type: string;
+          message: string;
+          severity: 'high' | 'medium' | 'low';
+        }>;
       }>;
     }>;
   }
@@ -664,6 +678,22 @@ class ApiClient {
     if (!res.ok) {
       const error = await res.json() as { message?: string; error?: string };
       throw new Error(this.toErrorMessage(error, 'Failed to save template'));
+    }
+    return res.json();
+  }
+
+  async saveDesign(resumeId: string, html: string, templateName?: string): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    const res = await this.fetchWithCredentials(`${this.baseUrl}/resumes/save-design`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resumeId, html, templateName }),
+    });
+    if (!res.ok) {
+      const error = await res.json() as { message?: string; error?: string };
+      throw new Error(this.toErrorMessage(error, 'Failed to save design'));
     }
     return res.json();
   }
