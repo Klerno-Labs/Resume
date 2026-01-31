@@ -164,14 +164,92 @@ PROFESSIONAL RESUME DESIGN RULES:
    - Contact information easily accessible
    - URLs and email addresses should be clickable
 
+CSS FRAMEWORK (USE THIS STRUCTURE):
+\`\`\`css
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 11pt;
+  line-height: 1.5;
+  color: #333333;
+  background: white;
+  max-width: 8.5in;
+  margin: 0 auto;
+  padding: 0.6in 0.6in;
+}
+h1 { font-size: 32px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
+h2 { font-size: 17px; font-weight: 600; color: ${accentColorMap[answers.accentColor]}; margin: 20px 0 10px; border-bottom: 2px solid ${accentColorMap[answers.accentColor]}; padding-bottom: 4px; }
+h3 { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+.contact { font-size: 10pt; color: #666666; margin-bottom: 16px; }
+.job-title { font-size: 12pt; color: #666666; font-weight: 400; margin-bottom: 4px; }
+.company { font-weight: 600; color: #1a1a1a; }
+.date { color: #666666; font-size: 10pt; font-style: italic; }
+ul { margin-left: 18px; margin-top: 6px; }
+li { margin-bottom: 4px; }
+\`\`\`
+
+HTML STRUCTURE (FOLLOW THIS PATTERN):
+\`\`\`html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Resume</title>
+  <style>/* CSS framework above */</style>
+</head>
+<body>
+  <header>
+    <h1>[Name]</h1>
+    <div class="job-title">[Title]</div>
+    <div class="contact">[Email] | [Phone] | [Location]</div>
+  </header>
+
+  <section>
+    <h2>Professional Summary</h2>
+    <p>[Summary text]</p>
+  </section>
+
+  <section>
+    <h2>Experience</h2>
+    <div class="job">
+      <div class="job-header">
+        <span class="company">[Company]</span> | <span class="date">[Dates]</span>
+      </div>
+      <h3>[Job Title]</h3>
+      <ul>
+        <li>[Achievement]</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Skills</h2>
+    <p>[Skills list]</p>
+  </section>
+
+  <section>
+    <h2>Education</h2>
+    <div class="education">
+      <div><span class="company">[School]</span> | <span class="date">[Dates]</span></div>
+      <div>[Degree]</div>
+    </div>
+  </section>
+</body>
+</html>
+\`\`\`
+
 CRITICAL RULES:
-- Use the EXACT accent color ${accentColorMap[answers.accentColor]} - do not substitute or modify
+- Use the EXACT CSS framework and HTML structure shown above as your foundation
+- Use the EXACT accent color ${accentColorMap[answers.accentColor]} - do not substitute
+- Keep the design SIMPLE and CLEAN - no fancy graphics, gradients, or colored backgrounds
+- Section headers should use the accent color with a simple underline border
+- Maximum width 8.5 inches with 0.6 inch margins
 - Include ALL resume content from the provided text - do not omit any sections
-- Create a clean, ATS-friendly design that looks professional on screen and in print
-- Ensure the design matches the ${answers.style} style aesthetic
+- Font sizes: Name 32px, Section headers 17px, Body 11pt, Metadata 10pt
 - Return ONLY valid JSON: {"html": "<!DOCTYPE html><html>...</html>"}
-- Height should be auto, not fixed
-- Test that all text is readable and properly contrasted`;
+- The design must look like a traditional professional resume, not a website
+- NO purple, teal, or bright colored backgrounds - white background only
+- NO large colored header bars - keep headers minimal`;
 
   return prompt;
 }
