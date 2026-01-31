@@ -121,11 +121,12 @@ PROFESSIONAL RESUME DESIGN RULES:
 
 2. SPACING & LAYOUT:
    - Max width: 8.5in (letter size)
-   - Margins: 0.5in to 0.75in all sides
+   - Margins: 0.5in all sides (use padding: 0.5in on body)
    - Section spacing: 1.2-1.5rem between sections
    - Item spacing: 0.5-0.8rem between list items
    - Use CSS Grid or Flexbox for precise alignment
    - Maintain consistent vertical rhythm
+   - Maximize content space - don't waste space with excessive margins
 
 3. COLOR USAGE:
    - Primary accent: ${accentColorMap[answers.accentColor]} for headers, icons, borders
@@ -175,7 +176,7 @@ body {
   background: white;
   max-width: 8.5in;
   margin: 0 auto;
-  padding: 0.6in 0.6in;
+  padding: 0.5in;
 }
 h1 { font-size: 32px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
 h2 { font-size: 17px; font-weight: 600; color: ${accentColorMap[answers.accentColor]}; margin: 20px 0 10px; border-bottom: 2px solid ${accentColorMap[answers.accentColor]}; padding-bottom: 4px; }
@@ -243,13 +244,14 @@ CRITICAL RULES:
 - Use the EXACT accent color ${accentColorMap[answers.accentColor]} - do not substitute
 - Keep the design SIMPLE and CLEAN - no fancy graphics, gradients, or colored backgrounds
 - Section headers should use the accent color with a simple underline border
-- Maximum width 8.5 inches with 0.6 inch margins
+- Maximum width 8.5 inches with 0.5 inch margins/padding (NOT 0.6in or 0.75in)
 - Include ALL resume content from the provided text - do not omit any sections
 - Font sizes: Name 32px, Section headers 17px, Body 11pt, Metadata 10pt
 - Return ONLY valid JSON: {"html": "<!DOCTYPE html><html>...</html>"}
 - The design must look like a traditional professional resume, not a website
 - NO purple, teal, or bright colored backgrounds - white background only
-- NO large colored header bars - keep headers minimal`;
+- NO large colored header bars - keep headers minimal
+- Maximize usable space - do NOT add excessive padding or margins`;
 
   return prompt;
 }
