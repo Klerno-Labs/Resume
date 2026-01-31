@@ -136,6 +136,13 @@ RULES:
 - Height: auto (not fixed)
 - Make it look expensive and professional`;
 
+        // Add variation instructions for custom prompts to ensure 3 different designs
+        const variationInstructions = customPrompt ? [
+          `VARIATION 1: Focus on a traditional, conservative interpretation with clean lines and minimal styling. Section headers should be simple underlines.`,
+          `VARIATION 2: Add subtle visual elements like section icons or skill ratings. Use slightly more prominent headers with background accents.`,
+          `VARIATION 3: Create a more modern interpretation with creative use of whitespace, subtle borders around sections, or a light gray sidebar for contact/skills info.`
+        ][templateIndex] : '';
+
         const designResult = await openai.chat.completions.create({
           model: 'gpt-4o',
           messages: [
@@ -146,6 +153,8 @@ RULES:
             {
               role: 'user',
               content: `Create a premium HTML resume${customPrompt ? ' based on the specifications above' : ` using the ${template.name} template`}.
+
+${customPrompt ? variationInstructions : ''}
 
 CONTENT:
 ${resume.improved_text || resume.original_text}
