@@ -106,7 +106,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const previews = [];
 
     // Generate designs in parallel with retry logic
-    const designPromises = selectedTemplates.map(async (template) => {
+    const designPromises = selectedTemplates.map(async (template, templateIndex) => {
       console.log('[Preview Designs] Generating design with template:', template.name);
 
       const maxRetries = 3;
@@ -224,11 +224,45 @@ Return ONLY JSON: {"html": "<!DOCTYPE html>..."}`,
 
         console.log(`[Preview] Attempt ${attempt}: Success for template:`, template.name);
 
+        // If using custom prompt, extract user preferences for metadata
+        let templateName = template.name;
+        let templateStyle = template.style;
+        let templateLayout = template.layout;
+        let accentColor = template.accentColor;
+
+        if (customPrompt) {
+          // Parse custom prompt to extract user choices
+          const styleMatch = customPrompt.match(/- Style: (\w+)/);
+          const layoutMatch = customPrompt.match(/- Layout: ([^\n]+)/);
+          const colorMatch = customPrompt.match(/- Accent Color: (#[0-9a-f]{6})/i);
+
+          if (styleMatch) templateStyle = styleMatch[1];
+          if (layoutMatch) {
+            const layoutText = layoutMatch[1].toLowerCase();
+            if (layoutText.includes('single')) templateLayout = 'single-column';
+            else if (layoutText.includes('two')) templateLayout = '2-column';
+            else if (layoutText.includes('sidebar')) templateLayout = 'sidebar';
+            else if (layoutText.includes('asymmetric')) templateLayout = 'asymmetric';
+          }
+          if (colorMatch) accentColor = colorMatch[1];
+
+          // Generate descriptive name based on user choices
+          const styleNames: Record<string, string> = {
+            modern: 'Modern',
+            classic: 'Classic',
+            creative: 'Creative',
+            minimalist: 'Minimal',
+            professional: 'Professional',
+            tech: 'Tech'
+          };
+          templateName = `Custom ${styleNames[templateStyle] || 'Design'} ${templateIndex + 1}`;
+        }
+
         return {
-          templateName: template.name,
-          templateStyle: template.style,
-          layout: template.layout,
-          accentColor: template.accentColor,
+          templateName,
+          templateStyle,
+          layout: templateLayout,
+          accentColor,
           html: design.html,
           contrastPassed: contrastValidation.passed,
           contrastSummary: contrastValidation.summary,
