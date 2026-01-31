@@ -21,7 +21,6 @@ export interface User {
   credits_remaining: number;
   email_verified: boolean;
   created_at: Date;
-  updated_at: Date;
 }
 
 // JWT helpers
@@ -48,7 +47,7 @@ export async function getUserFromRequest(req: VercelRequest): Promise<User | nul
 
   // Security: Never use SELECT * - explicitly select columns to avoid exposing password_hash
   const users = await sql`
-    SELECT id, email, name, plan, credits_remaining, email_verified, created_at, updated_at
+    SELECT id, email, name, plan, credits_remaining, email_verified, created_at
     FROM users
     WHERE id = ${decoded.userId}
   `;

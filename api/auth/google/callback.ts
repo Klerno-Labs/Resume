@@ -73,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Security: SELECT specific columns only
     console.log('[auth/google/callback] Querying database for existing user...');
     let users = await sql`
-      SELECT id, email, name, plan, credits_remaining, email_verified, created_at, updated_at
+      SELECT id, email, name, plan, credits_remaining, email_verified, created_at
       FROM users
       WHERE email = ${googleUser.email}
     `;
@@ -89,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const result = await sql`
         INSERT INTO users (email, password_hash, name, plan, credits_remaining, email_verified)
         VALUES (${googleUser.email}, ${secureOAuthHash}, ${googleUser.name || null}, ${admin ? 'admin' : 'free'}, ${admin ? 9999 : 1}, true)
-        RETURNING id, email, name, plan, credits_remaining, email_verified, created_at, updated_at
+        RETURNING id, email, name, plan, credits_remaining, email_verified, created_at
       `;
       user = result[0];
       console.log('[auth/google/callback] New user created with ID:', user.id);
