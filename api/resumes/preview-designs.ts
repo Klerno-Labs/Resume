@@ -138,9 +138,9 @@ RULES:
 
         // Add variation instructions for custom prompts to ensure 3 different designs
         const variationInstructions = customPrompt ? [
-          `VARIATION 1: Focus on a traditional, conservative interpretation with clean lines and minimal styling. Section headers should be simple underlines.`,
-          `VARIATION 2: Add subtle visual elements like section icons or skill ratings. Use slightly more prominent headers with background accents.`,
-          `VARIATION 3: Create a more modern interpretation with creative use of whitespace, subtle borders around sections, or a light gray sidebar for contact/skills info.`
+          `VARIATION 1: Focus on a traditional, conservative interpretation with clean lines and minimal styling. Section headers should be simple underlines with the accent color.`,
+          `VARIATION 2: Add subtle visual elements like small section icons (using Unicode symbols like ■ ◆ ●). Use slightly bolder section headers.`,
+          `VARIATION 3: Create a more modern interpretation with creative use of whitespace and subtle borders around sections. Keep white background throughout.`
         ][templateIndex] : '';
 
         const designResult = await openai.chat.completions.create({
@@ -193,13 +193,17 @@ Return ONLY JSON: {"html": "<!DOCTYPE html>..."}`,
           // Check for background-color declarations that aren't white/transparent
           const backgroundMatches = htmlLower.match(/background(-color)?:\s*[^;}\n]+/gi) || [];
           const hasColoredBackground = backgroundMatches.some(match => {
-            // Allow white, transparent, or inherit only
-            return !match.match(/:\s*(white|#fff|#ffffff|transparent|none|inherit)/i);
+            // Allow: white, transparent, inherit, url(), linear-gradient(), rgba(255,255,255,...)
+            // Reject: solid colors like #2563eb, blue, rgb(38, 99, 235), etc.
+            const isAllowed = match.match(/:\s*(white|#fff|#ffffff|transparent|none|inherit|url\(|linear-gradient\(|rgba?\(255,\s*255,\s*255)/i);
+            return !isAllowed;
           });
 
           if (hasColoredBackground) {
             console.warn(`[Preview] Attempt ${attempt}: Colored background detected, rejecting for template:`, template.name);
-            const badBackgrounds = backgroundMatches.filter(m => !m.match(/:\s*(white|#fff|#ffffff|transparent|none|inherit)/i));
+            const badBackgrounds = backgroundMatches.filter(m =>
+              !m.match(/:\s*(white|#fff|#ffffff|transparent|none|inherit|url\(|linear-gradient\(|rgba?\(255,\s*255,\s*255)/i)
+            );
             console.warn('[Preview] Invalid backgrounds found:', badBackgrounds.slice(0, 5));
             if (attempt === maxRetries) {
               console.warn('[Preview] Max retries reached, rejecting design:', template.name);
