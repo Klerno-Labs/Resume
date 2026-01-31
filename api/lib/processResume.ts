@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { getSQL } from '../_shared.js';
+import { sql } from '../_shared.js';
 import { getRandomTemplate } from './designTemplates.js';
 import { validateResumeContrast } from './contrastValidator.js';
 
@@ -16,8 +16,7 @@ function getOpenAI() {
 
 export async function processResume(resumeId: string, originalText: string, userId: string, userPlan: string) {
   try {
-    const sql = getSQL();
-    const openai = getOpenAI();
+      const openai = getOpenAI();
 
     // Run optimization and scoring in parallel (fast)
     // Design generation happens after in background to avoid timeout
@@ -111,8 +110,7 @@ Return ONLY valid JSON in this exact format:
     console.log(`[Process] Resume ${resumeId} text optimization completed - design will be generated separately`);
   } catch (error) {
     console.error('[Process] Error optimizing resume:', error);
-    const sql = getSQL();
-    await sql`UPDATE resumes SET status = 'failed' WHERE id = ${resumeId}`;
+      await sql`UPDATE resumes SET status = 'failed' WHERE id = ${resumeId}`;
 
     if (userPlan !== 'admin') {
       await sql`UPDATE users SET credits_remaining = credits_remaining + 1 WHERE id = ${userId}`;
@@ -124,8 +122,7 @@ Return ONLY valid JSON in this exact format:
 // Separate function for design generation (called by separate API endpoint)
 export async function generateResumeDesign(resumeId: string) {
   try {
-    const sql = getSQL();
-    const openai = getOpenAI();
+      const openai = getOpenAI();
 
     // Get resume data
     const resumes = await sql`SELECT improved_text, original_text FROM resumes WHERE id = ${resumeId}`;
