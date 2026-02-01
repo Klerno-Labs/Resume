@@ -467,6 +467,66 @@ Return ONLY JSON: {"html": "<!DOCTYPE html>..."}`,
 
         design.html = processedHtml;
 
+        // CRITICAL FIX: Remove inline padding from <body> tag (AI adds this and it overrides our CSS!)
+        console.log(`[Preview] Checking for inline body styles that override padding...`);
+        design.html = design.html.replace(
+          /<body([^>]*)\s+style\s*=\s*["']([^"']*)["']/gi,
+          (match, beforeStyle, styleContent) => {
+            const originalStyle = styleContent;
+            // Remove padding from inline styles
+            let cleanedStyle = styleContent.replace(/padding:\s*[^;]+;?/gi, '');
+            // Remove margin from inline styles
+            cleanedStyle = cleanedStyle.replace(/margin:\s*[^;]+;?/gi, '');
+
+            if (originalStyle !== cleanedStyle) {
+              console.log(`[Preview] ✓ Stripped inline padding/margin from <body> tag`);
+              console.log(`[Preview]   BEFORE:`, originalStyle);
+              console.log(`[Preview]   AFTER:`, cleanedStyle);
+            }
+
+            // If style is now empty, remove the attribute entirely
+            if (cleanedStyle.trim() === '') {
+              return `<body${beforeStyle}`;
+            }
+            return `<body${beforeStyle} style="${cleanedStyle}"`;
+          }
+        );
+
+        // CRITICAL FIX #2: Strip padding/margin from container divs that cancel body padding
+        console.log(`[Preview] Checking for container divs with problematic padding/margins...`);
+        const containerStyleMatch = design.html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+        if (containerStyleMatch) {
+          let containerStyles = containerStyleMatch[1];
+
+          // Remove padding and negative margins from .container, .wrapper, .main, etc.
+          containerStyles = containerStyles.replace(
+            /(\.container|\.wrapper|\.main|\.content|div\.resume|#resume)\s*{([^}]*?)}/gi,
+            (match, selector, props) => {
+              let cleanProps = props;
+
+              // Remove padding declarations
+              const hadPadding = /padding:/i.test(cleanProps);
+              cleanProps = cleanProps.replace(/padding:\s*[^;]+;?/gi, '');
+
+              // Remove negative margins (these cancel body padding!)
+              const hadNegMargin = /margin:\s*-/i.test(cleanProps);
+              cleanProps = cleanProps.replace(/margin:\s*-[^;]+;?/gi, '');
+
+              if (hadPadding || hadNegMargin) {
+                console.log(`[Preview] ✓ Removed problematic styles from ${selector}`);
+              }
+
+              return `${selector} {${cleanProps}}`;
+            }
+          );
+
+          design.html = design.html.replace(
+            /<style[^>]*>[\s\S]*?<\/style>/i,
+            `<style>${containerStyles}</style>`
+          );
+          console.log(`[Preview] ✓ Container padding/margin cleanup complete`);
+        }
+
         // Validate contrast
         const contrastValidation = validateResumeContrast(design.html);
 
