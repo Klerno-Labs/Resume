@@ -156,7 +156,9 @@ RULES:
 - Include ALL resume content
 - Height: auto (not fixed)
 - Make it look expensive and professional
-- MAXIMIZE content per page - tight but professional spacing`;
+- MAXIMIZE content per page - tight but professional spacing
+- NO IMAGES - Do not include <img> tags, profile photos, or external image URLs (NO via.placeholder.com, NO unsplash, NO photos)
+- Use text and Unicode symbols only (✉ ☎ 📍 ● ◆ ■)`;
 
         // Add variation instructions for custom prompts to ensure 3 different designs
         const variationInstructions = customPrompt ? [
@@ -477,6 +479,12 @@ a:hover { text-decoration: underline; }
           console.log(`[Preview] ✓ INJECTED perfect CSS into <head>`);
         }
 
+        // Step 7: Remove ALL external images (profile photos, placeholder images, etc.)
+        // Resumes should NEVER have external image URLs - they cause loading errors and are unprofessional
+        processedHtml = processedHtml.replace(/<img[^>]*>/gi, '');
+        processedHtml = processedHtml.replace(/https?:\/\/[^\s"']+\.(jpg|jpeg|png|gif|svg|webp)/gi, '');
+        console.log(`[Preview] ✓ Stripped all external images and image URLs`);
+
         design.html = processedHtml;
 
         console.log(`[Preview] ========================================`);
@@ -485,6 +493,7 @@ a:hover { text-decoration: underline; }
         console.log(`[Preview] ✓ @page margin: 0.5in 0.6in`);
         console.log(`[Preview] ✓ All containers: width 100%, no centering`);
         console.log(`[Preview] ✓ Print mode: fully configured`);
+        console.log(`[Preview] ✓ External images removed`);
         console.log(`[Preview] ========================================`);
 
         // Validate contrast
