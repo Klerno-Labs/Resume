@@ -169,7 +169,7 @@ PROFESSIONAL RESUME DESIGN RULES (ATS-OPTIMIZED):
    - Include <!DOCTYPE html> and proper HTML5 structure
    - Embed all CSS in <style> tag (no external stylesheets)
    - Use semantic HTML (header, section, article)
-   - Set page size: @page { size: 8.5in 11in; margin: 0; }
+   - Set page size and margins: @page { size: 8.5in 11in; margin: 0.5in 0.6in; }
    - Make responsive with @media print styles
    - No JavaScript or external dependencies
 

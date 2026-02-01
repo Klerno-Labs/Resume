@@ -351,7 +351,7 @@ ${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-co
    ✓ Full Google Fonts link with multiple weights
    ✓ ALL CSS in <style> tag (no external files)
    ✓ Semantic HTML5: <header>, <section>, <article>, <aside>
-   ✓ Print CSS: @page { margin: 0; size: letter; } @media print { .container { box-shadow: none !important; } }
+   ✓ Print CSS: @page { margin: 0.5in 0.6in; size: letter; } @media print { body { padding: 0.5in 0.6in !important; } }
 
 9. EXAMPLES OF MINIMAL STRUCTURE (Study these - TIGHT SPACING):
    ✓ Name Section: Name (26-28px, bold, letter-spacing: 0px) → Title (13px, regular, margin-top: 3px) → Contact (plain text: email | phone | location, 11px)
@@ -544,6 +544,35 @@ Expected JSON format:
         `<style>${containerStyles}</style>`
       );
       console.log('[Design] ✓ Container padding/margin cleanup complete');
+    }
+
+    // CRITICAL FIX #3: Force correct @page margins for print (browsers strip body padding in print mode!)
+    console.log('[Design] Fixing @page margins for print...');
+    const pageStyleMatch = designHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+    if (pageStyleMatch) {
+      let pageStyles = pageStyleMatch[1];
+
+      // Remove bad @page rules (margin: 0)
+      pageStyles = pageStyles.replace(/@page\s*{[^}]*}/gi, '');
+
+      // Add correct @page rule at the END of styles
+      pageStyles += '\n@page { margin: 0.5in 0.6in; size: letter; }';
+
+      // Ensure @media print preserves padding
+      if (!/@media\s+print/i.test(pageStyles)) {
+        pageStyles += '\n@media print { body { padding: 0.5in 0.6in !important; } }';
+      } else {
+        pageStyles = pageStyles.replace(
+          /@media\s+print\s*{([^}]*)}/gi,
+          '@media print { body { padding: 0.5in 0.6in !important; } }'
+        );
+      }
+
+      designHtml = designHtml.replace(
+        /<style[^>]*>[\s\S]*?<\/style>/i,
+        `<style>${pageStyles}</style>`
+      );
+      console.log('[Design] ✓ Print margins fixed: @page { margin: 0.5in 0.6in; }');
     }
 
     // Validate contrast ratios (WCAG AA compliance)

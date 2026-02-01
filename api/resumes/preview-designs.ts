@@ -527,6 +527,35 @@ Return ONLY JSON: {"html": "<!DOCTYPE html>..."}`,
           console.log(`[Preview] ✓ Container padding/margin cleanup complete`);
         }
 
+        // CRITICAL FIX #3: Force correct @page margins for print (browsers strip body padding in print mode!)
+        console.log(`[Preview] Fixing @page margins for print...`);
+        const pageStyleMatch = design.html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+        if (pageStyleMatch) {
+          let pageStyles = pageStyleMatch[1];
+
+          // Remove bad @page rules (margin: 0)
+          pageStyles = pageStyles.replace(/@page\s*{[^}]*}/gi, '');
+
+          // Add correct @page rule at the END of styles
+          pageStyles += '\n@page { margin: 0.5in 0.6in; size: letter; }';
+
+          // Ensure @media print preserves padding
+          if (!/@media\s+print/i.test(pageStyles)) {
+            pageStyles += '\n@media print { body { padding: 0.5in 0.6in !important; } }';
+          } else {
+            pageStyles = pageStyles.replace(
+              /@media\s+print\s*{([^}]*)}/gi,
+              '@media print { body { padding: 0.5in 0.6in !important; } }'
+            );
+          }
+
+          design.html = design.html.replace(
+            /<style[^>]*>[\s\S]*?<\/style>/i,
+            `<style>${pageStyles}</style>`
+          );
+          console.log(`[Preview] ✓ Print margins fixed: @page { margin: 0.5in 0.6in; }`);
+        }
+
         // Validate contrast
         const contrastValidation = validateResumeContrast(design.html);
 
