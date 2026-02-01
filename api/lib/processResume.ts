@@ -401,180 +401,169 @@ Expected JSON format:
       throw new Error('No HTML generated');
     }
 
-    // POST-PROCESS: FORCE FULL-WIDTH LAYOUT (AI ignores instructions)
-    console.log('[Design] POST-PROCESSING: Forcing full-width layout...');
-    const styleMatch = designHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+    // 🔥 NUCLEAR OPTION: COMPLETELY REWRITE CSS FROM SCRATCH 🔥
+    // The AI keeps ignoring instructions, so we'll extract the content and rebuild the CSS ourselves
+    console.log('[Design] ========================================');
+    console.log('[Design] 🔥 NUCLEAR POST-PROCESSING: REWRITING ALL CSS 🔥');
+    console.log('[Design] ========================================');
 
-    if (styleMatch) {
-      let styles = styleMatch[1];
+    // Step 1: Extract font import (we want to keep this)
+    const fontImportMatch = designHtml.match(/(@import\s+url\([^)]+\);)/i);
+    const fontImport = fontImportMatch ? fontImportMatch[1] : '';
 
-      // Count issues before fixing
-      const beforeMaxWidth = (styles.match(/max-width:\s*(?!100%|none)[^;]+;/gi) || []).length;
-      const beforeAutoMargin = (styles.match(/margin:\s*(0\s+)?auto/gi) || []).length;
-
-      console.log('[Design] BEFORE width fixes:', { maxWidthCount: beforeMaxWidth, autoMarginCount: beforeAutoMargin });
-
-      // REMOVE restrictive max-width (keep only max-width: 100% or none)
-      styles = styles.replace(/max-width:\s*(?!100%|none)[^;]+;/gi, '');
-
-      // REMOVE centering auto margins
-      styles = styles.replace(/margin:\s*0\s+auto;?/gi, 'margin: 0;');
-      styles = styles.replace(/margin:\s*auto;?/gi, 'margin: 0;');
-
-      // FORCE container/main/body to full width
-      styles = styles.replace(
-        /(\.container|\.main|body|html)\s*{([^}]*?)}/gi,
-        (match, selector, props) => {
-          let cleanProps = props;
-
-          // Remove restrictive width/max-width
-          cleanProps = cleanProps.replace(/max-width:\s*(?!100%|none)[^;]+;?/gi, '');
-          cleanProps = cleanProps.replace(/width:\s*(?!100%)[^;]+;?/gi, 'width: 100%;');
-
-          // Ensure width: 100%
-          if (!/width:\s*100%/i.test(cleanProps)) {
-            cleanProps += ' width: 100%;';
-          }
-
-          return `${selector} {${cleanProps}}`;
-        }
-      );
-
-      // FORCE body padding to create proper margins (CRITICAL - prevents content cutoff)
-      // Handle patterns like: body {, html body {, body, html {, etc.
-      const bodyPaddingRegex = /([^}]*\bbody\b[^{]*)\{([^}]*)\}/gi;
-      let bodyRuleFound = false;
-
-      styles = styles.replace(bodyPaddingRegex, (match, selector, props) => {
-        if (!selector.includes('body')) return match; // Safety check
-        bodyRuleFound = true;
-
-        let bodyProps = props;
-        // Remove any existing padding
-        bodyProps = bodyProps.replace(/padding:\s*[^;]+;?/gi, '');
-        // Remove box-sizing if exists
-        bodyProps = bodyProps.replace(/box-sizing:\s*[^;]+;?/gi, '');
-        // Remove line-height if exists
-        bodyProps = bodyProps.replace(/line-height:\s*[^;]+;?/gi, '');
-
-        // Add our properties at the start
-        bodyProps = 'padding: 0.5in 0.6in !important; box-sizing: border-box; line-height: 1.4;' + bodyProps;
-
-        console.log('[Design] ✓ Forced body padding to 0.5in 0.6in for selector:', selector.trim());
-        return `${selector}{${bodyProps}}`;
-      });
-
-      if (!bodyRuleFound) {
-        // No body rule found, add one
-        styles += '\nbody { padding: 0.5in 0.6in !important; box-sizing: border-box; line-height: 1.4; }';
-        console.log('[Design] ✓ Added new body rule with 0.5in 0.6in padding');
+    // Step 2: Extract font family being used (from existing CSS or use default)
+    const existingStyleMatch = designHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+    let fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
+    if (existingStyleMatch) {
+      const fontFamilyMatch = existingStyleMatch[1].match(/font-family:\s*([^;]+);/i);
+      if (fontFamilyMatch) {
+        fontFamily = fontFamilyMatch[1].trim();
       }
-
-      // Replace style block
-      designHtml = designHtml.replace(
-        /<style[^>]*>[\s\S]*?<\/style>/i,
-        `<style>${styles}</style>`
-      );
-
-      // Verify fixes
-      const verifyStyles = designHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/i)?.[1] || '';
-      const afterMaxWidth = (verifyStyles.match(/max-width:\s*(?!100%|none)[^;]+;/gi) || []).length;
-      const afterAutoMargin = (verifyStyles.match(/margin:\s*(0\s+)?auto/gi) || []).length;
-
-      console.log('[Design] AFTER width fixes:', { maxWidthCount: afterMaxWidth, autoMarginCount: afterAutoMargin });
-      console.log('[Design] ✓ Full-width enforcement complete');
-    } else {
-      console.warn('[Design] WARNING: No <style> tag found - cannot enforce full-width!');
     }
 
-    // CRITICAL FIX: Remove inline padding from <body> tag (AI adds this and it overrides our CSS!)
-    console.log('[Design] Checking for inline body styles that override padding...');
+    // Step 3: Extract accent color (from template)
+    const accentColor = design.colorScheme || '#2563eb';
+
+    // Step 4: Build PERFECT CSS from scratch with guaranteed padding
+    const perfectCSS = `
+${fontImport}
+
+/* CRITICAL RESET - Prevent any inherited padding/margin issues */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* HTML/BODY FOUNDATION - THE PADDING LIVES HERE */
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-size: 16px;
+}
+
+body {
+  margin: 0 !important;
+  padding: 0.5in 0.6in !important; /* THIS IS THE MARGIN - DO NOT REMOVE */
+  width: 100% !important;
+  min-height: 100%;
+  font-family: ${fontFamily};
+  font-size: 11px;
+  line-height: 1.4;
+  color: #1a1a1a;
+  background: white;
+  box-sizing: border-box !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ENSURE ALL CONTAINERS ARE FULL WIDTH - NO CENTERING */
+.container, .wrapper, .main, .content, .resume, #resume {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* PREVENT ANY ELEMENT FROM BREAKING OUT */
+div, section, article, header, main {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* PRINT MODE - CRITICAL FOR PDF GENERATION */
+@page {
+  size: letter;
+  margin: 0.5in 0.6in; /* Browsers use this instead of body padding in print */
+}
+
+@media print {
+  html, body {
+    width: 8.5in !important;
+    height: 11in !important;
+    margin: 0 !important;
+    padding: 0.5in 0.6in !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* TYPOGRAPHY HIERARCHY */
+h1, .name { font-size: 28px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.5px; }
+h2, .title { font-size: 13px; font-weight: 400; margin-bottom: 8px; color: #666; }
+h3, .section-title { font-size: 14px; font-weight: 600; margin: 16px 0 8px 0; padding-bottom: 4px; border-bottom: 1px solid #e5e5e5; color: ${accentColor}; text-transform: uppercase; letter-spacing: 0.5px; }
+h4, .job-title { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+.company { font-size: 12px; font-weight: 600; color: ${accentColor}; }
+.date { font-size: 11px; color: #666; font-weight: 400; }
+.meta { font-size: 9px; color: #666; }
+
+/* CONTACT INFO */
+.contact { font-size: 11px; color: #1a1a1a; margin-bottom: 12px; }
+.contact a { color: inherit; text-decoration: none; }
+
+/* EXPERIENCE & EDUCATION SECTIONS */
+.experience-item, .education-item {
+  margin-bottom: 12px;
+  page-break-inside: avoid;
+}
+
+.experience-header, .education-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+/* BULLET POINTS */
+ul { list-style: none; margin: 4px 0; padding: 0; }
+li { padding-left: 12px; position: relative; margin-bottom: 3px; }
+li:before { content: "•"; position: absolute; left: 0; color: ${accentColor}; font-weight: 700; }
+
+/* SKILLS */
+.skills-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.skill-tag { padding: 3px 8px; background: #f5f5f5; border-radius: 3px; font-size: 10px; color: #1a1a1a; white-space: nowrap; }
+
+/* LINKS */
+a { color: ${accentColor}; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* SPACING UTILITIES */
+.mb-xs { margin-bottom: 4px; }
+.mb-sm { margin-bottom: 8px; }
+.mb-md { margin-bottom: 12px; }
+.mb-lg { margin-bottom: 16px; }
+`;
+
+    // Step 5: Strip inline styles from body tag
     designHtml = designHtml.replace(
       /<body([^>]*)\s+style\s*=\s*["']([^"']*)["']/gi,
-      (match, beforeStyle, styleContent) => {
-        const originalStyle = styleContent;
-        // Remove padding from inline styles
-        let cleanedStyle = styleContent.replace(/padding:\s*[^;]+;?/gi, '');
-        // Remove margin from inline styles
-        cleanedStyle = cleanedStyle.replace(/margin:\s*[^;]+;?/gi, '');
-
-        if (originalStyle !== cleanedStyle) {
-          console.log('[Design] ✓ Stripped inline padding/margin from <body> tag');
-          console.log('[Design]   BEFORE:', originalStyle);
-          console.log('[Design]   AFTER:', cleanedStyle);
-        }
-
-        // If style is now empty, remove the attribute entirely
-        if (cleanedStyle.trim() === '') {
-          return `<body${beforeStyle}`;
-        }
-        return `<body${beforeStyle} style="${cleanedStyle}"`;
-      }
+      '<body$1'
     );
 
-    // CRITICAL FIX #2: Strip padding/margin from container divs that cancel body padding
-    console.log('[Design] Checking for container divs with problematic padding/margins...');
-    const containerStyleMatch = designHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
-    if (containerStyleMatch) {
-      let containerStyles = containerStyleMatch[1];
-
-      // Remove padding and negative margins from .container, .wrapper, .main, etc.
-      containerStyles = containerStyles.replace(
-        /(\.container|\.wrapper|\.main|\.content|div\.resume|#resume)\s*{([^}]*?)}/gi,
-        (match, selector, props) => {
-          let cleanProps = props;
-
-          // Remove padding declarations
-          const hadPadding = /padding:/i.test(cleanProps);
-          cleanProps = cleanProps.replace(/padding:\s*[^;]+;?/gi, '');
-
-          // Remove negative margins (these cancel body padding!)
-          const hadNegMargin = /margin:\s*-/i.test(cleanProps);
-          cleanProps = cleanProps.replace(/margin:\s*-[^;]+;?/gi, '');
-
-          if (hadPadding || hadNegMargin) {
-            console.log('[Design] ✓ Removed problematic styles from', selector);
-          }
-
-          return `${selector} {${cleanProps}}`;
-        }
-      );
-
+    // Step 6: Replace entire <style> block with our perfect CSS
+    if (designHtml.includes('<style')) {
       designHtml = designHtml.replace(
         /<style[^>]*>[\s\S]*?<\/style>/i,
-        `<style>${containerStyles}</style>`
+        `<style>${perfectCSS}</style>`
       );
-      console.log('[Design] ✓ Container padding/margin cleanup complete');
-    }
-
-    // CRITICAL FIX #3: Force correct @page margins for print (browsers strip body padding in print mode!)
-    console.log('[Design] Fixing @page margins for print...');
-    const pageStyleMatch = designHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
-    if (pageStyleMatch) {
-      let pageStyles = pageStyleMatch[1];
-
-      // Remove bad @page rules (margin: 0)
-      pageStyles = pageStyles.replace(/@page\s*{[^}]*}/gi, '');
-
-      // Add correct @page rule at the END of styles
-      pageStyles += '\n@page { margin: 0.5in 0.6in; size: letter; }';
-
-      // Ensure @media print preserves padding
-      if (!/@media\s+print/i.test(pageStyles)) {
-        pageStyles += '\n@media print { body { padding: 0.5in 0.6in !important; } }';
-      } else {
-        pageStyles = pageStyles.replace(
-          /@media\s+print\s*{([^}]*)}/gi,
-          '@media print { body { padding: 0.5in 0.6in !important; } }'
-        );
-      }
-
+      console.log('[Design] ✓ REPLACED entire <style> block with perfect CSS');
+    } else {
+      // No style block, inject into <head>
       designHtml = designHtml.replace(
-        /<style[^>]*>[\s\S]*?<\/style>/i,
-        `<style>${pageStyles}</style>`
+        '</head>',
+        `<style>${perfectCSS}</style></head>`
       );
-      console.log('[Design] ✓ Print margins fixed: @page { margin: 0.5in 0.6in; }');
+      console.log('[Design] ✓ INJECTED perfect CSS into <head>');
     }
+
+    console.log('[Design] ========================================');
+    console.log('[Design] ✓ CSS REWRITE COMPLETE');
+    console.log('[Design] ✓ Body padding: 0.5in 0.6in !important');
+    console.log('[Design] ✓ @page margin: 0.5in 0.6in');
+    console.log('[Design] ✓ All containers: width 100%, no centering');
+    console.log('[Design] ✓ Print mode: fully configured');
+    console.log('[Design] ========================================');
 
     // Validate contrast ratios (WCAG AA compliance)
     console.log('[Design] Validating contrast ratios...');
