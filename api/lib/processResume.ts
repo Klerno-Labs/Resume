@@ -441,33 +441,34 @@ Expected JSON format:
       );
 
       // FORCE body padding to create proper margins (CRITICAL - prevents content cutoff)
-      styles = styles.replace(
-        /(body)\s*{([^}]*?)}/gi,
-        (match, selector, props) => {
-          let bodyProps = props;
+      // Handle patterns like: body {, html body {, body, html {, etc.
+      const bodyPaddingRegex = /([^}]*\bbody\b[^{]*)\{([^}]*)\}/gi;
+      let bodyRuleFound = false;
 
-          // Force proper padding - 0.6in sides to prevent cutoff
-          if (/padding:/i.test(bodyProps)) {
-            bodyProps = bodyProps.replace(/padding:\s*[^;]+;/gi, 'padding: 0.5in 0.6in !important;');
-          } else {
-            bodyProps += ' padding: 0.5in 0.6in !important;';
-          }
+      styles = styles.replace(bodyPaddingRegex, (match, selector, props) => {
+        if (!selector.includes('body')) return match; // Safety check
+        bodyRuleFound = true;
 
-          // Force box-sizing for correct padding calculation
-          if (!/box-sizing:/i.test(bodyProps)) {
-            bodyProps += ' box-sizing: border-box;';
-          }
+        let bodyProps = props;
+        // Remove any existing padding
+        bodyProps = bodyProps.replace(/padding:\s*[^;]+;?/gi, '');
+        // Remove box-sizing if exists
+        bodyProps = bodyProps.replace(/box-sizing:\s*[^;]+;?/gi, '');
+        // Remove line-height if exists
+        bodyProps = bodyProps.replace(/line-height:\s*[^;]+;?/gi, '');
 
-          // Force line-height
-          if (/line-height:/i.test(bodyProps)) {
-            bodyProps = bodyProps.replace(/line-height:\s*[^;]+;/gi, 'line-height: 1.4;');
-          } else {
-            bodyProps += ' line-height: 1.4;';
-          }
+        // Add our properties at the start
+        bodyProps = 'padding: 0.5in 0.6in !important; box-sizing: border-box; line-height: 1.4;' + bodyProps;
 
-          return `${selector} {${bodyProps}}`;
-        }
-      );
+        console.log('[Design] ✓ Forced body padding to 0.5in 0.6in for selector:', selector.trim());
+        return `${selector}{${bodyProps}}`;
+      });
+
+      if (!bodyRuleFound) {
+        // No body rule found, add one
+        styles += '\nbody { padding: 0.5in 0.6in !important; box-sizing: border-box; line-height: 1.4; }';
+        console.log('[Design] ✓ Added new body rule with 0.5in 0.6in padding');
+      }
 
       // Replace style block
       designHtml = designHtml.replace(
