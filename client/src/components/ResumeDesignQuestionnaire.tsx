@@ -299,7 +299,7 @@ ABSOLUTELY FORBIDDEN - DO NOT USE:
 - NO centering with "margin: 0 auto" - content spans edge to edge (respecting body padding only)
 
 SPACE OPTIMIZATION (CRITICAL - FIT MORE CONTENT - MUST FOLLOW EXACTLY):
-- Body padding: EXACTLY "padding: 0.4in 0.5in;" (NOT "padding: 0.5in;")
+- Body padding: EXACTLY "padding: 0.5in 0.6in;" (NOT "padding: 0.5in;")
 - Section spacing: EXACTLY "margin: 14px 0 8px;" for h2 headers
 - List item spacing: EXACTLY "margin-bottom: 3px;" for li elements
 - Line height: EXACTLY "line-height: 1.4;" for body text

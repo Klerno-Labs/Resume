@@ -132,7 +132,7 @@ DESIGN ELEMENTS:
 - Make it visually striking and premium
 
 SPACE OPTIMIZATION (CRITICAL):
-- Body padding: 0.4in top/bottom, 0.5in left/right (TIGHT margins)
+- Body padding: 0.5in top/bottom, 0.6in left/right (PROPER margins - prevents cutoff)
 - Section spacing: 12-14px between sections (compact)
 - Line height: 1.4 (NOT 1.5 or higher)
 - List item spacing: 3-4px between bullets
@@ -148,9 +148,9 @@ RULES:
 
         // Add variation instructions for custom prompts to ensure 3 different designs
         const variationInstructions = customPrompt ? [
-          `VARIATION 1: Focus on a traditional, conservative interpretation with clean lines and minimal styling. Section headers should be simple underlines with the accent color. Use TIGHT margins (0.4in) and compact spacing.`,
-          `VARIATION 2: Add subtle visual elements like small section icons (using Unicode symbols like ■ ◆ ●). Use slightly bolder section headers. Maintain TIGHT spacing - margins 0.4in, section gaps 12-14px.`,
-          `VARIATION 3: Create a more modern interpretation with subtle borders around sections and clean typography. CRITICAL: Use TIGHT margins (0.4in), compact spacing (14px section gaps), and maximize content density. NO excessive whitespace.`
+          `VARIATION 1: Focus on a traditional, conservative interpretation with clean lines and minimal styling. Section headers should be simple underlines with the accent color. Use proper margins (0.5in/0.6in) and compact spacing.`,
+          `VARIATION 2: Add subtle visual elements like small section icons (using Unicode symbols like ■ ◆ ●). Use slightly bolder section headers. Maintain proper spacing - margins 0.5in/0.6in, section gaps 12-14px.`,
+          `VARIATION 3: Create a more modern interpretation with subtle borders around sections and clean typography. CRITICAL: Use proper margins (0.5in/0.6in), compact spacing (14px section gaps), and maximize content density. NO excessive whitespace.`
         ][templateIndex] : '';
 
         const designResult = await openai.chat.completions.create({
@@ -167,7 +167,7 @@ RULES:
 ${customPrompt ? variationInstructions : ''}
 
 CRITICAL SPACE REQUIREMENTS (MUST FOLLOW EXACTLY):
-- Body padding: EXACTLY 0.4in top/bottom, 0.5in left/right (padding: 0.4in 0.5in;)
+- Body padding: EXACTLY 0.5in top/bottom, 0.6in left/right (padding: 0.5in 0.6in;)
 - Section spacing: EXACTLY 12-14px between sections (margin: 14px 0 8px;)
 - Line height: EXACTLY 1.4 (line-height: 1.4;)
 - List item spacing: EXACTLY 3px (margin-bottom: 3px;)
