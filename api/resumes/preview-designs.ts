@@ -497,10 +497,10 @@ a:hover { text-decoration: underline; }
         console.log(`[Preview] ========================================`);
 
         // Validate contrast
-        const contrastValidation = validateResumeContrast(design.html);
+        const contrastValidation = validateResumeContrast(processedHtml);
 
         // Validate ATS compatibility
-        const atsValidation = validateATSCompatibility(design.html);
+        const atsValidation = validateATSCompatibility(processedHtml);
         console.log(`[Preview] ATS compatibility score: ${atsValidation.score} for template:`, template.name);
 
         if (atsValidation.score < 70) {
@@ -549,7 +549,7 @@ a:hover { text-decoration: underline; }
           templateStyle,
           layout: templateLayout,
           accentColor,
-          html: design.html,
+          html: processedHtml, // Use processed HTML with images removed and padding fixed
           contrastPassed: contrastValidation.passed,
           contrastSummary: contrastValidation.summary,
           atsScore: atsValidation.score,
