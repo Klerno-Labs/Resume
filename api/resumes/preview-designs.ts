@@ -341,8 +341,8 @@ Return ONLY JSON: {"html": "<!DOCTYPE html>..."}`,
           }
         }
 
-        // Step 3: Extract accent color (from template)
-        const accentColor = template.accentColor || '#2563eb';
+        // Step 3: Extract accent color (from template) - use let since it may be reassigned by custom prompt
+        let accentColor = template.accentColor || '#2563eb';
 
         // Step 4: Build PERFECT CSS from scratch with guaranteed padding
         const perfectCSS = `
@@ -505,7 +505,7 @@ a:hover { text-decoration: underline; }
         let templateName = template.name;
         let templateStyle = template.style;
         let templateLayout = template.layout;
-        let accentColor = template.accentColor;
+        // accentColor already declared above at line 345
 
         if (customPrompt) {
           // Parse custom prompt to extract user choices
