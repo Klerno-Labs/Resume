@@ -411,14 +411,14 @@ div, section, article, header, main {
   }
 }
 
-/* TYPOGRAPHY HIERARCHY */
+/* TYPOGRAPHY HIERARCHY - All colors meet WCAG AA (4.5:1 contrast) */
 h1, .name { font-size: 28px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.5px; }
-h2, .title { font-size: 13px; font-weight: 400; margin-bottom: 8px; color: #666; }
+h2, .title { font-size: 13px; font-weight: 400; margin-bottom: 8px; color: #595959; /* 7:1 contrast */ }
 h3, .section-title { font-size: 14px; font-weight: 600; margin: 16px 0 8px 0; padding-bottom: 4px; border-bottom: 1px solid #e5e5e5; color: ${accentColor}; text-transform: uppercase; letter-spacing: 0.5px; }
 h4, .job-title { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
 .company { font-size: 12px; font-weight: 600; color: ${accentColor}; }
-.date { font-size: 11px; color: #666; font-weight: 400; }
-.meta { font-size: 9px; color: #666; }
+.date { font-size: 11px; color: #595959; font-weight: 400; /* 7:1 contrast, WCAG AA compliant */ }
+.meta { font-size: 9px; color: #595959; /* 7:1 contrast */ }
 
 /* CONTACT INFO */
 .contact { font-size: 11px; color: #1a1a1a; margin-bottom: 12px; }
