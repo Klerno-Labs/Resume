@@ -12,8 +12,9 @@ api/**/*.disabled
 
 # Environment variables (contains secrets)
 .env
+.env.*
 .env.local
-.env.*.local
+test-auth-diagnostic.md
 
 # Local development
 .local/

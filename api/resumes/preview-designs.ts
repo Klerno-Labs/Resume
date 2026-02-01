@@ -191,10 +191,15 @@ Return ONLY JSON: {"html": "<!DOCTYPE html>..."}`,
           console.log(`[Preview] Raw AI response (first 200 chars):`, content.substring(0, 200));
           design = JSON.parse(content);
         } catch (parseError) {
-          console.error(`[Preview] Attempt ${attempt}: JSON parse error for template:`, template.name);
-          console.error(`[Preview] Parse error details:`, parseError);
-          console.error(`[Preview] Full content:`, designResult.choices[0].message.content?.substring(0, 500));
+          console.error(`[Preview] ========================================`);
+          console.error(`[Preview] JSON PARSE ERROR - Attempt ${attempt}/${maxRetries}`);
+          console.error(`[Preview] Template:`, template.name);
+          console.error(`[Preview] Parse error:`, parseError);
+          console.error(`[Preview] Full AI response (first 1000 chars):`, designResult.choices[0].message.content?.substring(0, 1000));
+          console.error(`[Preview] This looks like an OpenAI API error response`);
+          console.error(`[Preview] ========================================`);
           if (attempt === maxRetries) return null;
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s before retry
           continue; // Retry on parse error
         }
 
