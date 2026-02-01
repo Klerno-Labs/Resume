@@ -153,16 +153,18 @@ RULES:
           `VARIATION 3: Create a more modern interpretation with subtle borders around sections and clean typography. CRITICAL: Use proper margins (0.5in/0.6in), compact spacing (14px section gaps), and maximize content density. NO excessive whitespace.`
         ][templateIndex] : '';
 
-        const designResult = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content: systemPrompt,
-            },
-            {
-              role: 'user',
-              content: `Create a premium HTML resume${customPrompt ? ' based on the specifications above' : ` using the ${template.name} template`}.
+        let designResult;
+        try {
+          designResult = await openai.chat.completions.create({
+            model: 'gpt-4o',
+            messages: [
+              {
+                role: 'system',
+                content: systemPrompt,
+              },
+              {
+                role: 'user',
+                content: `Create a premium HTML resume${customPrompt ? ' based on the specifications above' : ` using the ${template.name} template`}.
 
 ${customPrompt ? variationInstructions : ''}
 
@@ -179,11 +181,27 @@ ${resume.improved_text || resume.original_text}
 
 ${!customPrompt ? `Apply gradient ${template.gradient} and accent color ${template.accentColor}.` : ''}
 Return ONLY JSON: {"html": "<!DOCTYPE html>..."}`,
-            },
-          ],
-          response_format: { type: 'json_object' },
-          max_tokens: 8000,
-        });
+              },
+            ],
+            response_format: { type: 'json_object' },
+            max_tokens: 8000,
+          });
+        } catch (apiError: any) {
+          console.error(`[Preview] ========================================`);
+          console.error(`[Preview] OPENAI API ERROR - Attempt ${attempt}/${maxRetries}`);
+          console.error(`[Preview] Template:`, template.name);
+          console.error(`[Preview] Error type:`, apiError?.constructor?.name);
+          console.error(`[Preview] Error message:`, apiError?.message);
+          console.error(`[Preview] Error status:`, apiError?.status);
+          console.error(`[Preview] Error code:`, apiError?.code);
+          console.error(`[Preview] Full error:`, JSON.stringify(apiError, null, 2));
+          console.error(`[Preview] API Key present:`, !!process.env.OPENAI_API_KEY);
+          console.error(`[Preview] API Key prefix:`, process.env.OPENAI_API_KEY?.substring(0, 10) + '...');
+          console.error(`[Preview] ========================================`);
+          if (attempt === maxRetries) return null;
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s before retry
+          continue; // Retry on API error
+        }
 
         let design;
         try {

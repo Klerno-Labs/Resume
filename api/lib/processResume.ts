@@ -227,7 +227,9 @@ export async function generateResumeDesign(resumeId: string) {
 
     console.log(`[Design] Starting design generation for resume ${resumeId}`);
 
-    const designResult = await openai.chat.completions.create({
+    let designResult;
+    try {
+      designResult = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
@@ -380,9 +382,23 @@ Expected JSON format:
 }`,
         },
       ],
-      response_format: { type: 'json_object' },
-      max_tokens: 4000,
-    });
+        response_format: { type: 'json_object' },
+        max_tokens: 4000,
+      });
+    } catch (apiError: any) {
+      console.error(`[Design] ========================================`);
+      console.error(`[Design] OPENAI API ERROR`);
+      console.error(`[Design] Resume ID:`, resumeId);
+      console.error(`[Design] Error type:`, apiError?.constructor?.name);
+      console.error(`[Design] Error message:`, apiError?.message);
+      console.error(`[Design] Error status:`, apiError?.status);
+      console.error(`[Design] Error code:`, apiError?.code);
+      console.error(`[Design] Full error:`, JSON.stringify(apiError, null, 2));
+      console.error(`[Design] API Key present:`, !!process.env.OPENAI_API_KEY);
+      console.error(`[Design] API Key prefix:`, process.env.OPENAI_API_KEY?.substring(0, 10) + '...');
+      console.error(`[Design] ========================================`);
+      throw new Error(`OpenAI API error: ${apiError?.message || 'Unknown error'}`);
+    }
 
     console.log(`[Design] OpenAI design API call completed for resume ${resumeId}`);
 
