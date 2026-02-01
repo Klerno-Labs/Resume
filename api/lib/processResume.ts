@@ -252,29 +252,29 @@ Fonts: ${template.fonts[0]} (headers), ${template.fonts[1]} (body)
 🎨 MINIMALIST DESIGN REQUIREMENTS (CRITICAL - MAXIMIZE SPACE, ZERO CLUTTER):
 
 1. LAYOUT - ${template.layout.toUpperCase()} STRUCTURE:
-${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-columns: 280px 1fr; height: 842px;
+${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-columns: 280px 1fr; min-height: 100%;
    ✓ SIDEBAR (280px): Gradient background ${template.gradient}, full height, tight padding (20px)
    ✓ MAIN (remaining): Pure white (#ffffff), tight margins (28px), compact spacing
    ✓ Name at TOP of sidebar: Medium (26px), bold (700), ${template.fonts[0]}, white, letter-spacing: 0px
    ✓ Job title below name: 12px, ${template.fonts[1]}, white, opacity: 0.95, compact spacing
-   ✓ NO photo - use elegant monogram circle instead: 70px circle with initials, subtle border` : ''}${template.layout === 'single-column' ? `   ✓ Container: width: 100%, height: 842px, NO max-width (use full page width)
+   ✓ NO photo - use elegant monogram circle instead: 70px circle with initials, subtle border` : ''}${template.layout === 'single-column' ? `   ✓ Container: width: 100%, min-height: 100%, NO max-width (use full page width)
    ✓ Name: Medium (28px), bold, ${template.fonts[0]}, color: ${template.accentColor}, letter-spacing: 0px
    ✓ Job title: 13px, ${template.fonts[1]}, below name, margin: 4px 0
    ✓ Contact info: Horizontal row beneath title, 10px, separated by bullets (•)
    ✓ Sections: Full-width blocks with compact spacing (14px between), left-aligned content
-   ✓ Headers: Left-aligned, 14px, uppercase, ${template.accentColor}, underline or bottom border` : ''}${template.layout === 'timeline' ? `   ✓ Container: width: 100%, height: 842px, NO max-width (use full page width)
+   ✓ Headers: Left-aligned, 14px, uppercase, ${template.accentColor}, underline or bottom border` : ''}${template.layout === 'timeline' ? `   ✓ Container: width: 100%, min-height: 100%, NO max-width (use full page width)
    ✓ Header: Name (36px), title (14px), contact - at top
    ✓ Timeline: Vertical line on left (3px solid ${template.accentColor}), connecting experience items
    ✓ Timeline dots: 16px circles on the line at each job, filled with ${template.accentColor}
    ✓ Experience cards: Offset from timeline (margin-left: 40px), with date badges
    ✓ Dates: Small badges (10px) positioned on timeline, background ${template.accentColor}, white text
-   ✓ Visual flow: Connecting lines between timeline dots create career progression visualization` : ''}${template.layout === 'skills-first' ? `   ✓ Container: width: 100%, height: 842px, NO max-width (use full page width)
+   ✓ Visual flow: Connecting lines between timeline dots create career progression visualization` : ''}${template.layout === 'skills-first' ? `   ✓ Container: width: 100%, min-height: 100%, NO max-width (use full page width)
    ✓ Header: Name (34px) and title (14px) at top, ${template.accentColor}
    ✓ Skills Section: Immediately below header, prominent placement (top 25% of page)
    ✓ Skills Display: Grid of pills (3-4 columns), padding: 8px 16px, background: ${template.accentColor}15, border: 1px solid ${template.accentColor}50
    ✓ OR Skill bars: Horizontal bars showing proficiency, filled portion ${template.accentColor}
    ✓ Experience: Standard format below skills, condensed to fit remaining space
-   ✓ Visual hierarchy: Skills visually dominant, larger and more colorful than experience` : ''}${template.layout === 'split-column' ? `   ✓ Grid: display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 842px
+   ✓ Visual hierarchy: Skills visually dominant, larger and more colorful than experience` : ''}${template.layout === 'split-column' ? `   ✓ Grid: display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 100%
    ✓ Header: Spans both columns, name (28px) and title (12px), ${template.accentColor}
    ✓ Left column: Experience (chronological work history)
    ✓ Right column: Skills, Education, Certifications
@@ -307,7 +307,7 @@ ${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-co
    ✓ Skill Display: Simple text list OR minimal pills with light gray background (#f5f5f5), black text
 
 4. SPACING & WHITESPACE - MAXIMIZE SPACE (CRITICAL):
-   ✓ Page Margins: 0.4-0.5 inch (29-36px) on all sides - TIGHT to fit more content
+   ✓ Page Margins: 0.5-0.6 inch (36-43px) on all sides - professional margins for readability
    ✓ Section Spacing: 12-16px between major sections (compact but readable)
    ✓ Line Height: 1.4 for body text (compact for maximum content)
    ✓ Paragraph Spacing: 3-4px between bullet points, 8-10px between job entries
@@ -342,7 +342,7 @@ ${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-co
    ✓ Font sizes: Precisely calculated - Name 26-28px, Headers 14px, Body 10-11px, Meta 9px
    ✓ Strategic spacing: Use TIGHT spacing - section gaps 12-14px, line-height 1.4
    ✓ If too long: Reduce bullet points to 2-3 per job, shorten summary, prioritize recent experience
-   ✓ CSS: html { overflow: hidden !important; height: 842px !important; margin: 0; padding: 0; } body { margin: 0; padding: 0.5in 0.6in !important; box-sizing: border-box; width: 100%; }
+   ✓ CSS: html { margin: 0; padding: 0; height: 100%; } body { margin: 0; padding: 0.5in 0.6in !important; box-sizing: border-box; width: 100%; height: 100%; }
    ✓ CRITICAL: Body MUST have padding for margins - NO padding: 0 on body element
    ✓ GOAL: Fit ALL content on one page, use full horizontal space WITH proper side margins (0.6in each side)
 
@@ -362,7 +362,7 @@ ${template.layout === '2-column' ? `   ✓ Grid: display: grid; grid-template-co
 💎 FINAL QUALITY CHECK - DOES IT LOOK LIKE AN EXPENSIVE 2025 MINIMAL RESUME?
    ✓ Typography: ONE font only, perfect hierarchy through size/weight, NO excessive letter-spacing
    ✓ Color: ONE accent color used sparingly, mostly black/gray text on white
-   ✓ Space Usage: MAXIMIZED content per page, tight margins (0.4-0.5 inch), compact spacing
+   ✓ Space Usage: MAXIMIZED content per page, professional margins (0.5-0.6 inch), compact spacing
    ✓ Zero Clutter: NO icons, NO photos, NO monograms, NO decorative elements, NO shadows
    ✓ Overall: Looks like a premium business document, NOT a Canva template. Clean, minimal, expensive.
    ✓ Content Fit: ALL resume content fits on one page through efficient spacing
