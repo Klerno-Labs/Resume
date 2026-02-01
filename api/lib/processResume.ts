@@ -3,14 +3,27 @@ import { sql } from '../_shared.js';
 import { getRandomTemplate } from './designTemplates.js';
 import { validateResumeContrast } from './contrastValidator.js';
 
+// Lazy OpenAI client - refresh every hour to pick up env var changes
 let _openai: OpenAI | null = null;
+let _openaiInitTime = 0;
+const OPENAI_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
 function getOpenAI() {
-  if (_openai) return _openai;
+  const now = Date.now();
+  if (_openai && (now - _openaiInitTime) < OPENAI_CACHE_TTL) {
+    return _openai;
+  }
+
   if (!process.env.OPENAI_API_KEY) {
+    console.error('[ProcessResume] CRITICAL: OPENAI_API_KEY environment variable is not set!');
+    console.error('[ProcessResume] Available env vars:', Object.keys(process.env).filter(k => k.includes('OPENAI') || k.includes('API')));
     throw new Error('OPENAI_API_KEY is required');
   }
+
+  console.log('[ProcessResume] Initializing new OpenAI client');
+  console.log('[ProcessResume] API Key prefix:', process.env.OPENAI_API_KEY.substring(0, 15) + '...');
   _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  _openaiInitTime = now;
   return _openai;
 }
 
