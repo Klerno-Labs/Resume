@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
@@ -15,6 +15,8 @@ import {
   CheckCircle2,
   ArrowRight,
   X,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +27,15 @@ interface ChatMessage {
   content: string;
   timestamp: Date;
 }
+
+const TEMPLATES = [
+  { id: 'modern', name: 'Modern', category: 'modern', accent: '#6366F1' },
+  { id: 'classic', name: 'Classic', category: 'classic', accent: '#1E40AF' },
+  { id: 'minimal', name: 'Minimal', category: 'minimal', accent: '#374151' },
+  { id: 'creative', name: 'Creative', category: 'creative', accent: '#7C3AED' },
+  { id: 'executive', name: 'Executive', category: 'executive', accent: '#0F172A' },
+  { id: 'tech', name: 'Tech Pro', category: 'modern', accent: '#059669' },
+];
 
 export function ResumeBuilder() {
   const [step, setStep] = useState<BuilderStep>('welcome');
@@ -47,6 +58,11 @@ export function ResumeBuilder() {
     formattingScore?: number;
     resumeId?: string;
   }>({});
+  const [selectedTemplate, setSelectedTemplate] = useState('modern');
+  const [coverLetter, setCoverLetter] = useState('');
+  const [showCoverLetter, setShowCoverLetter] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,12 +70,12 @@ export function ResumeBuilder() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const addRobertMessage = (content: string) => {
+  const addRobertMessage = useCallback((content: string) => {
     setMessages((prev) => [
       ...prev,
       { role: 'robert', content, timestamp: new Date() },
     ]);
-  };
+  }, []);
 
   const addUserMessage = (content: string) => {
     setMessages((prev) => [
@@ -102,20 +118,137 @@ export function ResumeBuilder() {
 
       addRobertMessage(
         `Done! Here's what I found:\n\n` +
-          `📊 **ATS Score: ${data.atsScore || 0}/100**\n` +
-          `🔑 Keywords Score: ${data.keywordsScore || 0}/100\n` +
-          `📝 Formatting Score: ${data.formattingScore || 0}/100\n\n` +
+          `ATS Score: ${data.atsScore || 0}/100\n` +
+          `Keywords Score: ${data.keywordsScore || 0}/100\n` +
+          `Formatting Score: ${data.formattingScore || 0}/100\n\n` +
           `I've rewritten your resume with stronger action verbs, quantified achievements, and optimized keywords. ` +
-          `Want to see the before/after comparison, choose a template design, or should I match it to a specific job posting?`
+          `What would you like to do next?\n\n` +
+          `- Match to a job posting\n- Choose a template design\n- Generate a cover letter\n- Download your optimized resume`
       );
     } catch (err: unknown) {
       setIsTyping(false);
       const errorMessage = err instanceof Error ? err.message : 'Something went wrong';
       addRobertMessage(
-        `Hmm, I ran into an issue: ${errorMessage}. Could you try uploading again? Make sure it's a PDF or DOCX file.`
+        `Hmm, I ran into an issue: ${errorMessage}. Could you try uploading again? Make sure it's a PDF or DOCX file under 10MB.`
       );
       setStep('upload');
     }
+  };
+
+  const handleDownloadPDF = async () => {
+    const text = resumeData.improvedText || resumeData.originalText;
+    if (!text) return;
+
+    setActionLoading('download');
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      const template = TEMPLATES.find((t) => t.id === selectedTemplate);
+
+      // Header accent bar
+      const accentColor = template?.accent || '#6366F1';
+      const r = parseInt(accentColor.slice(1, 3), 16);
+      const g = parseInt(accentColor.slice(3, 5), 16);
+      const b = parseInt(accentColor.slice(5, 7), 16);
+      doc.setFillColor(r, g, b);
+      doc.rect(0, 0, 210, 8, 'F');
+
+      // Content
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(30, 30, 30);
+
+      const lines = doc.splitTextToSize(text, 170);
+      let y = 20;
+      for (const line of lines) {
+        if (y > 280) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(line, 20, y);
+        y += 6;
+      }
+
+      // Footer
+      doc.setFontSize(7);
+      doc.setTextColor(150, 150, 150);
+      doc.text('Built with RewriteMe.app', 20, 290);
+
+      doc.save('resume-rewriteme.pdf');
+      addRobertMessage('Your PDF is downloading now! This version uses the ' + (template?.name || 'Modern') + ' template style.');
+    } catch {
+      addRobertMessage("Sorry, I had trouble generating the PDF. Try again in a moment.");
+    }
+    setActionLoading(null);
+  };
+
+  const handleCoverLetter = async () => {
+    const text = resumeData.improvedText || resumeData.originalText;
+    if (!text) return;
+
+    setActionLoading('cover-letter');
+    setIsTyping(true);
+    addRobertMessage("Generating your cover letter now. I'll make it compelling and tailored...");
+
+    try {
+      const res = await fetch('/api/cover-letters/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resumeText: text,
+          jobDescription: 'General application — create a versatile cover letter highlighting the strongest qualifications from this resume.',
+          tone: 'professional',
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to generate');
+      }
+
+      const data = await res.json();
+      setCoverLetter(data.content);
+      setShowCoverLetter(true);
+      addRobertMessage("Your cover letter is ready! I've opened it in the preview panel. You can copy it or I can tailor it for a specific job — just paste the job description.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Something went wrong';
+      addRobertMessage(`Couldn't generate the cover letter: ${msg}. Please try again.`);
+    }
+    setIsTyping(false);
+    setActionLoading(null);
+  };
+
+  const handleJobMatch = async (jobDescription: string) => {
+    const text = resumeData.improvedText || resumeData.originalText;
+    if (!text) return;
+
+    setIsTyping(true);
+    try {
+      const res = await fetch('/api/match-job', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeText: text, jobDescription }),
+      });
+
+      if (res.ok) {
+        const matchData = await res.json();
+        addRobertMessage(
+          `Here's your job match analysis:\n\n` +
+            `Match Score: ${matchData.score || 0}%\n\n` +
+            `${matchData.strengths?.length ? `Strengths:\n${matchData.strengths.map((s: string) => `  - ${s}`).join('\n')}\n\n` : ''}` +
+            `${matchData.missingKeywords?.length ? `Missing Keywords:\n${matchData.missingKeywords.map((k: string) => `  - ${k}`).join('\n')}\n\n` : ''}` +
+            `${matchData.suggestions?.length ? `Suggestions:\n${matchData.suggestions.map((s: string) => `  - ${s}`).join('\n')}\n\n` : ''}` +
+            `Want me to optimize your resume for this specific role?`
+        );
+      } else {
+        const error = await res.json();
+        throw new Error(error.message || 'Analysis failed');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Something went wrong';
+      addRobertMessage(`Couldn't complete the analysis: ${msg}. Try pasting the job description again.`);
+    }
+    setIsTyping(false);
   };
 
   const handleSend = async () => {
@@ -137,25 +270,16 @@ export function ResumeBuilder() {
         );
       } else {
         setStep('upload');
-        setIsTyping(true);
         addRobertMessage(
           `Thanks for sharing that! To give you the best results, upload your current resume and I'll rewrite it with your goals in mind. Or if you don't have one yet, upload any draft — even a rough one works. I'll transform it.`
         );
-        setIsTyping(false);
       }
-    } else if (step === 'review') {
+    } else if (step === 'review' || step === 'design') {
       const lowerInput = userInput.toLowerCase();
-      if (
-        lowerInput.includes('job') ||
-        lowerInput.includes('match') ||
-        lowerInput.includes('position') ||
-        lowerInput.includes('posting')
-      ) {
-        setIsTyping(true);
-        addRobertMessage(
-          "Paste the job description below and I'll tailor your resume specifically for that role — matching keywords, skills, and requirements."
-        );
-        setIsTyping(false);
+      if (lowerInput.includes('download')) {
+        handleDownloadPDF();
+      } else if (lowerInput.includes('cover letter')) {
+        handleCoverLetter();
       } else if (
         lowerInput.includes('template') ||
         lowerInput.includes('design') ||
@@ -163,48 +287,19 @@ export function ResumeBuilder() {
       ) {
         setStep('design');
         addRobertMessage(
-          "Let's pick a design! I'll show you templates that work best for your industry. Check out the template gallery below."
+          "Check out the template selector in the panel on the right. Pick one that fits your industry, then download your resume in that style."
         );
-      } else if (lowerInput.includes('cover letter')) {
-        setIsTyping(true);
-        addRobertMessage(
-          "I can generate a cover letter that complements your resume. What's the job title and company you're applying to?"
-        );
-        setIsTyping(false);
+      } else if (userInput.length > 50) {
+        // Long text = likely a job description
+        await handleJobMatch(userInput);
       } else {
-        setIsTyping(true);
-        // Send to AI for job matching
-        try {
-          const res = await fetch('/api/match-job', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              resumeText: resumeData.improvedText || resumeData.originalText,
-              jobDescription: userInput,
-            }),
-          });
-
-          if (res.ok) {
-            const matchData = await res.json();
-            addRobertMessage(
-              `Here's your job match analysis:\n\n` +
-                `🎯 **Match Score: ${matchData.score || 0}%**\n\n` +
-                `${matchData.strengths ? `**Strengths:**\n${matchData.strengths.map((s: string) => `• ${s}`).join('\n')}\n\n` : ''}` +
-                `${matchData.missingKeywords?.length ? `**Missing Keywords:**\n${matchData.missingKeywords.map((k: string) => `• ${k}`).join('\n')}\n\n` : ''}` +
-                `${matchData.suggestions?.length ? `**Suggestions:**\n${matchData.suggestions.map((s: string) => `• ${s}`).join('\n')}\n\n` : ''}` +
-                `Want me to optimize your resume for this specific role, or pick a template design?`
-            );
-          } else {
-            addRobertMessage(
-              "Got it! Would you like me to:\n• **Match** your resume to a job posting\n• **Choose a template** design\n• **Generate a cover letter**\n• **Download** your optimized resume"
-            );
-          }
-        } catch {
-          addRobertMessage(
-            "I'd love to help with that! You can:\n• Paste a job description and I'll match your resume to it\n• Choose a template design\n• Generate a tailored cover letter\n• Download your optimized resume"
-          );
-        }
-        setIsTyping(false);
+        addRobertMessage(
+          "I'm ready to help! You can:\n\n" +
+            "- Paste a job description and I'll match your resume to it\n" +
+            "- Choose a template design from the panel\n" +
+            "- Ask me to generate a cover letter\n" +
+            "- Download your optimized resume as PDF"
+        );
       }
     }
   };
@@ -214,6 +309,12 @@ export function ResumeBuilder() {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleCopy = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -307,7 +408,7 @@ export function ResumeBuilder() {
               </div>
             )}
 
-            {step === 'review' && (
+            {(step === 'review' || step === 'design') && (
               <div className="flex gap-2 mb-3 flex-wrap">
                 <QuickAction
                   icon={<Target className="w-3.5 h-3.5" />}
@@ -324,27 +425,21 @@ export function ResumeBuilder() {
                   onClick={() => {
                     setStep('design');
                     addRobertMessage(
-                      "Let's pick a design that fits your industry. Check the template panel on the right."
+                      "Pick a template from the panel on the right. Each one is ATS-friendly and professionally designed."
                     );
                   }}
                 />
                 <QuickAction
                   icon={<FileText className="w-3.5 h-3.5" />}
                   label="Cover Letter"
-                  onClick={() => {
-                    addRobertMessage(
-                      "I'll generate a cover letter for you. What's the job title and company?"
-                    );
-                  }}
+                  disabled={actionLoading === 'cover-letter'}
+                  onClick={handleCoverLetter}
                 />
                 <QuickAction
                   icon={<Download className="w-3.5 h-3.5" />}
                   label="Download PDF"
-                  onClick={() => {
-                    addRobertMessage(
-                      "Your resume is ready to download! Click the download button in the preview panel."
-                    );
-                  }}
+                  disabled={actionLoading === 'download'}
+                  onClick={handleDownloadPDF}
                 />
               </div>
             )}
@@ -354,7 +449,11 @@ export function ResumeBuilder() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Tell Robert about your experience..."
+                placeholder={
+                  step === 'review' || step === 'design'
+                    ? 'Paste a job description or ask Robert anything...'
+                    : 'Tell Robert about your experience...'
+                }
                 rows={1}
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-brand-muted resize-none focus:outline-none focus:ring-2 focus:ring-brand-accent/50"
               />
@@ -422,7 +521,76 @@ export function ResumeBuilder() {
             </motion.div>
           )}
 
-          {/* Quick Actions */}
+          {/* Cover Letter Preview */}
+          {showCoverLetter && coverLetter && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl glass p-6"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-white font-semibold">Cover Letter</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleCopy(coverLetter)}
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                    title="Copy"
+                  >
+                    {copied ? (
+                      <Check className="w-3.5 h-3.5 text-green-400" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5 text-brand-muted" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowCoverLetter(false)}
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5 text-brand-muted" />
+                  </button>
+                </div>
+              </div>
+              <div className="max-h-64 overflow-y-auto text-sm text-brand-muted leading-relaxed whitespace-pre-wrap">
+                {coverLetter}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Template Selector (in design step) */}
+          {(step === 'design' || step === 'review' || step === 'complete') && resumeData.improvedText && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl glass p-6"
+            >
+              <h3 className="text-white font-semibold mb-4">Template Style</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {TEMPLATES.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      setSelectedTemplate(t.id);
+                      addRobertMessage(`Great choice! The ${t.name} template is now selected. Download your resume when you're ready.`);
+                    }}
+                    className={cn(
+                      'p-3 rounded-xl text-center transition-all',
+                      selectedTemplate === t.id
+                        ? 'bg-brand-accent/20 border border-brand-accent/40'
+                        : 'bg-white/5 border border-white/10 hover:bg-white/10'
+                    )}
+                  >
+                    <div
+                      className="w-full aspect-[8.5/11] rounded-md mb-2"
+                      style={{ backgroundColor: t.accent + '20', borderTop: `3px solid ${t.accent}` }}
+                    />
+                    <span className="text-xs text-white">{t.name}</span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Action Buttons */}
           <div className="rounded-2xl glass p-6">
             <h3 className="text-white font-semibold mb-4">
               {step === 'welcome' || step === 'upload' ? 'Get Started' : 'Actions'}
@@ -437,7 +605,7 @@ export function ResumeBuilder() {
                   <Upload className="w-5 h-5 text-brand-accent-light" />
                   <div>
                     <div className="text-white text-sm font-medium">Upload Resume</div>
-                    <div className="text-brand-muted text-xs">PDF, DOCX, or DOC</div>
+                    <div className="text-brand-muted text-xs">PDF, DOCX, or DOC (max 10MB)</div>
                   </div>
                   <ArrowRight className="w-4 h-4 text-brand-muted ml-auto group-hover:text-white transition-colors" />
                 </button>
@@ -460,22 +628,33 @@ export function ResumeBuilder() {
                   icon={<Target className="w-4 h-4" />}
                   label="Match to Job"
                   description="Tailor for a specific role"
+                  onClick={() => {
+                    addRobertMessage("Paste the job description below and I'll analyze the match.");
+                  }}
                 />
                 <ActionButton
                   icon={<Palette className="w-4 h-4" />}
                   label="Choose Template"
-                  description="40+ professional designs"
+                  description="6 professional designs"
+                  onClick={() => {
+                    setStep('design');
+                    addRobertMessage("Pick a template style above. Each one is ATS-friendly.");
+                  }}
                 />
                 <ActionButton
                   icon={<FileText className="w-4 h-4" />}
                   label="Cover Letter"
                   description="AI-generated, job-specific"
+                  loading={actionLoading === 'cover-letter'}
+                  onClick={handleCoverLetter}
                 />
                 <ActionButton
                   icon={<Download className="w-4 h-4" />}
                   label="Download PDF"
                   description="Ready to submit"
                   primary
+                  loading={actionLoading === 'download'}
+                  onClick={handleDownloadPDF}
                 />
               </div>
             )}
@@ -522,15 +701,18 @@ function QuickAction({
   icon,
   label,
   onClick,
+  disabled,
 }: {
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-brand-muted text-xs hover:text-white hover:bg-white/10 transition-colors"
+      disabled={disabled}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-brand-muted text-xs hover:text-white hover:bg-white/10 transition-colors disabled:opacity-50"
     >
       {icon}
       {label}
@@ -543,19 +725,26 @@ function ActionButton({
   label,
   description,
   primary,
+  onClick,
+  loading,
 }: {
   icon: React.ReactNode;
   label: string;
   description: string;
   primary?: boolean;
+  onClick?: () => void;
+  loading?: boolean;
 }) {
   return (
     <button
+      onClick={onClick}
+      disabled={loading}
       className={cn(
         'w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors group',
         primary
           ? 'bg-gradient-to-r from-brand-accent to-purple-500 hover:shadow-lg hover:shadow-brand-accent/25'
-          : 'bg-white/5 border border-white/10 hover:bg-white/10'
+          : 'bg-white/5 border border-white/10 hover:bg-white/10',
+        loading && 'opacity-70'
       )}
     >
       <div
@@ -564,7 +753,11 @@ function ActionButton({
           primary ? 'bg-white/20' : 'bg-brand-accent/10'
         )}
       >
-        <span className={primary ? 'text-white' : 'text-brand-accent-light'}>{icon}</span>
+        {loading ? (
+          <Loader2 className={cn('w-4 h-4 animate-spin', primary ? 'text-white' : 'text-brand-accent-light')} />
+        ) : (
+          <span className={primary ? 'text-white' : 'text-brand-accent-light'}>{icon}</span>
+        )}
       </div>
       <div>
         <div className="text-white text-sm font-medium">{label}</div>

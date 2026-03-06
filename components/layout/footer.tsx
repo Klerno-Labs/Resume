@@ -6,11 +6,8 @@ const footerLinks = {
     { href: '/builder', label: 'Resume Builder' },
     { href: '/templates', label: 'Templates' },
     { href: '/pricing', label: 'Pricing' },
-    { href: '/features', label: 'Features' },
   ],
   Resources: [
-    { href: '/blog', label: 'Blog' },
-    { href: '/how-to/optimize-resume-for-ats', label: 'ATS Guide' },
     { href: '/about', label: 'About Robert' },
     { href: '/contact', label: 'Contact' },
   ],

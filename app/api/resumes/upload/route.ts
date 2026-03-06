@@ -39,6 +39,14 @@ export async function POST(req: NextRequest) {
       'application/msword',
     ];
 
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { message: 'File too large. Maximum size is 10MB.' },
+        { status: 400 }
+      );
+    }
+
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         { message: 'Please upload a PDF or DOCX file' },

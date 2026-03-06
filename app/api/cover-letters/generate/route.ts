@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { coverLetters } from '@shared/schema';
+import { coverLetters, users } from '@shared/schema';
+import { eq, sql } from 'drizzle-orm';
 import { ai, AI_MODEL } from '@/lib/openai';
 import { z } from 'zod';
 
@@ -31,6 +32,20 @@ export async function POST(req: NextRequest) {
     }
 
     const { resumeText, jobDescription, tone, companyName, jobTitle } = parsed.data;
+
+    if (user.plan !== 'admin' && user.creditsRemaining <= 0) {
+      return NextResponse.json(
+        { message: 'No credits remaining. Please upgrade your plan.' },
+        { status: 403 }
+      );
+    }
+
+    if (user.plan !== 'admin') {
+      await db
+        .update(users)
+        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+        .where(eq(users.id, user.id));
+    }
 
     const toneInstructions: Record<string, string> = {
       professional: 'Write in a professional, polished tone. Be confident but not arrogant.',

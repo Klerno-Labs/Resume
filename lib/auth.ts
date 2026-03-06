@@ -4,7 +4,13 @@ import { db } from './db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'development-secret-change-me';
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return secret;
+}
 
 export interface AuthUser {
   id: string;
@@ -20,7 +26,7 @@ export async function getAuthUser(): Promise<AuthUser | null> {
     const token = cookieStore.get('auth_token')?.value;
     if (!token) return null;
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string };
     const [user] = await db
       .select({
         id: users.id,
@@ -40,12 +46,12 @@ export async function getAuthUser(): Promise<AuthUser | null> {
 }
 
 export function signToken(userId: string): string {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ userId }, getJwtSecret(), { expiresIn: '7d' });
 }
 
 export function verifyToken(token: string): { userId: string } | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as { userId: string };
+    return jwt.verify(token, getJwtSecret()) as { userId: string };
   } catch {
     return null;
   }
