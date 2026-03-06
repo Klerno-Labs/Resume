@@ -1,35 +1,37 @@
-# Tests and development files
+# Tests
 tests/
-playwright.config.ts
-vitest.config.ts
 *.test.ts
 *.test.tsx
 *.spec.ts
 *.spec.tsx
 
-# Documentation
+# Documentation (keep README)
+docs/
 *.md
 !README.md
-docs/
 
-# Development configs
+# Old files
+client/
+api/
+server/
+scripts/
+script/
+drizzle/
+attached_assets/
+seed-templates.cjs
+drizzle.config.ts
+
+# Dev configs
 .env.example
-.eslintrc.cjs
-tsconfig.json
 
-# Build artifacts from old architecture (exclude server/storage.ts but include lib, db, config, services)
-server/storage.ts
-
-# Temporary files
+# Temp
 *.log
 build-errors.txt
 
-# Editor configs
+# Editor
 .vscode/
 .idea/
 *.swp
-*.swo
 
-# OS files
+# OS
 .DS_Store
-Thumbs.db
