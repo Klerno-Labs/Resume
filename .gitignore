@@ -1,25 +1,28 @@
 node_modules
+.next
 dist
-.vercel-build-output
+out
 .DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
 
-# API bundled files (not used by Vercel)
-api/bundled/
-api/**/*.disabled
-
-# Environment variables (contains secrets)
+# Environment variables
 .env
 .env.*
 .env.local
-test-auth-diagnostic.md
+
+# Vercel
+.vercel
 
 # Local development
 .local/
 .claude/
 
+# IDE
+.vscode/
+*.swp
+
 # Database
 migrations/
-.vercel
+
+# Old files
+api/bundled/
+api/**/*.disabled
