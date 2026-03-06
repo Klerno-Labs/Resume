@@ -181,6 +181,7 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
+                  onClick={() => router.push(`/editor/${resume.id}`)}
                   className="glass rounded-xl p-5 flex items-center gap-4 hover:bg-white/[0.03] transition-colors cursor-pointer"
                 >
                   <div className="w-10 h-10 rounded-lg bg-brand-accent/10 flex items-center justify-center">

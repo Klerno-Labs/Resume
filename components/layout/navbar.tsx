@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Menu, X, Bot, ChevronDown } from 'lucide-react';
+import { Menu, X, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navLinks = [

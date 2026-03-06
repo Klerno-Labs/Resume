@@ -4,12 +4,14 @@ import { Bot } from 'lucide-react';
 const footerLinks = {
   Product: [
     { href: '/builder', label: 'Resume Builder' },
+    { href: '/create-resume', label: 'Create Resume' },
     { href: '/templates', label: 'Templates' },
     { href: '/pricing', label: 'Pricing' },
   ],
   Resources: [
     { href: '/about', label: 'About Robert' },
     { href: '/contact', label: 'Contact' },
+    { href: '/dashboard', label: 'Dashboard' },
   ],
   Legal: [
     { href: '/privacy', label: 'Privacy Policy' },
