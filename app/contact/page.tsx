@@ -1,45 +1,43 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { motion } from 'framer-motion';
-import { Send, Mail, MessageSquare, Loader2, CheckCircle2 } from 'lucide-react';
+import { Bot, HelpCircle, FileText, CreditCard } from 'lucide-react';
+
+const helpTopics = [
+  {
+    icon: Bot,
+    title: 'Talk to Robert',
+    description: 'Get instant help building, optimizing, or improving your resume directly in the builder.',
+    link: '/builder',
+    cta: 'Open Resume Builder',
+  },
+  {
+    icon: FileText,
+    title: 'Resume Tips',
+    description: 'Robert can score your resume, suggest improvements, and tailor it for any job posting.',
+    link: '/builder',
+    cta: 'Get Started',
+  },
+  {
+    icon: CreditCard,
+    title: 'Billing & Plans',
+    description: 'Manage your subscription, view plan details, and upgrade or downgrade anytime.',
+    link: '/settings',
+    cta: 'Manage Billing',
+  },
+  {
+    icon: HelpCircle,
+    title: 'FAQ',
+    description: 'Robert uses AI to analyze, optimize, and redesign your resume for ATS systems and recruiters.',
+    link: '/builder',
+    cta: 'Try It Free',
+  },
+];
 
 export default function ContactPage() {
-  const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: '',
-  });
-
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || 'Failed to send');
-      }
-      setSent(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <>
       <Navbar />
@@ -52,134 +50,34 @@ export default function ContactPage() {
               className="text-center mb-16"
             >
               <h1 className="text-4xl sm:text-5xl font-display font-bold text-white mb-4">
-                Get in <span className="text-gradient">Touch</span>
+                How Can We <span className="text-gradient">Help?</span>
               </h1>
               <p className="text-brand-muted text-lg">
-                Have a question? Need help with your resume? We respond within 1 business day.
+                Robert is available 24/7 to help you build the perfect resume.
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Contact Form */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="glass rounded-2xl p-8"
-              >
-                {sent ? (
-                  <div className="text-center py-8">
-                    <CheckCircle2 className="w-12 h-12 text-green-400 mx-auto mb-4" />
-                    <h3 className="text-white font-semibold text-lg mb-2">Message Sent!</h3>
-                    <p className="text-brand-muted text-sm">
-                      We&apos;ll get back to you within 1 business day.
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    {error && (
-                      <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-                        {error}
-                      </div>
-                    )}
-                    <div>
-                      <label className="block text-sm text-brand-muted mb-1.5">Name</label>
-                      <input
-                        type="text"
-                        value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/50"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-brand-muted mb-1.5">Email</label>
-                      <input
-                        type="email"
-                        value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/50"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-brand-muted mb-1.5">Subject</label>
-                      <select
-                        value={form.subject}
-                        onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/50"
-                        required
-                      >
-                        <option value="">Select a topic</option>
-                        <option value="support">Technical Support</option>
-                        <option value="billing">Billing Question</option>
-                        <option value="feedback">Feedback</option>
-                        <option value="partnership">Partnership</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-brand-muted mb-1.5">Message</label>
-                      <textarea
-                        value={form.message}
-                        onChange={(e) => setForm({ ...form, message: e.target.value })}
-                        rows={5}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/50 resize-none"
-                        required
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-brand-accent to-purple-500 text-white font-semibold text-sm hover:shadow-lg hover:shadow-brand-accent/25 transition-all disabled:opacity-50"
-                    >
-                      {loading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <>
-                          Send Message
-                          <Send className="w-4 h-4" />
-                        </>
-                      )}
-                    </button>
-                  </form>
-                )}
-              </motion.div>
-
-              {/* Info */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="space-y-6"
-              >
-                <div className="glass rounded-2xl p-6">
-                  <Mail className="w-6 h-6 text-brand-accent-light mb-3" />
-                  <h3 className="text-white font-semibold mb-1">Email</h3>
-                  <p className="text-brand-muted text-sm">support@rewriteme.app</p>
-                </div>
-                <div className="glass rounded-2xl p-6">
-                  <MessageSquare className="w-6 h-6 text-brand-accent-light mb-3" />
-                  <h3 className="text-white font-semibold mb-1">Talk to Robert</h3>
-                  <p className="text-brand-muted text-sm">
-                    Have Robert help you directly in the{' '}
-                    <a href="/builder" className="text-brand-accent-light hover:underline">
-                      Resume Builder
-                    </a>
-                    .
-                  </p>
-                </div>
-                <div className="glass rounded-2xl p-6">
-                  <div className="text-brand-muted text-sm leading-relaxed">
-                    <p className="font-semibold text-white mb-2">Response Times</p>
-                    <ul className="space-y-1">
-                      <li>General inquiries: 1 business day</li>
-                      <li>Technical support: Same day</li>
-                      <li>Billing issues: Same day</li>
-                    </ul>
-                  </div>
-                </div>
-              </motion.div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {helpTopics.map((topic, i) => (
+                <motion.div
+                  key={topic.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <Link
+                    href={topic.link}
+                    className="block glass rounded-2xl p-6 hover:bg-white/[0.03] transition-colors group"
+                  >
+                    <topic.icon className="w-8 h-8 text-brand-accent-light mb-4" />
+                    <h3 className="text-white font-semibold text-lg mb-2">{topic.title}</h3>
+                    <p className="text-brand-muted text-sm mb-4">{topic.description}</p>
+                    <span className="text-brand-accent-light text-sm font-medium group-hover:underline">
+                      {topic.cta} &rarr;
+                    </span>
+                  </Link>
+                </motion.div>
+              ))}
             </div>
           </div>
         </section>

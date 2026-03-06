@@ -10,7 +10,7 @@ const footerLinks = {
   ],
   Resources: [
     { href: '/about', label: 'About Robert' },
-    { href: '/contact', label: 'Contact' },
+    { href: '/contact', label: 'Help Center' },
     { href: '/dashboard', label: 'Dashboard' },
   ],
   Legal: [
