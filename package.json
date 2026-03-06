@@ -12,13 +12,14 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.2",
     "@hookform/resolvers": "^3.3.4",
+    "@neondatabase/serverless": "^1.0.2",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
     "cookie": "^1.1.1",
     "date-fns": "^3.6.0",
+    "dotenv": "^17.3.1",
     "drizzle-orm": "^0.39.3",
     "drizzle-zod": "^0.7.0",
     "framer-motion": "^10.18.0",
