@@ -87,14 +87,6 @@ RESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jobDescription}`,
       );
     }
 
-    // Deduct credit only after successful AI response
-    if (user.plan !== 'admin') {
-      await db
-        .update(users)
-        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
-        .where(eq(users.id, user.id));
-    }
-
     const [coverLetter] = await db
       .insert(coverLetters)
       .values({
@@ -105,6 +97,14 @@ RESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jobDescription}`,
         content,
       })
       .returning();
+
+    // Deduct credit only after successful DB insert
+    if (user.plan !== 'admin') {
+      await db
+        .update(users)
+        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+        .where(eq(users.id, user.id));
+    }
 
     return NextResponse.json({
       id: coverLetter.id,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { users, resumes, coverLetters } from '@shared/schema';
+import { users, resumes, coverLetters, payments } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { rateLimit } from '@/lib/rate-limit';
 
@@ -17,7 +17,9 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ message: 'Too many requests. Please wait.' }, { status: 429 });
     }
 
-    // Delete user's data in order (cover letters → resumes → user)
+    // Delete user's data in order (payments → cover letters → resumes → user)
+    // Subscriptions cascade automatically via schema onDelete
+    await db.delete(payments).where(eq(payments.userId, user.id));
     await db.delete(coverLetters).where(eq(coverLetters.userId, user.id));
     await db.delete(resumes).where(eq(resumes.userId, user.id));
     await db.delete(users).where(eq(users.id, user.id));

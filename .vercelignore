@@ -12,7 +12,6 @@ docs/
 
 # Old files
 client/
-/api/
 server/
 scripts/
 script/

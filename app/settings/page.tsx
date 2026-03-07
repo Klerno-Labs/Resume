@@ -33,9 +33,9 @@ export default function SettingsPage() {
     fetch('/api/auth/me')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data) {
-          setUser(data);
-          setProfileForm({ name: data.name || '', email: data.email });
+        if (data?.user) {
+          setUser(data.user);
+          setProfileForm({ name: data.user.name || '', email: data.user.email });
         } else {
           router.push('/login');
         }
@@ -264,8 +264,8 @@ export default function SettingsPage() {
                 <span className="text-brand-muted">{user?.creditsRemaining} credits remaining</span>
               </div>
               {user?.plan === 'free' && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {(['basic', 'pro', 'premium'] as const).map((plan) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(['pro', 'premium'] as const).map((plan) => (
                     <button
                       key={plan}
                       onClick={() => handleUpgrade(plan)}
@@ -278,7 +278,6 @@ export default function SettingsPage() {
                     >
                       <div className="text-white font-semibold capitalize mb-1">{plan}</div>
                       <div className="text-brand-muted text-xs">
-                        {plan === 'basic' && '$5.99/mo — 15 credits'}
                         {plan === 'pro' && '$12/mo — 50 credits'}
                         {plan === 'premium' && '$29/mo — 200 credits'}
                       </div>

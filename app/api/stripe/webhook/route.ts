@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
           if (session.id) {
             await db
               .update(payments)
-              .set({ status: 'completed', stripePaymentId: session.payment_intent as string })
+              .set({ status: 'completed', stripePaymentId: (session.payment_intent as string) || null })
               .where(eq(payments.stripeSessionId, session.id));
           }
 
