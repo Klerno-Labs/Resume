@@ -211,7 +211,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                   className="w-full bg-white"
                   style={{ height: '800px' }}
                   title="Resume Design Preview"
-                  sandbox="allow-same-origin"
+                  sandbox=""
                 />
               </div>
             ) : (

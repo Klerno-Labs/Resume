@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { resumes, users } from '@shared/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { ai, AI_MODEL, ROBERT_SYSTEM_PROMPT } from '@/lib/openai';
 import { z } from 'zod';
 import { rateLimit } from '@/lib/rate-limit';
@@ -31,8 +31,9 @@ const createSchema = z.object({
 
 export async function POST(req: NextRequest) {
   let resumeId: string | null = null;
+  let user: Awaited<ReturnType<typeof getAuthUser>> = null;
   try {
-    const user = await getAuthUser();
+    user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
     }
@@ -42,8 +43,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Too many requests. Please wait a moment.' }, { status: 429 });
     }
 
-    if (user.plan !== 'admin' && user.creditsRemaining <= 0) {
-      return NextResponse.json({ message: 'No credits remaining' }, { status: 403 });
+    // Atomically deduct credit upfront (prevents race condition with concurrent requests)
+    if (user.plan !== 'admin') {
+      const [reserved] = await db.update(users)
+        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+        .where(and(eq(users.id, user.id), sql`${users.creditsRemaining} > 0`))
+        .returning({ creditsRemaining: users.creditsRemaining });
+      if (!reserved) {
+        return NextResponse.json({ message: 'No credits remaining' }, { status: 403 });
+      }
     }
 
     const body = await req.json();
@@ -123,11 +131,6 @@ export async function POST(req: NextRequest) {
       issues = scores.issues || [];
     } catch { /* use defaults */ }
 
-    // Deduct credit only after successful AI processing
-    if (user.plan !== 'admin') {
-      await db.update(users).set({ creditsRemaining: sql`${users.creditsRemaining} - 1` }).where(eq(users.id, user.id));
-    }
-
     const [updated] = await db.update(resumes).set({
       improvedText, atsScore, keywordsScore, formattingScore, issues, status: 'completed', updatedAt: new Date(),
     }).where(eq(resumes.id, resume.id)).returning();
@@ -137,11 +140,15 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Create resume error:', error);
-    if (resumeId) {
-      try {
+    // Refund the credit and mark resume as failed
+    try {
+      if (user?.plan !== 'admin') {
+        await db.update(users).set({ creditsRemaining: sql`${users.creditsRemaining} + 1` }).where(eq(users.id, user!.id));
+      }
+      if (resumeId) {
         await db.update(resumes).set({ status: 'failed', updatedAt: new Date() }).where(eq(resumes.id, resumeId));
-      } catch { /* best effort */ }
-    }
+      }
+    } catch { /* best effort */ }
     return NextResponse.json({ message: 'Failed to create resume' }, { status: 500 });
   }
 }

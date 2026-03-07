@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { users } from '@shared/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
+import { z } from 'zod';
+
+const matchSchema = z.object({
+  resumeText: z.string().min(50).max(50000),
+  jobDescription: z.string().min(20).max(50000),
+});
 import { ai, AI_MODEL } from '@/lib/openai';
 import { rateLimit } from '@/lib/rate-limit';
 
@@ -18,21 +24,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Too many requests. Please wait a moment.' }, { status: 429 });
     }
 
-    if (user.plan !== 'admin' && user.creditsRemaining <= 0) {
-      return NextResponse.json(
-        { message: 'No credits remaining. Please upgrade your plan.' },
-        { status: 403 }
-      );
+    // Atomically deduct credit upfront (prevents race condition)
+    if (user.plan !== 'admin') {
+      const [reserved] = await db.update(users)
+        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+        .where(and(eq(users.id, user.id), sql`${users.creditsRemaining} > 0`))
+        .returning({ creditsRemaining: users.creditsRemaining });
+      if (!reserved) {
+        return NextResponse.json(
+          { message: 'No credits remaining. Please upgrade your plan.' },
+          { status: 403 }
+        );
+      }
     }
 
-    const { resumeText, jobDescription } = await req.json();
-
-    if (!resumeText || !jobDescription) {
+    const body = await req.json();
+    const parsed = matchSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { message: 'Both resume text and job description are required' },
+        { message: parsed.error.errors[0].message },
         { status: 400 }
       );
     }
+    const { resumeText, jobDescription } = parsed.data;
 
     const result = await ai.chat.completions.create({
       model: AI_MODEL,
@@ -67,14 +81,6 @@ Return ONLY valid JSON.`,
         { message: 'AI returned an invalid response. Please try again.' },
         { status: 502 }
       );
-    }
-
-    // Deduct credit only after successful AI response
-    if (user.plan !== 'admin') {
-      await db
-        .update(users)
-        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
-        .where(eq(users.id, user.id));
     }
 
     return NextResponse.json(analysis);

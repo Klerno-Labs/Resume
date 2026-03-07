@@ -37,6 +37,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
 
+    // OAuth users have empty passwordHash — they can't use password change
+    if (!dbUser.passwordHash) {
+      return NextResponse.json({ message: 'Password changes are not available for Google sign-in accounts' }, { status: 400 });
+    }
+
     const valid = await bcrypt.compare(currentPassword, dbUser.passwordHash);
     if (!valid) {
       return NextResponse.json({ message: 'Current password is incorrect' }, { status: 400 });

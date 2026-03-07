@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import { Menu, X, Bot } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { Menu, X, Bot, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
@@ -15,7 +15,25 @@ const navLinks = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user) setUser(data.user);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSignOut = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setUser(null);
+    router.push('/');
+    router.refresh();
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-dark">
@@ -51,18 +69,38 @@ export function Navbar() {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/login"
-              className="px-4 py-2 text-sm font-medium text-brand-muted hover:text-white transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/builder"
-              className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-brand-accent to-purple-500 rounded-lg hover:shadow-lg hover:shadow-brand-accent/25 transition-all hover:-translate-y-0.5"
-            >
-              Build My Resume
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="px-4 py-2 text-sm font-medium text-brand-muted hover:text-white transition-colors"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="px-4 py-2 text-sm font-medium text-brand-muted hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-sm font-medium text-brand-muted hover:text-white transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/builder"
+                  className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-brand-accent to-purple-500 rounded-lg hover:shadow-lg hover:shadow-brand-accent/25 transition-all hover:-translate-y-0.5"
+                >
+                  Build My Resume
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Toggle */}
@@ -93,20 +131,40 @@ export function Navbar() {
               </Link>
             ))}
             <div className="mt-4 px-4 space-y-2">
-              <Link
-                href="/login"
-                onClick={() => setMobileOpen(false)}
-                className="block w-full text-center px-4 py-2.5 text-sm font-medium text-brand-muted border border-white/10 rounded-lg hover:text-white hover:bg-white/5 transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/builder"
-                onClick={() => setMobileOpen(false)}
-                className="block w-full text-center px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-brand-accent to-purple-500 rounded-lg"
-              >
-                Build My Resume
-              </Link>
+              {user ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className="block w-full text-center px-4 py-2.5 text-sm font-medium text-brand-muted border border-white/10 rounded-lg hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => { setMobileOpen(false); handleSignOut(); }}
+                    className="block w-full text-center px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-brand-accent to-purple-500 rounded-lg"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileOpen(false)}
+                    className="block w-full text-center px-4 py-2.5 text-sm font-medium text-brand-muted border border-white/10 rounded-lg hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/builder"
+                    onClick={() => setMobileOpen(false)}
+                    className="block w-full text-center px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-brand-accent to-purple-500 rounded-lg"
+                  >
+                    Build My Resume
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

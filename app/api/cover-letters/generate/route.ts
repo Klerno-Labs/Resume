@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { coverLetters, users } from '@shared/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { ai, AI_MODEL } from '@/lib/openai';
 import { z } from 'zod';
 import { rateLimit } from '@/lib/rate-limit';
@@ -40,11 +40,18 @@ export async function POST(req: NextRequest) {
 
     const { resumeText, resumeId, jobDescription, tone, companyName, jobTitle } = parsed.data;
 
-    if (user.plan !== 'admin' && user.creditsRemaining <= 0) {
-      return NextResponse.json(
-        { message: 'No credits remaining. Please upgrade your plan.' },
-        { status: 403 }
-      );
+    // Atomically deduct credit upfront (prevents race condition)
+    if (user.plan !== 'admin') {
+      const [reserved] = await db.update(users)
+        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+        .where(and(eq(users.id, user.id), sql`${users.creditsRemaining} > 0`))
+        .returning({ creditsRemaining: users.creditsRemaining });
+      if (!reserved) {
+        return NextResponse.json(
+          { message: 'No credits remaining. Please upgrade your plan.' },
+          { status: 403 }
+        );
+      }
     }
 
     const toneInstructions: Record<string, string> = {
@@ -97,14 +104,6 @@ RESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jobDescription}`,
         content,
       })
       .returning();
-
-    // Deduct credit only after successful DB insert
-    if (user.plan !== 'admin') {
-      await db
-        .update(users)
-        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
-        .where(eq(users.id, user.id));
-    }
 
     return NextResponse.json({
       id: coverLetter.id,

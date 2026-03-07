@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
         const userId = session.metadata?.userId;
         const plan = session.metadata?.plan as keyof typeof PLANS;
 
-        if (userId && plan && PLANS[plan]) {
+        if (userId && plan && PLANS[plan] && session.payment_status === 'paid') {
           // Update payment status
           if (session.id) {
             await db

@@ -22,8 +22,9 @@ async function parseFile(buffer: Buffer, mimeType: string): Promise<string> {
 
 export async function POST(req: NextRequest) {
   let resumeId: string | null = null;
+  let user: Awaited<ReturnType<typeof getAuthUser>> = null;
   try {
-    const user = await getAuthUser();
+    user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ message: 'Please sign in to upload a resume' }, { status: 401 });
     }
@@ -86,12 +87,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check credits
-    if (user.plan !== 'admin' && user.creditsRemaining <= 0) {
-      return NextResponse.json(
-        { message: 'No credits remaining. Please upgrade your plan.' },
-        { status: 403 }
-      );
+    // Atomically deduct credit upfront (prevents race condition)
+    if (user.plan !== 'admin') {
+      const [reserved] = await db.update(users)
+        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+        .where(and(eq(users.id, user.id), sql`${users.creditsRemaining} > 0`))
+        .returning({ creditsRemaining: users.creditsRemaining });
+      if (!reserved) {
+        return NextResponse.json(
+          { message: 'No credits remaining. Please upgrade your plan.' },
+          { status: 403 }
+        );
+      }
     }
 
     // Insert resume as processing
@@ -155,14 +162,6 @@ export async function POST(req: NextRequest) {
       // Use defaults
     }
 
-    // Deduct credit only after successful AI processing
-    if (user.plan !== 'admin') {
-      await db
-        .update(users)
-        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
-        .where(eq(users.id, user.id));
-    }
-
     // Update resume
     const [updated] = await db
       .update(resumes)
@@ -190,11 +189,14 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Upload error:', error);
-    if (resumeId) {
-      try {
+    try {
+      if (user?.plan !== 'admin') {
+        await db.update(users).set({ creditsRemaining: sql`${users.creditsRemaining} + 1` }).where(eq(users.id, user!.id));
+      }
+      if (resumeId) {
         await db.update(resumes).set({ status: 'failed', updatedAt: new Date() }).where(eq(resumes.id, resumeId));
-      } catch { /* best effort */ }
-    }
+      }
+    } catch { /* best effort */ }
     return NextResponse.json(
       { message: 'Failed to process resume. Please try again.' },
       { status: 500 }
