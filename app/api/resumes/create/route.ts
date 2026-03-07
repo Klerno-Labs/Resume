@@ -76,11 +76,6 @@ export async function POST(req: NextRequest) {
 
     const contentHash = crypto.createHash('sha256').update(text).digest('hex');
 
-    // Deduct credit
-    if (user.plan !== 'admin') {
-      await db.update(users).set({ creditsRemaining: sql`${users.creditsRemaining} - 1` }).where(eq(users.id, user.id));
-    }
-
     // Insert and process
     const [resume] = await db.insert(resumes).values({
       userId: user.id,
@@ -125,6 +120,11 @@ export async function POST(req: NextRequest) {
       formattingScore = scores.formattingScore || 70;
       issues = scores.issues || [];
     } catch { /* use defaults */ }
+
+    // Deduct credit only after successful AI processing
+    if (user.plan !== 'admin') {
+      await db.update(users).set({ creditsRemaining: sql`${users.creditsRemaining} - 1` }).where(eq(users.id, user.id));
+    }
 
     const [updated] = await db.update(resumes).set({
       improvedText, atsScore, keywordsScore, formattingScore, issues, status: 'completed', updatedAt: new Date(),

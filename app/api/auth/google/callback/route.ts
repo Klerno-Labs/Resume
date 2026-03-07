@@ -21,8 +21,15 @@ interface GoogleUserInfo {
 export async function GET(req: NextRequest) {
   try {
     const code = req.nextUrl.searchParams.get('code');
+    const state = req.nextUrl.searchParams.get('state');
+    const storedState = req.cookies.get('oauth_state')?.value;
+
     if (!code) {
       return NextResponse.redirect(new URL('/login?error=no_code', req.url));
+    }
+
+    if (!state || !storedState || state !== storedState) {
+      return NextResponse.redirect(new URL('/login?error=invalid_state', req.url));
     }
 
     const clientId = process.env.GOOGLE_CLIENT_ID!;
@@ -100,6 +107,7 @@ export async function GET(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
     });
+    response.cookies.delete('oauth_state');
 
     return response;
   } catch (error) {

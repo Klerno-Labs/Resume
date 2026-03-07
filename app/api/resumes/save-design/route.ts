@@ -39,12 +39,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Resume not found' }, { status: 404 });
     }
 
-    // Sanitize HTML - strip script tags and event handlers
+    // Sanitize HTML - strip dangerous tags and attributes
     let sanitizedHtml = html;
     if (html) {
       sanitizedHtml = html
         .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-        .replace(/\bon\w+\s*=\s*["'][^"']*["']/gi, '');
+        .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+        .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+        .replace(/<embed\b[^>]*>/gi, '')
+        .replace(/<link\b[^>]*>/gi, '')
+        .replace(/\bon\w+\s*=\s*["'][^"']*["']/gi, '')
+        .replace(/\bon\w+\s*=\s*[^\s>]+/gi, '')
+        .replace(/javascript\s*:/gi, '')
+        .replace(/data\s*:\s*text\/html/gi, '')
+        .replace(/expression\s*\(/gi, '');
     }
 
     await db.update(resumes).set({

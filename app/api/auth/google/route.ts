@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { randomBytes } from 'crypto';
 
 export async function GET() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -10,6 +11,7 @@ export async function GET() {
     || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
   const redirectUri = `${appUrl}/api/auth/google/callback`;
+  const state = randomBytes(32).toString('hex');
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -18,7 +20,17 @@ export async function GET() {
     scope: 'openid email profile',
     access_type: 'offline',
     prompt: 'consent',
+    state,
   });
 
-  return NextResponse.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
+  const response = NextResponse.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
+  response.cookies.set('oauth_state', state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 600,
+    path: '/',
+  });
+
+  return response;
 }

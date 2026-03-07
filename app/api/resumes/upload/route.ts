@@ -93,14 +93,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Deduct credit atomically
-    if (user.plan !== 'admin') {
-      await db
-        .update(users)
-        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
-        .where(eq(users.id, user.id));
-    }
-
     // Insert resume as processing
     const [resume] = await db
       .insert(resumes)
@@ -159,6 +151,14 @@ export async function POST(req: NextRequest) {
       issues = scores.issues || [];
     } catch {
       // Use defaults
+    }
+
+    // Deduct credit only after successful AI processing
+    if (user.plan !== 'admin') {
+      await db
+        .update(users)
+        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+        .where(eq(users.id, user.id));
     }
 
     // Update resume

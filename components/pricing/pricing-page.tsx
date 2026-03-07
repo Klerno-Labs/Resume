@@ -1,12 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Check, Sparkles, X } from 'lucide-react';
+import { Check, Sparkles, X, Loader2 } from 'lucide-react';
 
 const plans = [
   {
     name: 'Free',
+    planId: 'free',
     price: '$0',
     period: 'forever',
     description: 'Perfect for testing Robert',
@@ -21,11 +24,11 @@ const plans = [
       { text: 'Priority AI processing', included: false },
     ],
     cta: 'Get Started Free',
-    href: '/builder',
     highlighted: false,
   },
   {
     name: 'Pro',
+    planId: 'pro',
     price: '$12',
     period: '/month',
     description: 'For active job seekers',
@@ -40,11 +43,11 @@ const plans = [
       { text: 'Priority AI processing', included: true },
     ],
     cta: 'Start Pro — 7 Day Free Trial',
-    href: '/builder',
     highlighted: true,
   },
   {
     name: 'Premium',
+    planId: 'premium',
     price: '$29',
     period: '/month',
     description: 'Maximum job search firepower',
@@ -59,12 +62,44 @@ const plans = [
       { text: 'White-label exports', included: true },
     ],
     cta: 'Go Premium',
-    href: '/builder',
     highlighted: false,
   },
 ];
 
 export function PricingPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState<string | null>(null);
+
+  async function handleCheckout(planId: string) {
+    if (planId === 'free') {
+      router.push('/builder');
+      return;
+    }
+
+    setLoading(planId);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planId }),
+      });
+
+      if (res.status === 401) {
+        router.push('/login?redirect=/pricing');
+        return;
+      }
+
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      // Silently fail — user can retry
+    } finally {
+      setLoading(null);
+    }
+  }
+
   return (
     <section className="py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -129,21 +164,34 @@ export function PricingPage() {
                 ))}
               </ul>
 
-              <Link
-                href={plan.href}
-                className={`block w-full text-center py-3 rounded-xl text-sm font-semibold transition-all ${
-                  plan.highlighted
-                    ? 'bg-gradient-to-r from-brand-accent to-purple-500 text-white hover:shadow-lg hover:shadow-brand-accent/25'
-                    : 'border border-white/10 text-white hover:bg-white/5'
-                }`}
-              >
-                {plan.cta}
-              </Link>
+              {plan.planId === 'free' ? (
+                <Link
+                  href="/builder"
+                  className="block w-full text-center py-3 rounded-xl text-sm font-semibold transition-all border border-white/10 text-white hover:bg-white/5"
+                >
+                  {plan.cta}
+                </Link>
+              ) : (
+                <button
+                  onClick={() => handleCheckout(plan.planId)}
+                  disabled={loading === plan.planId}
+                  className={`block w-full text-center py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 ${
+                    plan.highlighted
+                      ? 'bg-gradient-to-r from-brand-accent to-purple-500 text-white hover:shadow-lg hover:shadow-brand-accent/25'
+                      : 'border border-white/10 text-white hover:bg-white/5'
+                  }`}
+                >
+                  {loading === plan.planId ? (
+                    <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                  ) : (
+                    plan.cta
+                  )}
+                </button>
+              )}
             </motion.div>
           ))}
         </div>
 
-        {/* FAQ or comparison could go here */}
         <div className="mt-16 text-center">
           <p className="text-brand-muted text-sm">
             All plans include a 30-day money-back guarantee. Cancel anytime.

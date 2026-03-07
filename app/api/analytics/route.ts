@@ -3,17 +3,24 @@ import { getAuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { analyticsEvents, funnelSteps } from '@shared/schema';
 import { z } from 'zod';
+import { rateLimit } from '@/lib/rate-limit';
 
 const eventSchema = z.object({
-  event: z.string().min(1),
+  event: z.string().min(1).max(100),
   properties: z.record(z.unknown()).optional(),
-  page: z.string().optional(),
-  sessionId: z.string().optional(),
-  funnelStep: z.string().optional(),
+  page: z.string().max(500).optional(),
+  sessionId: z.string().max(100).optional(),
+  funnelStep: z.string().max(100).optional(),
 });
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { allowed } = rateLimit(`analytics:${ip}`, 60, 60_000);
+    if (!allowed) {
+      return NextResponse.json({ success: true }); // Silently drop
+    }
+
     const user = await getAuthUser();
     const body = await req.json();
     const parsed = eventSchema.safeParse(body);

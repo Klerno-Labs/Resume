@@ -32,3 +32,34 @@ export async function GET(
     return NextResponse.json({ message: 'Failed to fetch resume' }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getAuthUser();
+    if (!user) {
+      return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const [resume] = await db
+      .select({ id: resumes.id })
+      .from(resumes)
+      .where(and(eq(resumes.id, id), eq(resumes.userId, user.id)))
+      .limit(1);
+
+    if (!resume) {
+      return NextResponse.json({ message: 'Resume not found' }, { status: 404 });
+    }
+
+    await db.delete(resumes).where(and(eq(resumes.id, id), eq(resumes.userId, user.id)));
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Delete resume error:', error);
+    return NextResponse.json({ message: 'Failed to delete resume' }, { status: 500 });
+  }
+}
