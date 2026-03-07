@@ -35,7 +35,7 @@ const plans = [
     features: [
       { text: 'Unlimited resume optimizations', included: true },
       { text: 'Full ATS reports & scoring', included: true },
-      { text: '40+ premium templates', included: true },
+      { text: '35+ premium templates', included: true },
       { text: 'PDF & DOCX export', included: true },
       { text: 'Unlimited cover letters', included: true },
       { text: 'Job matching analysis', included: true },

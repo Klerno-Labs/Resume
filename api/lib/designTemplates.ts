@@ -1,4 +1,4 @@
-// 40+ unique resume design templates with DIVERSE LAYOUTS and styles
+// 35+ unique resume design templates with DIVERSE LAYOUTS and styles
 // Now includes: single-column, timeline, skills-first, split-column, header-banner, and sidebar layouts
 export const DESIGN_TEMPLATES = [
   // SINGLE-COLUMN CENTERED LAYOUTS (Classic Executive Style)

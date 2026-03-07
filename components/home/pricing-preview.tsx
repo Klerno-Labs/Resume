@@ -28,7 +28,7 @@ const plans = [
     features: [
       'Unlimited resume optimizations',
       'Full ATS reports',
-      '40+ premium templates',
+      '35+ premium templates',
       'Cover letter generation',
       'Job matching analysis',
       'Industry optimization',

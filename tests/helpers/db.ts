@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pkg from 'pg';
-import { users, resumes, payments, sessions, coverLetters } from '../../shared/schema';
+import { users, resumes, payments, coverLetters } from '../../shared/schema';
 
 const { Pool } = pkg;
 
@@ -98,7 +98,6 @@ export async function clearDb(db: any) {
   await db.delete(payments);
   await db.delete(coverLetters);
   await db.delete(resumes);
-  await db.delete(sessions);
   await db.delete(users);
 }
 

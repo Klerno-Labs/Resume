@@ -47,7 +47,7 @@ export function TemplateGallery() {
             Resume <span className="text-gradient">Templates</span>
           </h1>
           <p className="text-brand-muted text-lg max-w-2xl mx-auto">
-            40+ professionally designed templates. All ATS-friendly. Robert will
+            35+ professionally designed templates. All ATS-friendly. Robert will
             recommend the best one for your industry.
           </p>
         </motion.div>

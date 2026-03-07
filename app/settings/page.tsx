@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { motion } from 'framer-motion';
-import { User, Lock, CreditCard, Users, Loader2, CheckCircle2, Copy, Check } from 'lucide-react';
+import { User, Lock, CreditCard, Loader2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type Tab = 'profile' | 'security' | 'billing' | 'referrals';
+type Tab = 'profile' | 'security' | 'billing';
 
 interface UserData {
   id: string;
@@ -27,7 +27,7 @@ export default function SettingsPage() {
   const [message, setMessage] = useState('');
   const [profileForm, setProfileForm] = useState({ name: '', email: '' });
   const [passwordForm, setPasswordForm] = useState({ current: '', newPassword: '', confirm: '' });
-  const [copied, setCopied] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -106,13 +106,22 @@ export default function SettingsPage() {
     }
   };
 
-  const referralCode = user?.id ? `REF-${user.id.slice(0, 8).toUpperCase()}` : '';
-  const referralLink = `https://rewriteme.app/login?ref=${referralCode}`;
-
-  const handleCopyReferral = () => {
-    navigator.clipboard.writeText(referralLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleDeleteAccount = async () => {
+    if (!confirm('Are you sure you want to delete your account? This will permanently delete all your resumes, cover letters, and account data. This cannot be undone.')) return;
+    if (!confirm('This is your last chance. Type OK to confirm you want to permanently delete everything.')) return;
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/auth/delete-account', { method: 'DELETE' });
+      if (res.ok) {
+        router.push('/');
+      } else {
+        const data = await res.json();
+        setMessage(data.message || 'Failed to delete account');
+      }
+    } catch {
+      setMessage('Something went wrong');
+    }
+    setDeleting(false);
   };
 
   if (loading) {
@@ -128,7 +137,6 @@ export default function SettingsPage() {
     { id: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> },
     { id: 'security', label: 'Security', icon: <Lock className="w-4 h-4" /> },
     { id: 'billing', label: 'Billing', icon: <CreditCard className="w-4 h-4" /> },
-    { id: 'referrals', label: 'Referrals', icon: <Users className="w-4 h-4" /> },
   ];
 
   return (
@@ -282,43 +290,23 @@ export default function SettingsPage() {
           </motion.div>
         )}
 
-        {/* Referrals Tab */}
-        {tab === 'referrals' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-8 space-y-6">
-            <h3 className="text-white font-semibold">Referral Program</h3>
+        {/* Danger Zone */}
+        {tab === 'security' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/5 p-8 space-y-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+              <h3 className="text-red-400 font-semibold">Danger Zone</h3>
+            </div>
             <p className="text-brand-muted text-sm">
-              Share your referral link and earn 5 credits for each friend who signs up. Earn 10 bonus credits when they upgrade to a paid plan!
+              Permanently delete your account and all associated data including resumes, cover letters, and settings. This action cannot be undone.
             </p>
-            <div>
-              <label className="block text-sm text-brand-muted mb-1.5">Your Referral Link</label>
-              <div className="flex gap-2">
-                <input
-                  value={referralLink}
-                  readOnly
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm"
-                />
-                <button
-                  onClick={handleCopyReferral}
-                  className="px-4 py-3 rounded-xl bg-brand-accent/10 border border-brand-accent/20 text-brand-accent-light hover:bg-brand-accent/20 transition-colors"
-                >
-                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-white/5 rounded-xl">
-                <div className="text-2xl font-display font-bold text-white">0</div>
-                <div className="text-brand-muted text-xs">Total Referrals</div>
-              </div>
-              <div className="text-center p-4 bg-white/5 rounded-xl">
-                <div className="text-2xl font-display font-bold text-white">0</div>
-                <div className="text-brand-muted text-xs">Paid Conversions</div>
-              </div>
-              <div className="text-center p-4 bg-white/5 rounded-xl">
-                <div className="text-2xl font-display font-bold text-white">0</div>
-                <div className="text-brand-muted text-xs">Credits Earned</div>
-              </div>
-            </div>
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleting}
+              className="px-6 py-2.5 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm font-semibold hover:bg-red-500/20 transition-all disabled:opacity-50"
+            >
+              {deleting ? 'Deleting...' : 'Delete My Account'}
+            </button>
           </motion.div>
         )}
       </div>

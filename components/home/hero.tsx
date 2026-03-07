@@ -90,7 +90,7 @@ export function HeroSection() {
           </div>
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-purple-400" />
-            <span>40+ Templates</span>
+            <span>35+ Templates</span>
           </div>
         </motion.div>
       </div>

@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Loader2,
   Bot,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -39,6 +40,20 @@ export default function DashboardPage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [resumes, setResumes] = useState<ResumeItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  async function handleDelete(e: React.MouseEvent, resumeId: string) {
+    e.stopPropagation();
+    if (!confirm('Delete this resume? This cannot be undone.')) return;
+    setDeleting(resumeId);
+    try {
+      const res = await fetch(`/api/resumes/${resumeId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setResumes((prev) => prev.filter((r) => r.id !== resumeId));
+      }
+    } catch { /* ignore */ }
+    setDeleting(null);
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -196,7 +211,7 @@ export default function DashboardPage() {
                       {new Date(resume.createdAt).toLocaleDateString()}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     {resume.atsScore && (
                       <div className="text-right">
                         <div className="text-white font-semibold text-sm">{resume.atsScore}</div>
@@ -220,6 +235,18 @@ export default function DashboardPage() {
                       )}
                       {resume.status}
                     </div>
+                    <button
+                      onClick={(e) => handleDelete(e, resume.id)}
+                      disabled={deleting === resume.id}
+                      className="p-2 rounded-lg text-brand-muted hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                      title="Delete resume"
+                    >
+                      {deleting === resume.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
                 </motion.div>
               ))}

@@ -30,6 +30,7 @@ const createSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  let resumeId: string | null = null;
   try {
     const user = await getAuthUser();
     if (!user) {
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest) {
       contentHash,
       status: 'processing',
     }).returning();
+    resumeId = resume.id;
 
     // AI optimization (sequential to avoid rate limits)
     const optimizeResult = await ai.chat.completions.create({
@@ -135,6 +137,11 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Create resume error:', error);
+    if (resumeId) {
+      try {
+        await db.update(resumes).set({ status: 'failed', updatedAt: new Date() }).where(eq(resumes.id, resumeId));
+      } catch { /* best effort */ }
+    }
     return NextResponse.json({ message: 'Failed to create resume' }, { status: 500 });
   }
 }

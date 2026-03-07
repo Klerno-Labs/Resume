@@ -9,6 +9,7 @@ import { rateLimit } from '@/lib/rate-limit';
 
 const generateSchema = z.object({
   resumeText: z.string().min(50),
+  resumeId: z.string().optional(),
   jobDescription: z.string().min(20),
   tone: z.enum(['professional', 'casual', 'enthusiastic', 'formal']).default('professional'),
   companyName: z.string().optional(),
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { resumeText, jobDescription, tone, companyName, jobTitle } = parsed.data;
+    const { resumeText, resumeId, jobDescription, tone, companyName, jobTitle } = parsed.data;
 
     if (user.plan !== 'admin' && user.creditsRemaining <= 0) {
       return NextResponse.json(
@@ -98,6 +99,7 @@ RESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jobDescription}`,
       .insert(coverLetters)
       .values({
         userId: user.id,
+        resumeId: resumeId || null,
         jobDescription,
         tone,
         content,
