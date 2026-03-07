@@ -114,34 +114,33 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
-    // Process with Z.AI (GLM-4-Flash)
-    const [optimizeResult, scoreResult] = await Promise.all([
-      ai.chat.completions.create({
-        model: AI_MODEL,
-        messages: [
-          { role: 'system', content: ROBERT_SYSTEM_PROMPT },
-          {
-            role: 'user',
-            content: `Optimize this resume for maximum ATS compatibility and recruiter appeal. Return ONLY the improved resume text, no explanations:\n\n${text}`,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
-      ai.chat.completions.create({
-        model: AI_MODEL,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are an ATS scoring system. Analyze the resume and return a JSON object with: atsScore (0-100), keywordsScore (0-100), formattingScore (0-100), issues (array of {type, message, severity}). Return ONLY valid JSON.',
-          },
-          { role: 'user', content: `Score this resume:\n\n${text}` },
-        ],
-        temperature: 0.3,
-        max_tokens: 2000,
-      }),
-    ]);
+    // Process with Z.AI (sequential to avoid rate limits)
+    const optimizeResult = await ai.chat.completions.create({
+      model: AI_MODEL,
+      messages: [
+        { role: 'system', content: ROBERT_SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: `Optimize this resume for maximum ATS compatibility and recruiter appeal. Return ONLY the improved resume text, no explanations:\n\n${text}`,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 10000,
+    });
+
+    const scoreResult = await ai.chat.completions.create({
+      model: AI_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are an ATS scoring system. Analyze the resume and return a JSON object with: atsScore (0-100), keywordsScore (0-100), formattingScore (0-100), issues (array of {type, message, severity}). Return ONLY valid JSON.',
+        },
+        { role: 'user', content: `Score this resume:\n\n${text}` },
+      ],
+      temperature: 0.3,
+      max_tokens: 6000,
+    });
 
     const improvedText = optimizeResult.choices[0]?.message?.content || text;
 

@@ -5,7 +5,7 @@ let _client: OpenAI | null = null;
 export function getAI(): OpenAI {
   if (!_client) {
     _client = new OpenAI({
-      apiKey: process.env.ZAI_API_KEY || process.env.OPENAI_API_KEY,
+      apiKey: process.env.ZAI_API_KEY,
       baseURL: 'https://open.bigmodel.cn/api/paas/v4',
     });
   }
@@ -24,8 +24,8 @@ export const ai = new Proxy({} as OpenAI, {
   },
 });
 
-// Default model — GLM-4-Flash (fast and capable)
-export const AI_MODEL = 'glm-4-flash';
+// Z.AI GLM-4.7-Flash — reasoning model
+export const AI_MODEL = 'glm-4.7-flash';
 
 export const ROBERT_SYSTEM_PROMPT = `You are Robert, the AI resume architect at RewriteMe. You are an expert resume writer with deep knowledge of:
 - ATS (Applicant Tracking Systems) optimization

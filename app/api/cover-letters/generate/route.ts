@@ -74,7 +74,7 @@ RESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jobDescription}`,
         },
       ],
       temperature: 0.8,
-      max_tokens: 2000,
+      max_tokens: 6000,
     });
 
     const content = result.choices[0]?.message?.content || '';

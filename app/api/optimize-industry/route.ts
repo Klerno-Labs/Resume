@@ -63,7 +63,7 @@ Return ONLY valid JSON.`,
         },
       ],
       temperature: 0.5,
-      max_tokens: 4000,
+      max_tokens: 10000,
     });
 
     const content = result.choices[0]?.message?.content || '{}';

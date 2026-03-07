@@ -69,7 +69,7 @@ Return ONLY the HTML, no markdown or explanations.`,
         },
       ],
       temperature: 0.6,
-      max_tokens: 6000,
+      max_tokens: 16000,
     });
 
     let html = result.choices[0]?.message?.content || '';

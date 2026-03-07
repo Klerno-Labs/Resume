@@ -91,27 +91,26 @@ export async function POST(req: NextRequest) {
       status: 'processing',
     }).returning();
 
-    // AI optimization
-    const [optimizeResult, scoreResult] = await Promise.all([
-      ai.chat.completions.create({
-        model: AI_MODEL,
-        messages: [
-          { role: 'system', content: ROBERT_SYSTEM_PROMPT },
-          { role: 'user', content: `Optimize this resume for maximum ATS compatibility:\n\n${text}` },
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
-      ai.chat.completions.create({
-        model: AI_MODEL,
-        messages: [
-          { role: 'system', content: 'Analyze the resume. Return JSON: {atsScore: 0-100, keywordsScore: 0-100, formattingScore: 0-100, issues: [{type, message, severity}]}. Return ONLY valid JSON.' },
-          { role: 'user', content: text },
-        ],
-        temperature: 0.3,
-        max_tokens: 2000,
-      }),
-    ]);
+    // AI optimization (sequential to avoid rate limits)
+    const optimizeResult = await ai.chat.completions.create({
+      model: AI_MODEL,
+      messages: [
+        { role: 'system', content: ROBERT_SYSTEM_PROMPT },
+        { role: 'user', content: `Optimize this resume for maximum ATS compatibility:\n\n${text}` },
+      ],
+      temperature: 0.7,
+      max_tokens: 10000,
+    });
+
+    const scoreResult = await ai.chat.completions.create({
+      model: AI_MODEL,
+      messages: [
+        { role: 'system', content: 'Analyze the resume. Return JSON: {atsScore: 0-100, keywordsScore: 0-100, formattingScore: 0-100, issues: [{type, message, severity}]}. Return ONLY valid JSON.' },
+        { role: 'user', content: text },
+      ],
+      temperature: 0.3,
+      max_tokens: 6000,
+    });
 
     const improvedText = optimizeResult.choices[0]?.message?.content || text;
     let atsScore = 75, keywordsScore = 70, formattingScore = 70;
