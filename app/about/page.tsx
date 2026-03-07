@@ -48,7 +48,7 @@ export default function AboutPage() {
                   for both humans and machines.
                 </p>
                 <p>
-                  The result? Resumes that score 95+ on ATS systems and actually get
+                  The result? Resumes built to pass ATS systems and actually get
                   callbacks.
                 </p>
               </div>
@@ -57,9 +57,9 @@ export default function AboutPage() {
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
               {[
-                { value: '10,000+', label: 'Resumes Built' },
-                { value: '95+', label: 'Avg ATS Score' },
-                { value: '5,000+', label: 'Users Hired' },
+                { value: '<60s', label: 'Processing Time' },
+                { value: 'ATS', label: 'Optimized Output' },
+                { value: 'AI', label: 'Powered Analysis' },
               ].map((stat) => (
                 <div key={stat.label} className="glass rounded-2xl p-6 text-center">
                   <div className="text-3xl font-display font-bold text-white mb-1">
@@ -89,7 +89,7 @@ export default function AboutPage() {
                 {
                   icon: Shield,
                   title: 'Data Security',
-                  desc: 'Your resume data is encrypted and never shared. Delete anytime.',
+                  desc: 'Your resume data is transmitted securely over HTTPS and never shared. Delete anytime.',
                 },
                 {
                   icon: FileText,

@@ -59,7 +59,7 @@ const sections = [
   {
     title: 'Data Storage & Security',
     content: [
-      'Your data is stored securely using industry-standard encryption. Resume content and personal information are protected with AES-256 encryption at rest.',
+      'Your data is stored securely in a protected database hosted by Neon (PostgreSQL). All connections use SSL/TLS encryption.',
       'We use secure HTTPS connections for all data transfers between your browser and our servers.',
     ],
   },

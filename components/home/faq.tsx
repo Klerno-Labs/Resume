@@ -14,7 +14,7 @@ const faqs = [
   {
     question: 'Will my resume pass ATS systems?',
     answer:
-      'Yes. Every resume Robert builds is optimized for Applicant Tracking Systems. He uses clean formatting, proper heading structures, and strategically places keywords that ATS systems scan for. Our average ATS score is 95+.',
+      'Yes. Every resume Robert builds is optimized for Applicant Tracking Systems. He uses clean formatting, proper heading structures, and strategically places keywords that ATS systems scan for.',
   },
   {
     question: 'Can I upload my existing resume?',
@@ -34,7 +34,7 @@ const faqs = [
   {
     question: 'Is my data secure?',
     answer:
-      'Your resume data is encrypted in transit and at rest. We never share your personal information with third parties. You can delete your data at any time from your dashboard.',
+      'Your resume data is transmitted securely over HTTPS and stored in a protected database. We never share your personal information with third parties. You can delete your data at any time from your settings.',
   },
 ];
 

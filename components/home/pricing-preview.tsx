@@ -26,7 +26,7 @@ const plans = [
     period: '/month',
     description: 'For serious job seekers',
     features: [
-      'Unlimited resume optimizations',
+      '50 resume optimizations/month',
       'Full ATS reports',
       'All premium templates',
       'Cover letter generation',

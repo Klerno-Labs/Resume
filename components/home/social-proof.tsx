@@ -4,10 +4,10 @@ import { motion } from 'framer-motion';
 import { FileText, Users, TrendingUp, Star } from 'lucide-react';
 
 const stats = [
-  { icon: FileText, value: '10,000+', label: 'Resumes Built' },
-  { icon: TrendingUp, value: '95+', label: 'Avg ATS Score' },
-  { icon: Users, value: '5,000+', label: 'Users Hired' },
-  { icon: Star, value: '4.9/5', label: 'User Rating' },
+  { icon: FileText, value: '6', label: 'Template Styles' },
+  { icon: TrendingUp, value: 'ATS', label: 'Optimized' },
+  { icon: Users, value: 'AI', label: 'Powered by Robert' },
+  { icon: Star, value: '<60s', label: 'Processing Time' },
 ];
 
 export function SocialProof() {
