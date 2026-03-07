@@ -23,7 +23,7 @@ const steps = [
     step: '03',
     title: 'Choose Your Design',
     description:
-      'Pick from 35+ professionally designed templates. Robert recommends the best layout for your industry.',
+      'Pick from professionally designed templates. Robert recommends the best layout for your industry.',
   },
   {
     icon: Download,

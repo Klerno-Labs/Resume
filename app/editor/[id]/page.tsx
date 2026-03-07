@@ -97,31 +97,39 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     setSaving(false);
   };
 
+  const [downloadError, setDownloadError] = useState('');
+
   const handleDownload = async () => {
-    const text = resume?.improvedText || resume?.originalText || '';
-    const { jsPDF } = await import('jspdf');
-    const doc = new jsPDF();
-    const template = TEMPLATES.find((t) => t.id === selectedTemplate);
-    const color = template?.accent || '#6366F1';
-    const r = parseInt(color.slice(1, 3), 16);
-    const g = parseInt(color.slice(3, 5), 16);
-    const b = parseInt(color.slice(5, 7), 16);
-    doc.setFillColor(r, g, b);
-    doc.rect(0, 0, 210, 8, 'F');
-    doc.setFont('helvetica');
-    doc.setFontSize(11);
-    doc.setTextColor(30, 30, 30);
-    const lines = doc.splitTextToSize(text, 170);
-    let y = 20;
-    for (const line of lines) {
-      if (y > 280) { doc.addPage(); y = 20; }
-      doc.text(line, 20, y);
-      y += 6;
+    setDownloadError('');
+    try {
+      const text = resume?.improvedText || resume?.originalText || '';
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      const template = TEMPLATES.find((t) => t.id === selectedTemplate);
+      const color = template?.accent || '#6366F1';
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      doc.setFillColor(r, g, b);
+      doc.rect(0, 0, 210, 8, 'F');
+      doc.setFont('helvetica');
+      doc.setFontSize(11);
+      doc.setTextColor(30, 30, 30);
+      const lines = doc.splitTextToSize(text, 170);
+      let y = 20;
+      for (const line of lines) {
+        if (y > 280) { doc.addPage(); y = 20; }
+        doc.text(line, 20, y);
+        y += 6;
+      }
+      doc.setFontSize(7);
+      doc.setTextColor(150, 150, 150);
+      doc.text('Built with RewriteMe.app', 20, 290);
+      doc.save('resume-rewriteme.pdf');
+    } catch (err) {
+      console.error('PDF export error:', err);
+      setDownloadError('Failed to generate PDF. Please try again.');
     }
-    doc.setFontSize(7);
-    doc.setTextColor(150, 150, 150);
-    doc.text('Built with RewriteMe.app', 20, 290);
-    doc.save('resume-rewriteme.pdf');
   };
 
   if (loading) {
@@ -178,6 +186,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             </button>
           </div>
         </div>
+
+        {downloadError && (
+          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            {downloadError}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}

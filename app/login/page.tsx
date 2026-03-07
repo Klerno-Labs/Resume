@@ -39,8 +39,20 @@ function LoginContent() {
     name: '',
   });
 
+  const passwordErrors = isRegister && form.password.length > 0 ? [
+    form.password.length < 12 ? 'At least 12 characters' : null,
+    !/[A-Z]/.test(form.password) ? 'Uppercase letter' : null,
+    !/[a-z]/.test(form.password) ? 'Lowercase letter' : null,
+    !/[0-9]/.test(form.password) ? 'Number' : null,
+    !/[^A-Za-z0-9]/.test(form.password) ? 'Special character' : null,
+  ].filter(Boolean) as string[] : [];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isRegister && passwordErrors.length > 0) {
+      setError('Password needs: ' + passwordErrors.join(', '));
+      return;
+    }
     setLoading(true);
     setError('');
 
@@ -142,6 +154,21 @@ function LoginContent() {
                     required
                   />
                 </div>
+                {isRegister && form.password.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {[
+                      { label: '12+ chars', ok: form.password.length >= 12 },
+                      { label: 'A-Z', ok: /[A-Z]/.test(form.password) },
+                      { label: 'a-z', ok: /[a-z]/.test(form.password) },
+                      { label: '0-9', ok: /[0-9]/.test(form.password) },
+                      { label: 'Special', ok: /[^A-Za-z0-9]/.test(form.password) },
+                    ].map((r) => (
+                      <span key={r.label} className={`text-[10px] px-2 py-0.5 rounded-full ${r.ok ? 'bg-green-500/20 text-green-400' : 'bg-white/5 text-brand-muted'}`}>
+                        {r.ok ? '\u2713' : '\u2717'} {r.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <button
@@ -181,6 +208,14 @@ function LoginContent() {
               </svg>
               Continue with Google
             </a>
+
+            {!isRegister && (
+              <div className="mt-4 text-center">
+                <Link href="/forgot-password" className="text-brand-muted text-xs hover:text-white transition-colors">
+                  Forgot your password?
+                </Link>
+              </div>
+            )}
 
             <div className="mt-6 text-center">
               <button

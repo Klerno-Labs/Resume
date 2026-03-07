@@ -7,12 +7,13 @@ export const metadata = {
   description: 'Let Robert build your perfect resume. Upload your existing resume or start from scratch.',
 };
 
-export default function BuilderPage() {
+export default async function BuilderPage({ searchParams }: { searchParams: Promise<{ template?: string }> }) {
+  const params = await searchParams;
   return (
     <>
       <Navbar />
       <main className="min-h-screen bg-brand-navy pt-16">
-        <ResumeBuilder />
+        <ResumeBuilder initialTemplate={params.template} />
       </main>
       <Footer />
     </>

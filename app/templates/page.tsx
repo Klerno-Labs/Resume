@@ -4,7 +4,7 @@ import { TemplateGallery } from '@/components/templates/template-gallery';
 
 export const metadata = {
   title: 'Resume Templates',
-  description: '35+ professionally designed, ATS-friendly resume templates. Choose your style.',
+  description: 'Professionally designed, ATS-friendly resume templates. Choose your style.',
 };
 
 export default function TemplatesPage() {

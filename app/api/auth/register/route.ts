@@ -5,6 +5,8 @@ import { users } from '@shared/schema';
 import { signToken } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import crypto from 'crypto';
+import { sendVerificationEmail } from '@/lib/email';
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -49,6 +51,8 @@ export async function POST(req: NextRequest) {
     const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase());
     const plan = adminEmails.includes(email.toLowerCase()) ? 'admin' as const : 'free' as const;
 
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
     const [user] = await db
       .insert(users)
       .values({
@@ -57,6 +61,7 @@ export async function POST(req: NextRequest) {
         name: name || null,
         plan,
         creditsRemaining: plan === 'admin' ? 9999 : 3,
+        verificationToken,
       })
       .returning({
         id: users.id,
@@ -65,6 +70,13 @@ export async function POST(req: NextRequest) {
         plan: users.plan,
         creditsRemaining: users.creditsRemaining,
       });
+
+    // Send verification email (best effort — don't block registration)
+    try {
+      await sendVerificationEmail(email.toLowerCase(), verificationToken);
+    } catch (err) {
+      console.error('Failed to send verification email:', err);
+    }
 
     const token = signToken(user.id);
 

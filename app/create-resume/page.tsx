@@ -248,6 +248,12 @@ export default function CreateResumePage() {
           {step === 'review' && (
             <div className="space-y-4">
               <h2 className="text-white font-semibold mb-4">Review & Submit</h2>
+              {(!form.experience.some((e) => e.title) || !form.skills.some(Boolean)) && (
+                <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm">
+                  {!form.experience.some((e) => e.title) && 'Add at least one work experience. '}
+                  {!form.skills.some(Boolean) && 'Add at least one skill.'}
+                </div>
+              )}
               <div className="space-y-3 text-sm">
                 <div className="p-3 bg-white/5 rounded-lg"><span className="text-brand-muted">Name:</span> <span className="text-white">{form.name}</span></div>
                 <div className="p-3 bg-white/5 rounded-lg"><span className="text-brand-muted">Email:</span> <span className="text-white">{form.email}</span></div>
@@ -275,7 +281,7 @@ export default function CreateResumePage() {
           {step === 'review' ? (
             <button
               onClick={handleSubmit}
-              disabled={loading || !form.name || !form.email}
+              disabled={loading || !form.name || !form.email || !form.experience.some((e) => e.title) || !form.skills.some(Boolean)}
               className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-brand-accent to-purple-500 rounded-xl text-white text-sm font-semibold hover:shadow-lg hover:shadow-brand-accent/25 transition-all disabled:opacity-50"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}

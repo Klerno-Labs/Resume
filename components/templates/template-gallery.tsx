@@ -47,7 +47,7 @@ export function TemplateGallery() {
             Resume <span className="text-gradient">Templates</span>
           </h1>
           <p className="text-brand-muted text-lg max-w-2xl mx-auto">
-            35+ professionally designed templates. All ATS-friendly. Robert will
+            Professionally designed templates. All ATS-friendly. Robert will
             recommend the best one for your industry.
           </p>
         </motion.div>
@@ -91,7 +91,7 @@ export function TemplateGallery() {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-6">
                   <Link
-                    href="/builder"
+                    href={`/builder?template=${template.id}`}
                     className="flex items-center gap-2 px-4 py-2 bg-white text-brand-navy rounded-lg text-sm font-semibold hover:bg-brand-cream transition-colors"
                   >
                     Use Template

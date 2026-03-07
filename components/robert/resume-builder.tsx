@@ -17,6 +17,7 @@ import {
   X,
   Copy,
   Check,
+  Briefcase,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -37,13 +38,15 @@ const TEMPLATES = [
   { id: 'tech', name: 'Tech Pro', category: 'modern', accent: '#059669' },
 ];
 
-export function ResumeBuilder() {
+export function ResumeBuilder({ initialTemplate }: { initialTemplate?: string }) {
   const [step, setStep] = useState<BuilderStep>('welcome');
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'robert',
       content:
-        "Hey! I'm Robert, your AI resume architect. I'll help you build a resume that gets interviews. You can upload your existing resume, or tell me about your experience and I'll create one from scratch. What would you like to do?",
+        initialTemplate
+          ? `Hey! I'm Robert, your AI resume architect. I see you picked the ${initialTemplate} template — great choice! Upload your resume and I'll optimize it with that style in mind.`
+          : "Hey! I'm Robert, your AI resume architect. I'll help you build a resume that gets interviews. You can upload your existing resume, or tell me about your experience and I'll create one from scratch. What would you like to do?",
       timestamp: new Date(),
     },
   ]);
@@ -58,7 +61,8 @@ export function ResumeBuilder() {
     formattingScore?: number;
     resumeId?: string;
   }>({});
-  const [selectedTemplate, setSelectedTemplate] = useState('modern');
+  const validTemplate = TEMPLATES.find((t) => t.id === initialTemplate);
+  const [selectedTemplate, setSelectedTemplate] = useState(validTemplate ? initialTemplate! : 'modern');
   const [coverLetter, setCoverLetter] = useState('');
   const [showCoverLetter, setShowCoverLetter] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -251,6 +255,42 @@ export function ResumeBuilder() {
     setIsTyping(false);
   };
 
+  const handleIndustryOptimize = async (industry: string) => {
+    const text = resumeData.improvedText || resumeData.originalText;
+    if (!text) return;
+
+    setIsTyping(true);
+    setActionLoading('industry');
+    try {
+      const res = await fetch('/api/optimize-industry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeText: text, industry }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        addRobertMessage(
+          `Your resume has been optimized for the ${industry} industry!\n\n` +
+            `Confidence Score: ${data.confidenceScore || 0}%\n\n` +
+            `${data.addedKeywords?.length ? `Added Keywords:\n${data.addedKeywords.map((k: string) => `  + ${k}`).join('\n')}\n\n` : ''}` +
+            `${data.industryTips?.length ? `Industry Tips:\n${data.industryTips.map((t: string) => `  - ${t}`).join('\n')}` : ''}`
+        );
+        if (data.optimizedText) {
+          setResumeData((prev) => ({ ...prev, improvedText: data.optimizedText }));
+        }
+      } else {
+        const error = await res.json();
+        throw new Error(error.message || 'Optimization failed');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Something went wrong';
+      addRobertMessage(`Couldn't optimize for industry: ${msg}. Please try again.`);
+    }
+    setIsTyping(false);
+    setActionLoading(null);
+  };
+
   const handleSend = async () => {
     if (!input.trim()) return;
     const userInput = input.trim();
@@ -289,6 +329,19 @@ export function ResumeBuilder() {
         addRobertMessage(
           "Check out the template selector in the panel on the right. Pick one that fits your industry, then download your resume in that style."
         );
+      } else if (
+        lowerInput.includes('industry') ||
+        lowerInput.includes('optimize for') ||
+        lowerInput.includes('tailor for')
+      ) {
+        // Extract industry name from input
+        const industryMatch = userInput.match(/(?:for|industry[:\s]*)\s*(.+)/i);
+        const industry = industryMatch ? industryMatch[1].trim() : userInput;
+        if (industry.length >= 2 && industry.length <= 50) {
+          await handleIndustryOptimize(industry);
+        } else {
+          addRobertMessage("What industry should I optimize for? Just type the name, like 'Healthcare' or 'Finance'.");
+        }
       } else if (userInput.length > 50) {
         // Long text = likely a job description
         await handleJobMatch(userInput);
@@ -296,6 +349,7 @@ export function ResumeBuilder() {
         addRobertMessage(
           "I'm ready to help! You can:\n\n" +
             "- Paste a job description and I'll match your resume to it\n" +
+            "- Optimize for a specific industry\n" +
             "- Choose a template design from the panel\n" +
             "- Ask me to generate a cover letter\n" +
             "- Download your optimized resume as PDF"
@@ -426,6 +480,16 @@ export function ResumeBuilder() {
                     setStep('design');
                     addRobertMessage(
                       "Pick a template from the panel on the right. Each one is ATS-friendly and professionally designed."
+                    );
+                  }}
+                />
+                <QuickAction
+                  icon={<Briefcase className="w-3.5 h-3.5" />}
+                  label="Optimize for Industry"
+                  disabled={actionLoading === 'industry'}
+                  onClick={() => {
+                    addRobertMessage(
+                      "What industry are you targeting? Type the industry name (e.g., 'Healthcare', 'Finance', 'Tech') and I'll optimize your resume with industry-specific keywords."
                     );
                   }}
                 />
@@ -639,6 +703,15 @@ export function ResumeBuilder() {
                   onClick={() => {
                     setStep('design');
                     addRobertMessage("Pick a template style above. Each one is ATS-friendly.");
+                  }}
+                />
+                <ActionButton
+                  icon={<Briefcase className="w-4 h-4" />}
+                  label="Industry Optimize"
+                  description="Tailor for your industry"
+                  loading={actionLoading === 'industry'}
+                  onClick={() => {
+                    addRobertMessage("What industry are you targeting? Type the name (e.g., 'Healthcare', 'Finance', 'Tech') and I'll optimize your resume.");
                   }}
                 />
                 <ActionButton

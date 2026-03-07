@@ -31,7 +31,7 @@ const features = [
   },
   {
     icon: Palette,
-    title: '35+ Pro Templates',
+    title: 'Pro Templates',
     description:
       'Choose from professionally designed templates — modern, classic, creative, or minimal. All ATS-friendly.',
   },

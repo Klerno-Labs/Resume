@@ -11,6 +11,7 @@ const navLinks = [
   { href: '/templates', label: 'Templates' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Help' },
 ];
 
 export function Navbar() {
