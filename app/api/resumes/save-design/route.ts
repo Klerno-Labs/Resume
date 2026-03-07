@@ -3,6 +3,16 @@ import { getAuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { resumes } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
+import { z } from 'zod';
+
+const VALID_TEMPLATES = ['modern', 'classic', 'minimal', 'creative', 'executive', 'tech'] as const;
+
+const saveDesignSchema = z.object({
+  resumeId: z.string().min(1),
+  template: z.enum(VALID_TEMPLATES).optional(),
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid hex color').optional(),
+  html: z.string().max(500_000, 'HTML too large').optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,11 +21,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
     }
 
-    const { resumeId, template, accentColor, html } = await req.json();
-
-    if (!resumeId) {
-      return NextResponse.json({ message: 'Resume ID required' }, { status: 400 });
+    const body = await req.json();
+    const parsed = saveDesignSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ message: parsed.error.errors[0].message }, { status: 400 });
     }
+
+    const { resumeId, template, accentColor, html } = parsed.data;
 
     const [resume] = await db
       .select()
@@ -27,10 +39,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Resume not found' }, { status: 404 });
     }
 
+    // Sanitize HTML - strip script tags and event handlers
+    let sanitizedHtml = html;
+    if (html) {
+      sanitizedHtml = html
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/\bon\w+\s*=\s*["'][^"']*["']/gi, '');
+    }
+
     await db.update(resumes).set({
       analysis: {
-        ...(resume.analysis || {}),
-        designHtml: html,
+        ...(resume.analysis as Record<string, unknown> || {}),
+        designHtml: sanitizedHtml,
         template,
         accentColor,
         savedAt: new Date().toISOString(),

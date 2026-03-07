@@ -5,6 +5,7 @@ import { resumes, users } from '@shared/schema';
 import { eq, sql } from 'drizzle-orm';
 import { ai, AI_MODEL, ROBERT_SYSTEM_PROMPT } from '@/lib/openai';
 import { z } from 'zod';
+import { rateLimit } from '@/lib/rate-limit';
 import crypto from 'crypto';
 
 const createSchema = z.object({
@@ -33,6 +34,11 @@ export async function POST(req: NextRequest) {
     const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
+    }
+
+    const { allowed } = rateLimit(`create:${user.id}`, 5, 60_000);
+    if (!allowed) {
+      return NextResponse.json({ message: 'Too many requests. Please wait a moment.' }, { status: 429 });
     }
 
     if (user.plan !== 'admin' && user.creditsRemaining <= 0) {

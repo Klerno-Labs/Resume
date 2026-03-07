@@ -5,6 +5,7 @@ import { coverLetters, users } from '@shared/schema';
 import { eq, sql } from 'drizzle-orm';
 import { ai, AI_MODEL } from '@/lib/openai';
 import { z } from 'zod';
+import { rateLimit } from '@/lib/rate-limit';
 
 const generateSchema = z.object({
   resumeText: z.string().min(50),
@@ -19,6 +20,11 @@ export async function POST(req: NextRequest) {
     const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
+    }
+
+    const { allowed } = rateLimit(`cover-letter:${user.id}`, 5, 60_000);
+    if (!allowed) {
+      return NextResponse.json({ message: 'Too many requests. Please wait a moment.' }, { status: 429 });
     }
 
     const body = await req.json();
@@ -38,13 +44,6 @@ export async function POST(req: NextRequest) {
         { message: 'No credits remaining. Please upgrade your plan.' },
         { status: 403 }
       );
-    }
-
-    if (user.plan !== 'admin') {
-      await db
-        .update(users)
-        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
-        .where(eq(users.id, user.id));
     }
 
     const toneInstructions: Record<string, string> = {
@@ -79,6 +78,21 @@ RESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jobDescription}`,
     });
 
     const content = result.choices[0]?.message?.content || '';
+
+    if (!content) {
+      return NextResponse.json(
+        { message: 'AI failed to generate a cover letter. Please try again.' },
+        { status: 502 }
+      );
+    }
+
+    // Deduct credit only after successful AI response
+    if (user.plan !== 'admin') {
+      await db
+        .update(users)
+        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+        .where(eq(users.id, user.id));
+    }
 
     const [coverLetter] = await db
       .insert(coverLetters)

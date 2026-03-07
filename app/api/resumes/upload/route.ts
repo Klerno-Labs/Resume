@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { resumes, users } from '@shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { ai, AI_MODEL, ROBERT_SYSTEM_PROMPT } from '@/lib/openai';
+import { rateLimit } from '@/lib/rate-limit';
 import crypto from 'crypto';
 
 async function parseFile(buffer: Buffer, mimeType: string): Promise<string> {
@@ -24,6 +25,11 @@ export async function POST(req: NextRequest) {
     const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ message: 'Please sign in to upload a resume' }, { status: 401 });
+    }
+
+    const { allowed } = rateLimit(`upload:${user.id}`, 5, 60_000);
+    if (!allowed) {
+      return NextResponse.json({ message: 'Too many uploads. Please wait a moment.' }, { status: 429 });
     }
 
     const formData = await req.formData();

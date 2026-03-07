@@ -4,12 +4,18 @@ import { db } from '@/lib/db';
 import { users } from '@shared/schema';
 import { eq, sql } from 'drizzle-orm';
 import { ai, AI_MODEL } from '@/lib/openai';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
     const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
+    }
+
+    const { allowed } = rateLimit(`match-job:${user.id}`, 10, 60_000);
+    if (!allowed) {
+      return NextResponse.json({ message: 'Too many requests. Please wait a moment.' }, { status: 429 });
     }
 
     if (user.plan !== 'admin' && user.creditsRemaining <= 0) {
@@ -26,13 +32,6 @@ export async function POST(req: NextRequest) {
         { message: 'Both resume text and job description are required' },
         { status: 400 }
       );
-    }
-
-    if (user.plan !== 'admin') {
-      await db
-        .update(users)
-        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
-        .where(eq(users.id, user.id));
     }
 
     const result = await ai.chat.completions.create({
@@ -59,7 +58,24 @@ Return ONLY valid JSON.`,
 
     const content = result.choices[0]?.message?.content || '{}';
     const cleaned = content.replace(/```json\n?|```\n?/g, '').trim();
-    const analysis = JSON.parse(cleaned);
+
+    let analysis;
+    try {
+      analysis = JSON.parse(cleaned);
+    } catch {
+      return NextResponse.json(
+        { message: 'AI returned an invalid response. Please try again.' },
+        { status: 502 }
+      );
+    }
+
+    // Deduct credit only after successful AI response
+    if (user.plan !== 'admin') {
+      await db
+        .update(users)
+        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+        .where(eq(users.id, user.id));
+    }
 
     return NextResponse.json(analysis);
   } catch (error) {

@@ -49,22 +49,31 @@ export async function POST(req: NextRequest) {
             })
             .where(eq(users.id, userId));
 
-          // Create subscription record
+          // Create subscription record (idempotent - check if exists first)
           if (session.subscription) {
-            const sub = await stripe.subscriptions.retrieve(session.subscription as string) as unknown as {
-              id: string;
-              items: { data: Array<{ price: { id: string } }> };
-              current_period_start: number;
-              current_period_end: number;
-            };
-            await db.insert(subscriptions).values({
-              userId,
-              stripeSubscriptionId: sub.id,
-              stripePriceId: sub.items.data[0]?.price.id || '',
-              status: 'active',
-              currentPeriodStart: new Date(sub.current_period_start * 1000),
-              currentPeriodEnd: new Date(sub.current_period_end * 1000),
-            });
+            const subId = session.subscription as string;
+            const [existingSub] = await db
+              .select({ id: subscriptions.id })
+              .from(subscriptions)
+              .where(eq(subscriptions.stripeSubscriptionId, subId))
+              .limit(1);
+
+            if (!existingSub) {
+              const sub = await stripe.subscriptions.retrieve(subId) as unknown as {
+                id: string;
+                items: { data: Array<{ price: { id: string } }> };
+                current_period_start: number;
+                current_period_end: number;
+              };
+              await db.insert(subscriptions).values({
+                userId,
+                stripeSubscriptionId: sub.id,
+                stripePriceId: sub.items.data[0]?.price.id || '',
+                status: 'active',
+                currentPeriodStart: new Date(sub.current_period_start * 1000),
+                currentPeriodEnd: new Date(sub.current_period_end * 1000),
+              });
+            }
           }
         }
         break;
@@ -96,7 +105,7 @@ export async function POST(req: NextRequest) {
 
         // Downgrade user to free
         const [subRecord] = await db
-          .select()
+          .select({ userId: subscriptions.userId })
           .from(subscriptions)
           .where(eq(subscriptions.stripeSubscriptionId, sub.id))
           .limit(1);
@@ -122,9 +131,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Always return 200 for successfully processed events
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Webhook handler error:', error);
-    return NextResponse.json({ message: 'Webhook processing failed' }, { status: 500 });
+    // Return 200 to prevent Stripe from retrying on application errors
+    // Only infrastructure failures (caught above at signature level) should return non-200
+    return NextResponse.json({ received: true, error: 'Processing error logged' });
   }
 }

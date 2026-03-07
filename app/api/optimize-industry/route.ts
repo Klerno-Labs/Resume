@@ -5,6 +5,7 @@ import { users } from '@shared/schema';
 import { eq, sql } from 'drizzle-orm';
 import { ai, AI_MODEL } from '@/lib/openai';
 import { z } from 'zod';
+import { rateLimit } from '@/lib/rate-limit';
 
 const schema = z.object({
   resumeText: z.string().min(50),
@@ -18,7 +19,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
     }
 
-    // Feature gated to pro/premium/admin
+    const { allowed } = rateLimit(`optimize:${user.id}`, 5, 60_000);
+    if (!allowed) {
+      return NextResponse.json({ message: 'Too many requests. Please wait a moment.' }, { status: 429 });
+    }
+
     if (!['pro', 'premium', 'admin'].includes(user.plan)) {
       return NextResponse.json(
         { message: 'Industry optimization is available on Pro and Premium plans' },
@@ -37,10 +42,6 @@ export async function POST(req: NextRequest) {
     }
 
     const { resumeText, industry } = parsed.data;
-
-    if (user.plan !== 'admin') {
-      await db.update(users).set({ creditsRemaining: sql`${users.creditsRemaining} - 1` }).where(eq(users.id, user.id));
-    }
 
     const result = await ai.chat.completions.create({
       model: AI_MODEL,
@@ -67,7 +68,20 @@ Return ONLY valid JSON.`,
 
     const content = result.choices[0]?.message?.content || '{}';
     const cleaned = content.replace(/```json\n?|```\n?/g, '').trim();
-    const analysis = JSON.parse(cleaned);
+
+    let analysis;
+    try {
+      analysis = JSON.parse(cleaned);
+    } catch {
+      return NextResponse.json(
+        { message: 'AI returned an invalid response. Please try again.' },
+        { status: 502 }
+      );
+    }
+
+    if (user.plan !== 'admin') {
+      await db.update(users).set({ creditsRemaining: sql`${users.creditsRemaining} - 1` }).where(eq(users.id, user.id));
+    }
 
     return NextResponse.json(analysis);
   } catch (error) {

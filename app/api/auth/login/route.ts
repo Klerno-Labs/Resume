@@ -5,6 +5,7 @@ import { users } from '@shared/schema';
 import { signToken } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { rateLimit } from '@/lib/rate-limit';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -13,6 +14,12 @@ const loginSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { allowed } = rateLimit(`login:${ip}`, 10, 60_000);
+    if (!allowed) {
+      return NextResponse.json({ message: 'Too many login attempts. Please wait.' }, { status: 429 });
+    }
+
     const body = await req.json();
     const parsed = loginSchema.safeParse(body);
 
