@@ -69,12 +69,15 @@ const plans = [
 export function PricingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [agreed, setAgreed] = useState(false);
 
   async function handleCheckout(planId: string) {
     if (planId === 'free') {
       router.push('/builder');
       return;
     }
+
+    if (!agreed) return;
 
     setLoading(planId);
     try {
@@ -174,8 +177,8 @@ export function PricingPage() {
               ) : (
                 <button
                   onClick={() => handleCheckout(plan.planId)}
-                  disabled={loading === plan.planId}
-                  className={`block w-full text-center py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 ${
+                  disabled={loading === plan.planId || !agreed}
+                  className={`block w-full text-center py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                     plan.highlighted
                       ? 'bg-gradient-to-r from-brand-accent to-purple-500 text-white hover:shadow-lg hover:shadow-brand-accent/25'
                       : 'border border-white/10 text-white hover:bg-white/5'
@@ -192,9 +195,28 @@ export function PricingPage() {
           ))}
         </div>
 
-        <div className="mt-16 text-center">
-          <p className="text-brand-muted text-sm">
-            All plans include a 30-day money-back guarantee. Cancel anytime.
+        <div className="mt-12 max-w-xl mx-auto">
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-1 w-4 h-4 rounded border-white/20 bg-white/5 text-brand-accent focus:ring-brand-accent/50 cursor-pointer"
+            />
+            <span className="text-brand-muted text-sm leading-relaxed">
+              I have read and agree to the{' '}
+              <Link href="/terms" target="_blank" className="text-brand-accent-light underline hover:text-white transition-colors">
+                Terms of Service &amp; Subscription Agreement
+              </Link>
+              , including the <strong className="text-white/80">no-refund policy</strong>. I understand that all
+              sales are final and non-refundable.
+            </span>
+          </label>
+        </div>
+
+        <div className="mt-6 text-center">
+          <p className="text-brand-muted text-xs">
+            All sales are final. Cancel anytime &mdash; your access continues through the end of your billing period.
           </p>
         </div>
       </div>
