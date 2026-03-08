@@ -12,7 +12,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
     }
 
-    const { allowed } = rateLimit(`delete-account:${user.id}`, 1, 60_000);
+    const { allowed } = await rateLimit(`delete-account:${user.id}`, 1, 60_000);
     if (!allowed) {
       return NextResponse.json({ message: 'Too many requests. Please wait.' }, { status: 429 });
     }

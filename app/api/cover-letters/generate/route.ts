@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
     }
 
-    const { allowed } = rateLimit(`cover-letter:${user.id}`, 5, 60_000);
+    const { allowed } = await rateLimit(`cover-letter:${user.id}`, 5, 60_000);
     if (!allowed) {
       return NextResponse.json({ message: 'Too many requests. Please wait a moment.' }, { status: 429 });
     }

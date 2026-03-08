@@ -18,6 +18,7 @@ export interface AuthUser {
   name: string | null;
   plan: string;
   creditsRemaining: number;
+  onboardingCompleted: boolean;
 }
 
 export async function getAuthUser(): Promise<AuthUser | null> {
@@ -34,6 +35,7 @@ export async function getAuthUser(): Promise<AuthUser | null> {
         name: users.name,
         plan: users.plan,
         creditsRemaining: users.creditsRemaining,
+        onboardingCompleted: users.onboardingCompleted,
       })
       .from(users)
       .where(eq(users.id, decoded.userId))

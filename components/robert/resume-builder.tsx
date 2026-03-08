@@ -20,6 +20,7 @@ import {
   Briefcase,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadDocx } from '@/lib/docx-export';
 
 type BuilderStep = 'welcome' | 'upload' | 'processing' | 'review' | 'design' | 'complete';
 
@@ -186,6 +187,21 @@ export function ResumeBuilder({ initialTemplate }: { initialTemplate?: string })
     setActionLoading(null);
   };
 
+  const handleDownloadDOCX = async () => {
+    const text = resumeData.improvedText || resumeData.originalText;
+    if (!text) return;
+
+    setActionLoading('download-docx');
+    try {
+      const template = TEMPLATES.find((t) => t.id === selectedTemplate);
+      await downloadDocx(text, template?.accent);
+      addRobertMessage('Your DOCX file is downloading. You can open it in Word, Google Docs, or any word processor.');
+    } catch {
+      addRobertMessage("Sorry, I had trouble generating the DOCX. Try again in a moment.");
+    }
+    setActionLoading(null);
+  };
+
   const handleCoverLetter = async () => {
     const text = resumeData.improvedText || resumeData.originalText;
     if (!text) return;
@@ -316,7 +332,9 @@ export function ResumeBuilder({ initialTemplate }: { initialTemplate?: string })
       }
     } else if (step === 'review' || step === 'design') {
       const lowerInput = userInput.toLowerCase();
-      if (lowerInput.includes('download')) {
+      if (lowerInput.includes('docx') || lowerInput.includes('word')) {
+        handleDownloadDOCX();
+      } else if (lowerInput.includes('download')) {
         handleDownloadPDF();
       } else if (lowerInput.includes('cover letter')) {
         handleCoverLetter();
@@ -504,6 +522,12 @@ export function ResumeBuilder({ initialTemplate }: { initialTemplate?: string })
                   label="Download PDF"
                   disabled={actionLoading === 'download'}
                   onClick={handleDownloadPDF}
+                />
+                <QuickAction
+                  icon={<Download className="w-3.5 h-3.5" />}
+                  label="Download DOCX"
+                  disabled={actionLoading === 'download-docx'}
+                  onClick={handleDownloadDOCX}
                 />
               </div>
             )}
@@ -728,6 +752,13 @@ export function ResumeBuilder({ initialTemplate }: { initialTemplate?: string })
                   primary
                   loading={actionLoading === 'download'}
                   onClick={handleDownloadPDF}
+                />
+                <ActionButton
+                  icon={<Download className="w-4 h-4" />}
+                  label="Download DOCX"
+                  description="Editable Word format"
+                  loading={actionLoading === 'download-docx'}
+                  onClick={handleDownloadDOCX}
                 />
               </div>
             )}

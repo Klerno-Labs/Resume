@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { motion } from 'framer-motion';
-import { User, Lock, CreditCard, Loader2, AlertTriangle } from 'lucide-react';
+import { User, Lock, CreditCard, Loader2, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Tab = 'profile' | 'security' | 'billing';
@@ -233,7 +233,29 @@ export default function SettingsPage() {
                 onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/50"
               />
-              <p className="text-xs text-brand-muted mt-1">Min 12 chars, uppercase, lowercase, number, special character</p>
+              {passwordForm.newPassword && (
+                <div className="mt-2 space-y-1">
+                  {[
+                    { test: passwordForm.newPassword.length >= 12, label: 'At least 12 characters' },
+                    { test: /[A-Z]/.test(passwordForm.newPassword), label: 'Uppercase letter' },
+                    { test: /[a-z]/.test(passwordForm.newPassword), label: 'Lowercase letter' },
+                    { test: /[0-9]/.test(passwordForm.newPassword), label: 'Number' },
+                    { test: /[^A-Za-z0-9]/.test(passwordForm.newPassword), label: 'Special character' },
+                  ].map((rule) => (
+                    <div key={rule.label} className="flex items-center gap-1.5 text-xs">
+                      {rule.test ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
+                      ) : (
+                        <XCircle className="w-3.5 h-3.5 text-brand-muted" />
+                      )}
+                      <span className={rule.test ? 'text-green-400' : 'text-brand-muted'}>{rule.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!passwordForm.newPassword && (
+                <p className="text-xs text-brand-muted mt-1">Min 12 chars, uppercase, lowercase, number, special character</p>
+              )}
             </div>
             <div>
               <label className="block text-sm text-brand-muted mb-1.5">Confirm New Password</label>

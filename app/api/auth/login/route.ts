@@ -15,7 +15,7 @@ const loginSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    const { allowed } = rateLimit(`login:${ip}`, 10, 60_000);
+    const { allowed } = await rateLimit(`login:${ip}`, 10, 60_000);
     if (!allowed) {
       return NextResponse.json({ message: 'Too many login attempts. Please wait.' }, { status: 429 });
     }

@@ -14,7 +14,7 @@ const plans = [
       '1 resume optimization',
       'Basic ATS scoring',
       '5 templates',
-      'PDF export',
+      'PDF & DOCX export',
     ],
     cta: 'Get Started Free',
     href: '/builder',

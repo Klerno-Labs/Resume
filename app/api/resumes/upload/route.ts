@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Please sign in to upload a resume' }, { status: 401 });
     }
 
-    const { allowed } = rateLimit(`upload:${user.id}`, 5, 60_000);
+    const { allowed } = await rateLimit(`upload:${user.id}`, 5, 60_000);
     if (!allowed) {
       return NextResponse.json({ message: 'Too many uploads. Please wait a moment.' }, { status: 429 });
     }

@@ -8,6 +8,7 @@ import {
   Bot, Loader2, Download, Palette, Eye, EyeOff, ArrowLeft, RefreshCw, Save, FileText, Target, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadDocx } from '@/lib/docx-export';
 
 interface ResumeData {
   id: string;
@@ -132,6 +133,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
   };
 
+  const handleDownloadDocx = async () => {
+    setDownloadError('');
+    try {
+      const text = resume?.improvedText || resume?.originalText || '';
+      const template = TEMPLATES.find((t) => t.id === selectedTemplate);
+      await downloadDocx(text, template?.accent);
+    } catch (err) {
+      console.error('DOCX export error:', err);
+      setDownloadError('Failed to generate DOCX. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-brand-navy pt-16 flex items-center justify-center">
@@ -178,11 +191,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
               Design
             </button>
             <button
+              onClick={handleDownloadDocx}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-brand-muted text-xs hover:text-white transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              DOCX
+            </button>
+            <button
               onClick={handleDownload}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-brand-accent to-purple-500 text-white text-xs font-semibold hover:shadow-lg hover:shadow-brand-accent/25 transition-all"
             >
               <Download className="w-3.5 h-3.5" />
-              Download PDF
+              PDF
             </button>
           </div>
         </div>

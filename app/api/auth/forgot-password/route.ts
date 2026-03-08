@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Email is required' }, { status: 400 });
     }
 
-    const { allowed } = rateLimit(`forgot:${email}`, 3, 300_000);
+    const { allowed } = await rateLimit(`forgot:${email}`, 3, 300_000);
     if (!allowed) {
       return NextResponse.json({ message: 'Too many requests. Please wait a few minutes.' }, { status: 429 });
     }
