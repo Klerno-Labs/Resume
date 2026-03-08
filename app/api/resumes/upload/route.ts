@@ -9,10 +9,10 @@ import crypto from 'crypto';
 
 async function parseFile(buffer: Buffer, mimeType: string): Promise<string> {
   if (mimeType === 'application/pdf') {
-    const mod = await import('pdf-parse');
-    const pdfParse = (mod as unknown as { default: (buf: Buffer) => Promise<{ text: string }> }).default;
-    const parsed = await pdfParse(buffer);
-    return parsed.text;
+    const { PDFParse } = await import('pdf-parse');
+    const parser = new PDFParse({ data: new Uint8Array(buffer) });
+    const result = await parser.getText();
+    return result.text;
   } else {
     const mammoth = await import('mammoth');
     const result = await mammoth.extractRawText({ buffer });
