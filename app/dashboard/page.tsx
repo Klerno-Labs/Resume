@@ -264,9 +264,7 @@ export default function DashboardPage() {
                 Welcome back{user?.name ? `, ${user.name}` : ''}
               </h1>
               <p className="text-brand-muted text-sm mt-1">
-                {user?.plan === 'free'
-                  ? `${user.creditsRemaining} credits remaining`
-                  : `${user?.plan} plan`}
+                {user?.creditsRemaining ?? 0} credits remaining
               </p>
             </div>
             <Link

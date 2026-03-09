@@ -14,7 +14,7 @@ export default function TermsPage() {
             <FileText className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-4xl sm:text-5xl font-display font-bold text-white mb-4">
-            Terms of Service &amp; Subscription Agreement
+            Terms of Service
           </h1>
           <p className="text-brand-muted text-lg">
             Effective Date: March 7, 2026 &mdash; Last Updated: March 7, 2026
@@ -38,9 +38,9 @@ export default function TermsPage() {
 
         <div className="mt-12 glass rounded-2xl p-8 border border-brand-accent/20">
           <p className="text-brand-muted text-sm leading-relaxed">
-            By creating an account, using our services, or purchasing a subscription on RewriteMe.app,
+            By creating an account, using our services, or purchasing credits on RewriteMe.app,
             you acknowledge that you have read, understood, and agree to be bound by these Terms of
-            Service and Subscription Agreement in their entirety. This agreement constitutes a legally
+            Service in their entirety. This agreement constitutes a legally
             binding contract between you and RewriteMe.
           </p>
         </div>
@@ -54,8 +54,8 @@ const sections = [
   {
     title: 'Agreement to Terms',
     content: [
-      'This Terms of Service and Subscription Agreement ("Agreement") is a legally binding contract between you ("Customer," "you," or "your") and RewriteMe ("Company," "we," "us," or "our"), governing your access to and use of RewriteMe.app and all related services, tools, and AI features (collectively, the "Service").',
-      'By creating an account, accessing the Service, or purchasing any subscription plan, you represent that you are at least 18 years of age and have the legal capacity to enter into this Agreement. If you do not agree to all terms herein, you must immediately discontinue use of the Service.',
+      'This Terms of Service ("Agreement") is a legally binding contract between you ("Customer," "you," or "your") and RewriteMe ("Company," "we," "us," or "our"), governing your access to and use of RewriteMe.app and all related services, tools, and AI features (collectively, the "Service").',
+      'By creating an account, accessing the Service, or purchasing any credit pack, you represent that you are at least 18 years of age and have the legal capacity to enter into this Agreement. If you do not agree to all terms herein, you must immediately discontinue use of the Service.',
     ],
   },
   {
@@ -67,29 +67,28 @@ const sections = [
     ],
   },
   {
-    title: 'Subscription Plans & Billing',
+    title: 'Credit Packs & Billing',
     content: [
-      'RewriteMe offers free and paid subscription plans. Free plans include limited credits and features as described on our pricing page. Paid plans ("Pro" and "Premium") are billed on a recurring monthly or annual basis at the rates displayed at the time of purchase.',
-      'By purchasing a paid subscription, you authorize RewriteMe to charge your designated payment method on a recurring basis at the applicable rate. Billing occurs automatically at the start of each billing cycle. All prices are in US Dollars (USD) and are exclusive of applicable taxes.',
-      'We reserve the right to modify pricing with 30 days advance notice. Price changes will take effect at the start of your next billing cycle following the notice period.',
+      'RewriteMe offers one-time credit pack purchases. Credit packs ("Starter," "Pro," and "Premium") are available at the prices displayed on our pricing page at the time of purchase. There are no recurring charges or subscriptions.',
+      'By purchasing a credit pack, you authorize RewriteMe to charge your designated payment method a one-time fee at the applicable rate. All prices are in US Dollars (USD) and are exclusive of applicable taxes.',
+      'Credits are added to your account immediately upon successful payment, are cumulative (multiple purchases stack), and never expire. We reserve the right to modify pricing at any time; price changes do not affect previously purchased credits.',
     ],
   },
   {
     title: 'ALL SALES ARE FINAL — NO REFUNDS',
     content: [
-      'ALL PURCHASES AND SUBSCRIPTION PAYMENTS ARE FINAL AND NON-REFUNDABLE. BY COMPLETING A PURCHASE, YOU EXPRESSLY ACKNOWLEDGE AND AGREE THAT:',
-      '(a) You will not receive a refund for any subscription payment, partial or full, under any circumstances including but not limited to: dissatisfaction with the Service, failure to use allocated credits, cancellation before the end of a billing period, technical issues, changes to Service features, or any other reason.',
-      '(b) Upon payment, you receive immediate access to premium AI processing features, resume credits, and digital tools. Because the Service delivers digital goods and AI-processed content that cannot be "returned," all sales are considered final upon delivery of access.',
-      '(c) Cancellation of a subscription stops future billing but does not entitle you to a refund for the current or any prior billing period. Your access to paid features will continue until the end of your current billing cycle.',
-      '(d) If you dispute a charge with your bank or credit card company ("chargeback") without first attempting to resolve the issue directly with us, we reserve the right to immediately terminate your account, revoke access to all content and data, and pursue recovery of the disputed amount plus any fees incurred.',
+      'ALL PURCHASES ARE FINAL AND NON-REFUNDABLE. BY COMPLETING A PURCHASE, YOU EXPRESSLY ACKNOWLEDGE AND AGREE THAT:',
+      '(a) You will not receive a refund for any credit pack purchase, partial or full, under any circumstances including but not limited to: dissatisfaction with the Service, failure to use allocated credits, technical issues, changes to Service features, or any other reason.',
+      '(b) Upon payment, you receive immediate access to resume credits and digital tools. Because the Service delivers digital goods and AI-processed content that cannot be "returned," all sales are considered final upon delivery of access.',
+      '(c) If you dispute a charge with your bank or credit card company ("chargeback") without first attempting to resolve the issue directly with us, we reserve the right to immediately terminate your account, revoke access to all content and data, and pursue recovery of the disputed amount plus any fees incurred.',
       'This no-refund policy is a material term of this Agreement. You accept this policy each time you make a purchase.',
     ],
   },
   {
     title: 'Credits & Usage',
     content: [
-      'Resume optimization credits are allocated based on your subscription plan. Free plan credits are one-time allocations. Paid plan credits refresh each billing cycle.',
-      'Unused credits do not roll over between billing periods and have no cash value. Credits are non-transferable between accounts.',
+      'Resume optimization credits are purchased through one-time credit packs. Credits are added to your account immediately upon purchase and are cumulative — purchasing additional packs adds to your existing balance.',
+      'Credits never expire and have no cash value. Credits are non-transferable between accounts and are non-refundable.',
       'We reserve the right to implement reasonable usage limits to prevent abuse, including rate limiting on API calls and AI processing requests.',
     ],
   },
@@ -143,7 +142,7 @@ const sections = [
   {
     title: 'Termination',
     content: [
-      'You may cancel your subscription at any time through your account settings. Cancellation takes effect at the end of your current billing period. No refunds will be issued for the remaining period.',
+      'You may delete your account at any time through your account settings. Account deletion is permanent and forfeits any remaining credits. No refunds will be issued for unused credits.',
       'We reserve the right to suspend or terminate your access to the Service at any time, with or without cause, and with or without notice. Grounds for termination include but are not limited to: violation of these terms, fraudulent activity, abuse of the Service, or failure of payment.',
       'Upon termination, your right to use the Service ceases immediately. We may delete your account data after a reasonable retention period. Sections 4, 7, 9, 10, 11, and 13 survive termination.',
     ],
@@ -161,7 +160,7 @@ const sections = [
     title: 'Modifications to Terms',
     content: [
       'We reserve the right to modify this Agreement at any time. Material changes will be communicated via email or prominent notice on the Service at least 14 days before taking effect.',
-      'Your continued use of the Service after the effective date of any modifications constitutes your acceptance of the updated terms. If you do not agree to the modified terms, you must discontinue use of the Service and cancel your subscription.',
+      'Your continued use of the Service after the effective date of any modifications constitutes your acceptance of the updated terms. If you do not agree to the modified terms, you must discontinue use of the Service.',
     ],
   },
   {

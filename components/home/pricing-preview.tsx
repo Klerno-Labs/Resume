@@ -6,53 +6,46 @@ import { Check, Sparkles } from 'lucide-react';
 
 const plans = [
   {
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
-    description: 'Try Robert with limited features',
+    name: 'Starter',
+    price: '$9.99',
+    description: 'Perfect for a single application',
     features: [
-      '1 resume optimization',
-      'Basic ATS scoring',
-      '5 templates',
+      '10 resume credits',
+      'ATS scoring & optimization',
+      'All templates',
       'PDF & DOCX export',
     ],
-    cta: 'Get Started Free',
-    href: '/builder',
+    cta: 'Buy Starter',
+    href: '/pricing',
     highlighted: false,
   },
   {
     name: 'Pro',
-    price: '$12',
-    period: '/month',
-    description: 'For serious job seekers',
+    price: '$19.99',
+    description: 'Best value for job seekers',
     features: [
-      '50 resume optimizations/month',
+      '30 resume credits',
       'Full ATS reports',
       'All premium templates',
       'Cover letter generation',
       'Job matching analysis',
       'Industry optimization',
-      'Priority AI processing',
     ],
-    cta: 'Start Pro',
+    cta: 'Buy Pro',
     href: '/pricing',
     highlighted: true,
   },
   {
     name: 'Premium',
-    price: '$29',
-    period: '/month',
-    description: 'Maximum firepower for your job search',
+    price: '$39.99',
+    description: 'Maximum firepower',
     features: [
+      '100 resume credits',
       'Everything in Pro',
-      '200 monthly credits',
-      'Unlimited cover letters',
       'Priority AI processing',
-      'Industry optimization',
       'Advanced ATS reports',
-      'Priority support',
     ],
-    cta: 'Go Premium',
+    cta: 'Buy Premium',
     href: '/pricing',
     highlighted: false,
   },
@@ -73,11 +66,11 @@ export function PricingPreview() {
           className="text-center mb-16"
         >
           <h2 className="text-3xl sm:text-4xl font-display font-bold text-white mb-4">
-            Simple, Transparent{' '}
-            <span className="text-gradient">Pricing</span>
+            Buy Credits,{' '}
+            <span className="text-gradient">Use Anytime</span>
           </h2>
           <p className="text-brand-muted text-lg max-w-2xl mx-auto">
-            Start free. Upgrade when you&apos;re ready. No surprises.
+            One-time purchase. No subscriptions. No surprises.
           </p>
         </motion.div>
 
@@ -98,7 +91,7 @@ export function PricingPreview() {
               {plan.highlighted && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-brand-accent to-purple-500 text-white text-xs font-semibold flex items-center gap-1">
                   <Sparkles className="w-3 h-3" />
-                  Most Popular
+                  Best Value
                 </div>
               )}
 
@@ -114,7 +107,7 @@ export function PricingPreview() {
                   {plan.price}
                 </span>
                 <span className="text-brand-muted text-sm ml-1">
-                  {plan.period}
+                  one-time
                 </span>
               </div>
 

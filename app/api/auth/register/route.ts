@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         passwordHash,
         name: name || null,
         plan,
-        creditsRemaining: plan === 'admin' ? 9999 : 3,
+        creditsRemaining: plan === 'admin' ? 9999 : 0,
         verificationToken,
       })
       .returning({

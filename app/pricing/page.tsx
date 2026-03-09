@@ -4,7 +4,7 @@ import { PricingPage } from '@/components/pricing/pricing-page';
 
 export const metadata = {
   title: 'Pricing',
-  description: 'Simple, transparent pricing. Start free, upgrade when ready.',
+  description: 'Buy resume credits. One-time purchase, no subscriptions.',
 };
 
 export default function Pricing() {

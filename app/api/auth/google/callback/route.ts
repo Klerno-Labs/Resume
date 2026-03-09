@@ -77,23 +77,29 @@ export async function GET(req: NextRequest) {
       .limit(1);
 
     let userId: string;
+    const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase());
+    const isAdmin = adminEmails.includes(googleUser.email.toLowerCase());
 
     if (existingUser) {
       userId = existingUser.id;
-      // Update name if not set
-      if (!existingUser.name && googleUser.name) {
-        await db.update(users).set({ name: googleUser.name }).where(eq(users.id, userId));
+      const updates: Record<string, unknown> = {};
+      if (!existingUser.name && googleUser.name) updates.name = googleUser.name;
+      if (isAdmin && existingUser.plan !== 'admin') {
+        updates.plan = 'admin';
+        updates.creditsRemaining = 9999;
+      }
+      if (Object.keys(updates).length > 0) {
+        await db.update(users).set(updates).where(eq(users.id, userId));
       }
     } else {
-      // Create new user with Google info
       userId = randomUUID();
       await db.insert(users).values({
         id: userId,
         email: googleUser.email,
         name: googleUser.name,
-        passwordHash: '', // No password for OAuth users
-        plan: 'free',
-        creditsRemaining: 3,
+        passwordHash: '',
+        plan: isAdmin ? 'admin' : 'free',
+        creditsRemaining: isAdmin ? 9999 : 0,
       });
     }
 

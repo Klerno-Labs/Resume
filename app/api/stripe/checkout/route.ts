@@ -12,14 +12,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
     }
 
-    const { plan, interval = 'month' } = await req.json();
+    const { plan } = await req.json();
 
-    if (!plan || !['basic', 'pro', 'premium'].includes(plan)) {
+    if (!plan || !['starter', 'pro', 'premium'].includes(plan)) {
       return NextResponse.json({ message: 'Invalid plan' }, { status: 400 });
     }
 
     const planConfig = PLANS[plan as keyof typeof PLANS];
-    const amount = interval === 'year' ? Math.round(planConfig.price * 10) : planConfig.price;
 
     // Get or create Stripe customer
     let customerId: string;
@@ -39,32 +38,32 @@ export async function POST(req: NextRequest) {
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      mode: 'subscription',
+      mode: 'payment',
       line_items: [
         {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `RewriteMe ${planConfig.name} Plan`,
-              description: `${planConfig.credits} resume credits per month`,
+              name: `RewriteMe ${planConfig.name} Pack`,
+              description: `${planConfig.credits} resume credits`,
             },
-            unit_amount: amount,
-            recurring: { interval: interval === 'year' ? 'year' : 'month' },
+            unit_amount: planConfig.price,
           },
           quantity: 1,
         },
       ],
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://rewriteme.app'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://rewriteme.app'}/pricing`,
-      metadata: { userId: user.id, plan },
+      metadata: { userId: user.id, plan, credits: String(planConfig.credits) },
     });
 
-    // Track payment
+    // Track payment (map starter -> basic for DB enum compatibility)
+    const dbPlan = plan === 'starter' ? 'basic' : plan;
     await db.insert(payments).values({
       userId: user.id,
       stripeSessionId: session.id,
-      plan: plan as 'basic' | 'pro' | 'premium',
-      amount,
+      plan: dbPlan as 'basic' | 'pro' | 'premium',
+      amount: planConfig.price,
       status: 'pending',
     });
 

@@ -23,8 +23,7 @@ export const stripe = new Proxy({} as Stripe, {
 });
 
 export const PLANS = {
-  free: { name: 'Free', credits: 3, price: 0 },
-  basic: { name: 'Basic', credits: 15, price: 599 },
-  pro: { name: 'Pro', credits: 50, price: 1200 },
-  premium: { name: 'Premium', credits: 200, price: 2900 },
+  starter: { name: 'Starter', credits: 10, price: 999 },
+  pro: { name: 'Pro', credits: 30, price: 1999 },
+  premium: { name: 'Premium', credits: 100, price: 3999 },
 } as const;

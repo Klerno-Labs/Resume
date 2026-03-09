@@ -4,64 +4,57 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Check, Sparkles, X, Loader2 } from 'lucide-react';
+import { Check, Sparkles, Loader2 } from 'lucide-react';
 
 const plans = [
   {
-    name: 'Free',
-    planId: 'free',
-    price: '$0',
-    period: 'forever',
-    description: 'Perfect for testing Robert',
+    name: 'Starter',
+    planId: 'starter',
+    price: '$9.99',
+    credits: 10,
+    description: 'Great for a single job application',
     features: [
-      { text: '3 resume optimizations', included: true },
-      { text: 'Basic ATS scoring', included: true },
-      { text: '5 starter templates', included: true },
-      { text: 'PDF & DOCX export', included: true },
-      { text: 'Cover letters', included: false },
-      { text: 'Job matching', included: false },
-      { text: 'Industry optimization', included: false },
-      { text: 'Priority AI processing', included: false },
+      '10 resume credits',
+      'ATS scoring & optimization',
+      'All templates',
+      'PDF & DOCX export',
+      'Cover letter generation',
     ],
-    cta: 'Get Started Free',
+    cta: 'Buy Starter',
     highlighted: false,
   },
   {
     name: 'Pro',
     planId: 'pro',
-    price: '$12',
-    period: '/month',
-    description: 'For active job seekers',
+    price: '$19.99',
+    credits: 30,
+    description: 'Best value for active job seekers',
     features: [
-      { text: '50 resume optimizations/month', included: true },
-      { text: 'Full ATS reports & scoring', included: true },
-      { text: 'All premium templates', included: true },
-      { text: 'PDF & DOCX export', included: true },
-      { text: 'Cover letter generation', included: true },
-      { text: 'Job matching analysis', included: true },
-      { text: 'Industry optimization', included: true },
-      { text: 'Priority AI processing', included: true },
+      '30 resume credits',
+      'Full ATS reports & scoring',
+      'All premium templates',
+      'PDF & DOCX export',
+      'Cover letter generation',
+      'Job matching analysis',
+      'Industry optimization',
     ],
-    cta: 'Start Pro',
+    cta: 'Buy Pro',
     highlighted: true,
   },
   {
     name: 'Premium',
     planId: 'premium',
-    price: '$29',
-    period: '/month',
-    description: 'Maximum job search firepower',
+    price: '$39.99',
+    credits: 100,
+    description: 'Maximum firepower for your job search',
     features: [
-      { text: 'Everything in Pro', included: true },
-      { text: '200 monthly credits', included: true },
-      { text: 'All premium templates', included: true },
-      { text: 'Unlimited cover letters', included: true },
-      { text: 'Priority AI processing', included: true },
-      { text: 'Industry-specific optimization', included: true },
-      { text: 'Advanced ATS reports', included: true },
-      { text: 'Priority support from Robert', included: true },
+      '100 resume credits',
+      'Everything in Pro',
+      'Priority AI processing',
+      'Advanced ATS reports',
+      'Industry-specific optimization',
     ],
-    cta: 'Go Premium',
+    cta: 'Buy Premium',
     highlighted: false,
   },
 ];
@@ -72,11 +65,6 @@ export function PricingPage() {
   const [agreed, setAgreed] = useState(false);
 
   async function handleCheckout(planId: string) {
-    if (planId === 'free') {
-      router.push('/builder');
-      return;
-    }
-
     if (!agreed) return;
 
     setLoading(planId);
@@ -112,11 +100,11 @@ export function PricingPage() {
           className="text-center mb-16"
         >
           <h1 className="text-4xl sm:text-5xl font-display font-bold text-white mb-4">
-            Simple, Transparent{' '}
-            <span className="text-gradient">Pricing</span>
+            Buy Credits,{' '}
+            <span className="text-gradient">Use Anytime</span>
           </h1>
           <p className="text-brand-muted text-lg max-w-2xl mx-auto">
-            Start free. No credit card required. Upgrade when Robert proves his worth.
+            One-time purchase. No subscriptions. Credits never expire.
           </p>
         </motion.div>
 
@@ -134,7 +122,7 @@ export function PricingPage() {
               {plan.highlighted && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-brand-accent to-purple-500 text-white text-xs font-semibold flex items-center gap-1">
                   <Sparkles className="w-3 h-3" />
-                  Most Popular
+                  Best Value
                 </div>
               )}
 
@@ -143,54 +131,37 @@ export function PricingPage() {
                 <p className="text-brand-muted text-sm">{plan.description}</p>
               </div>
 
-              <div className="mb-8">
+              <div className="mb-2">
                 <span className="text-5xl font-display font-bold text-white">{plan.price}</span>
-                <span className="text-brand-muted ml-1">{plan.period}</span>
               </div>
+              <p className="text-brand-accent-light text-sm font-medium mb-8">
+                {plan.credits} credits &middot; one-time
+              </p>
 
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature) => (
-                  <li key={feature.text} className="flex items-start gap-3">
-                    {feature.included ? (
-                      <Check className="w-4 h-4 text-brand-accent-light flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <X className="w-4 h-4 text-brand-muted/50 flex-shrink-0 mt-0.5" />
-                    )}
-                    <span
-                      className={`text-sm ${
-                        feature.included ? 'text-brand-muted' : 'text-brand-muted/50'
-                      }`}
-                    >
-                      {feature.text}
-                    </span>
+                  <li key={feature} className="flex items-start gap-3">
+                    <Check className="w-4 h-4 text-brand-accent-light flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-brand-muted">{feature}</span>
                   </li>
                 ))}
               </ul>
 
-              {plan.planId === 'free' ? (
-                <Link
-                  href="/builder"
-                  className="block w-full text-center py-3 rounded-xl text-sm font-semibold transition-all border border-white/10 text-white hover:bg-white/5"
-                >
-                  {plan.cta}
-                </Link>
-              ) : (
-                <button
-                  onClick={() => handleCheckout(plan.planId)}
-                  disabled={loading === plan.planId || !agreed}
-                  className={`block w-full text-center py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                    plan.highlighted
-                      ? 'bg-gradient-to-r from-brand-accent to-purple-500 text-white hover:shadow-lg hover:shadow-brand-accent/25'
-                      : 'border border-white/10 text-white hover:bg-white/5'
-                  }`}
-                >
-                  {loading === plan.planId ? (
-                    <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                  ) : (
-                    plan.cta
-                  )}
-                </button>
-              )}
+              <button
+                onClick={() => handleCheckout(plan.planId)}
+                disabled={loading === plan.planId || !agreed}
+                className={`block w-full text-center py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                  plan.highlighted
+                    ? 'bg-gradient-to-r from-brand-accent to-purple-500 text-white hover:shadow-lg hover:shadow-brand-accent/25'
+                    : 'border border-white/10 text-white hover:bg-white/5'
+                }`}
+              >
+                {loading === plan.planId ? (
+                  <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                ) : (
+                  plan.cta
+                )}
+              </button>
             </motion.div>
           ))}
         </div>
@@ -206,7 +177,7 @@ export function PricingPage() {
             <span className="text-brand-muted text-sm leading-relaxed">
               I have read and agree to the{' '}
               <Link href="/terms" target="_blank" className="text-brand-accent-light underline hover:text-white transition-colors">
-                Terms of Service &amp; Subscription Agreement
+                Terms of Service
               </Link>
               , including the <strong className="text-white/80">no-refund policy</strong>. I understand that all
               sales are final and non-refundable.
@@ -216,7 +187,7 @@ export function PricingPage() {
 
         <div className="mt-6 text-center">
           <p className="text-brand-muted text-xs">
-            All sales are final. Cancel anytime &mdash; your access continues through the end of your billing period.
+            All sales are final. Credits are added to your account instantly and never expire.
           </p>
         </div>
       </div>

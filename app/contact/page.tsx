@@ -24,16 +24,16 @@ const helpTopics = [
   {
     icon: CreditCard,
     title: 'Billing & Plans',
-    description: 'Manage your subscription, view plan details, and upgrade or downgrade anytime.',
+    description: 'View your credits, purchase more, and manage your account settings.',
     link: '/settings',
-    cta: 'Manage Billing',
+    cta: 'Account Settings',
   },
   {
     icon: HelpCircle,
     title: 'FAQ',
     description: 'Robert uses AI to analyze, optimize, and redesign your resume for ATS systems and recruiters.',
     link: '/builder',
-    cta: 'Try It Free',
+    cta: 'Learn More',
   },
 ];
 
